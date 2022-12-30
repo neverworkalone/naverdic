@@ -1,9 +1,15 @@
 {
-  "name": "네이버 영어사전 (Naver Dictionary)",
+  "name": "네이버 영어사전",
   "description": "직접 단어를 입력하거나 웹페이지의 영어 단어를 선택해 영단어의 뜻을 보여줍니다.",
   "version": "5.0",
   "manifest_version": 3,
   "action": {
     "default_popup": "index.html"
-  }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions" : [
+    "https://dict.naver.com/"
+  ]
 }
