@@ -1,5 +1,3 @@
-import { mockEndic } from './mock.js'
-
 let noAudios = 0
 let audio = null
 
@@ -72,23 +70,17 @@ function parseEndic(data) {
 }
 
 export async function searchWord(event, word) {
-  if (!chrome.runtime) {
-    const data = await mockEndic()
+  const url = 'https://dict.naver.com/search.dict?dicQuery=' + word
+
+  chrome.runtime.sendMessage({
+    method: 'GET',
+    action: 'endic',
+    url: url,
+    }, function(data) {
+    if (!data) {
+      return
+    }
+
     document.getElementById('content').innerHTML = parseEndic(data);
-  }
-  else {
-    const url = 'https://dict.naver.com/search.dict?dicQuery=' + word
-
-    chrome.runtime.sendMessage({
-      method: 'GET',
-      action: 'endic',
-      url: url,
-      }, function(data) {
-      if (!data) {
-        return
-      }
-
-      document.getElementById('content').innerHTML = parseEndic(data);
-    })
-  }
+  })
 }

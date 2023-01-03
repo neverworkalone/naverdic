@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { searchWord } from '../scheme.js'
+import { getText } from '../text.js'
 
 const word = ref('')
 
@@ -26,7 +27,7 @@ onMounted(() => {
         type="button"
         @click="searchWord($event, word)"
         class="naverdic-search"
-        value="검색"
+        :value="getText('SEARCH')"
       >
     </form>
 
@@ -35,7 +36,7 @@ onMounted(() => {
     <hr>
 
     <div align="right">
-      Naver dic <a href="options.html" target="_blank">Setting</a>
+      {{ getText('EXT_NAME') }} <a href="options.html" target="_blank">{{ getText('SETTING') }}</a>
     </div>
   </div>
 </template>
@@ -44,6 +45,10 @@ onMounted(() => {
 body {
   font-size: 10pt;
   background-color: #f5f5f5;
+}
+a {
+  text-decoration:none;
+  color: #37d;
 }
 div.naverdic-word {
   width: 280px;
@@ -73,9 +78,7 @@ div.naverdic-wordTitle {
   padding-left: 1px;
 }
 div.naverdic-wordTitle a {
-  text-decoration: none;
   font-weight: bold;
-  color: #37d;
 }
 dd.naverdic-means {
   margin-inline-start: 8px !important;
