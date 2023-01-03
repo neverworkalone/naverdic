@@ -1,0 +1,14 @@
+{
+  "APP_NAME": {
+    "message": "Naver dictionary"
+  },
+  "APP_DESCRIPTION": {
+    "message": "English - Korean dictionary supports not only searching but from selecting words on the web pages."
+  },
+  "SEARCH": {
+    "message": "OK"
+  },
+  "SETTING": {
+    "message": "Setting"
+  }
+}

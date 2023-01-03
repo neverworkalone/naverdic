@@ -14,7 +14,6 @@ onMounted(() => {
   <div class="naverdic-word">
     <form
       @submit.prevent="searchWord($event, word)"
-      name="dicform"
     >
       <input
         v-model="word"
@@ -36,7 +35,7 @@ onMounted(() => {
     <hr>
 
     <div align="right">
-      {{ getText('EXT_NAME') }} <a href="options.html" target="_blank">{{ getText('SETTING') }}</a>
+      {{ getText('APP_NAME') }} <a href="options.html" target="_blank">{{ getText('SETTING') }}</a>
     </div>
   </div>
 </template>
