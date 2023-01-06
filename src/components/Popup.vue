@@ -1,9 +1,25 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { searchWord } from '../scheme.js'
+import { parseEndic } from '../../public/content.js'
 import { getText } from '../text.js'
 
 const word = ref('')
+
+async function searchWord(word) {
+  const url = 'https://dict.naver.com/search.dict?dicQuery=' + word
+
+  chrome.runtime.sendMessage({
+    method: 'GET',
+    action: 'endic',
+    url: url,
+    }, function(data) {
+      if (!data) {
+        return
+      }
+
+      document.getElementById('content').innerHTML = parseEndic(data)
+  })
+}
 
 onMounted(() => {
   document.getElementById('naverdic-dic').focus()
@@ -13,7 +29,7 @@ onMounted(() => {
 <template>
   <div class="naverdic-word">
     <form
-      @submit.prevent="searchWord($event, word)"
+      @submit.prevent="searchWord(word)"
     >
       <input
         v-model="word"
@@ -24,7 +40,7 @@ onMounted(() => {
       >
       <input
         type="button"
-        @click="searchWord($event, word)"
+        @click="searchWord(word)"
         class="naverdic-search"
         :value="getText('SEARCH')"
       >

@@ -1,5 +1,1 @@
-(async () => {
-  const src = chrome.runtime.getURL('./content.js');
-  const contentScript = await import(src);
-  contentScript.main();
-})();
+(async()=>(await import(chrome.runtime.getURL("./content.js"))).main())();
