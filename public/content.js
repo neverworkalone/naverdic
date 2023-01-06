@@ -81,7 +81,7 @@ function showFrame(e, datain, top, left) {
   div.innerHTML = datain
   div.setAttribute('id', 'popupFrame')
   div.className = 'popupFrame'
-  div.style.cssText = "position:fixed;top:" + top + "px;left:" + left + "px;width:" + popupWidth +"px;height:auto;line-height:normal;display:block;z-index:99997;background-color:" + popupColor + ";padding:5px;font-size: " + popupFontsize + "pt;color:" + popupFontColor + ";box-shadow:0 0 3px 3px #888;"
+  div.style.cssText = "position:absolute;top:" + top + "px;left:" + left + "px;width:" + popupWidth +"px;height:auto;line-height:normal;display:block;z-index:99997;background-color:" + popupColor + ";padding:5px;font-size: " + popupFontsize + "pt;color:" + popupFontColor + ";box-shadow:0 0 3px 3px #888;"
 
   document.body.appendChild(div)
 
@@ -166,6 +166,10 @@ function openPopup(e, naver_client_id, naver_client_secret, type='search') {
 
   if (selection.rangeCount > 0) {
       let text = selection.getRangeAt(0).cloneContents().textContent.trim()
+      if (!text) {
+        return
+      }
+
       let english = /^[A-Za-z]*$/
       if (english.test(text[0]) && text.split(/\s+/).length < 4) {
         searchWord(e, text.toLowerCase(), top, left)
