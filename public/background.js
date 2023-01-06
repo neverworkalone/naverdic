@@ -8,3 +8,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, callback) {
     return true
   }
 })
+
+
+export default function backgroundHMR() {
+}

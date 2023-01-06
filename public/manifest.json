@@ -1,22 +1,41 @@
 {
-  "version": "5.0",
   "manifest_version": 3,
   "name": "__MSG_APP_NAME__",
   "description": "__MSG_APP_DESCRIPTION__",
+  "version": "5.0",
   "default_locale": "ko",
   "icons": {
-    "128": "icon.png",
     "16": "icon.png",
     "32": "icon.png",
-    "48": "icon.png"
+    "48": "icon.png",
+    "128": "icon.png"
   },
   "action": {
     "default_popup": "index.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
+  "content_scripts": [{
+    "matches": [ "<all_urls>" ],
+    "run_at": "document_idle",
+    "all_frames": true,
+    "css": ["content.css"],
+    "js": ["contentWrapper.js"]
+  }],
+  "web_accessible_resources": [
+    {
+      "resources": ["content.js"],
+      "matches": [ "<all_urls>" ]
+    }
+  ],
+  "permissions": [
+    "storage",
+    "scripting"
+  ],
   "host_permissions" : [
-    "https://dict.naver.com/"
+    "https://dict.naver.com/",
+    "http://www.gencode.me/"
   ]
 }

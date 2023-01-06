@@ -1,0 +1,42 @@
+audio.naverdic-audio {
+  width: 100px;
+  height: 20px;
+  margin-left: 5px;
+  opacity: 0.8;
+}
+
+/*audio.naverdic-audio::-webkit-media-controls-panel {
+  background-color: #FFFFDD;
+}*/
+
+audio.naverdic-audio::-webkit-media-controls-timeline-container {
+  display:none !important;
+}
+
+audio.naverdic-audio::-webkit-media-controls-current-time-display {
+  display:none !important;
+}
+
+audio.naverdic-audio::-webkit-media-controls-time-remaining-display {
+  display:none !important;
+}
+
+audio.naverdic-audio::-webkit-media-controls-timeline {
+  display:none !important;
+}
+
+audio.naverdic-audio::-webkit-media-controls-volume-control-container {
+  display:none !important;
+}
+div.naverdic-wordTitle {
+  margin-bottom:5px;
+  padding-left:1px;
+}
+div.naverdic-wordTitle a {
+  text-decoration:none;
+  color: black;
+  font-weight:bold;
+}
+dd.naverdic-means {
+  margin-inline-start: 8px;
+}
