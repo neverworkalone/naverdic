@@ -1,12 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import HMR from './components/HMR.vue'
-import Popup from './components/Popup.vue'
-
-onMounted(() => {
-})
+import LoremIpsum from './components/LoremIpsum.vue'
 </script>
 
 <template>
-  <Popup />
+  <LoremIpsum />
 </template>

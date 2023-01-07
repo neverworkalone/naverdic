@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { parseEndic } from '../../public/content.js'
-import { getText } from '../text.js'
+import { parseEndic } from '/src/content.js'
+import { getText } from '/src/text.js'
 
 const word = ref('')
 

@@ -11,7 +11,7 @@
     "128": "icon.png"
   },
   "action": {
-    "default_popup": "index.html"
+    "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "background.js",
