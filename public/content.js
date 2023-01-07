@@ -4,8 +4,8 @@ const popupWidth = 360
 let noAudios = 0
 let audio = null
 let popupColor = '#FFFFDD'
-let popupFontsize = '11'
 let popupFontColor = 'black'
+let popupFontsize = '11'
 
 
 export function parseEndic(data) {
@@ -86,10 +86,9 @@ function showFrame(e, datain, top, left) {
   document.body.appendChild(div)
 
   const height = document.getElementById('popupFrame').clientHeight
-
   if (height + e.clientY > window.innerHeight) {
     const newtop = top - height - 2 * marginY
-    document.getElementById('popupFrame').style.top = newtop
+    document.getElementById('popupFrame').style.top = newtop + "px"
   }
 
   document.getElementById('popupFrame').onmousedown = function(e) {
@@ -134,7 +133,7 @@ function checkTrigger(e, key) {
   return true
 }
 
-async function searchWord(e, word, top, left) {
+async function consultDic(e, word, top, left) {
   const url = 'https://dict.naver.com/search.dict?dicQuery=' + word
 
   chrome.runtime.sendMessage({
@@ -151,12 +150,11 @@ async function searchWord(e, word, top, left) {
 }
 
 function openPopup(e, naver_client_id, naver_client_secret, type='search') {
-  let top = e.clientY + document.querySelector('html').scrollTop + marginY
-  let left = e.clientX - 180 + document.querySelector('html').scrollLeft
-  let clientY = e.clientY
+  let top = e.clientY + window.scrollY + marginY
+  let left = e.clientX - 120 + window.scrollX
 
-  if (e.clientX - 180 < marginX) {
-    left = marginX + document.querySelector('html').scrollLeft
+  if (e.clientX - 120 < marginX) {
+    left = marginX + window.scrollX
   }
   else if (left + popupWidth > window.width) {
     left = window.width - popupWidth - marginX
@@ -172,10 +170,10 @@ function openPopup(e, naver_client_id, naver_client_secret, type='search') {
 
       let english = /^[A-Za-z]*$/
       if (english.test(text[0]) && text.split(/\s+/).length < 4) {
-        searchWord(e, text.toLowerCase(), top, left)
+        consultDic(e, text.toLowerCase(), top, left)
       }
       else if (type == 'translate') {
-        translateWord(e, text, top, left, naver_client_id, naver_client_secret)
+        translate(e, text, top, left, naver_client_id, naver_client_secret)
       }
   }
 }
