@@ -141,7 +141,10 @@ onMounted(() => {
                   v-model="options.popupBGColor"
                   type="text"
                   class="option-popup-input"
-                ><br>
+                > <a href="https://gencode.me/blogs/post/89/" target="_blank">
+                  {{ getText('POPUP_THEME_GUIDE') }}
+                </a>
+                <br>
                 <input
                   v-model="options.popupFontColor"
                   type="text"
@@ -363,7 +366,7 @@ input.button-reset:hover {
 span.options-status {
   margin-left: 15px;
 }
-a:link {color:#417690; text-decoration:none;}
-a:visited {color:#417690; text-decoration:none;}
-a:hover {color:#be131c; text-decoration:none;}
+a:link {color:#1867c0; text-decoration:none;}
+a:visited {color:#1867c0; text-decoration:none;}
+a:hover {color:#1E88E5; text-decoration:none;}
 </style>

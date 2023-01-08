@@ -20,6 +20,9 @@
   "POPUP_SETTING": {
     "message": "팝업"
   },
+  "POPUP_THEME_GUIDE": {
+    "message": "테마 가이드"
+  },
   "POPUP_BGCOLOR": {
     "message": "팝업 배경색: "
   },

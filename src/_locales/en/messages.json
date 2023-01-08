@@ -20,6 +20,9 @@
   "POPUP_SETTING": {
     "message": "Popup setting"
   },
+  "POPUP_THEME_GUIDE": {
+    "message": "Theme guide"
+  },
   "POPUP_BGCOLOR": {
     "message": "Popup bgcolor: "
   },
