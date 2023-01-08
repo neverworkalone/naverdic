@@ -12,7 +12,8 @@ export const DEFAULT_OPTIONS = {
   POPUP_FONT_SIZE: '11'
 }
 
-const marginX = 10
+const marginLeft = 10
+const marginRight = 30
 const marginY = 20
 const popupWidth = 360
 let noAudios = 0
@@ -163,15 +164,34 @@ async function consultDic(e, word, top, left) {
   })
 }
 
+async function translate(e, text, top, left, id, secret) {
+  const url = 'http://www.gencode.me/api/papago/'
+
+  chrome.runtime.sendMessage({
+    method: 'POST',
+    action: 'papago',
+    data: {
+      source: 'en',
+      target: 'ko',
+      client_id: id,
+      client_secret: secret,
+      text: text
+    },
+    url: url,
+    }, function(data) {
+      showFrame(e, data, top, left);
+  })
+}
+
 function openPopup(e, id, secret, type='search') {
   let top = e.clientY + window.scrollY + marginY
   let left = e.clientX - 120 + window.scrollX
 
-  if (e.clientX - 120 < marginX) {
-    left = marginX + window.scrollX
+  if (e.clientX - 120 < marginLeft) {
+    left = marginLeft + window.scrollX
   }
-  else if (left + popupWidth > window.width) {
-    left = window.width - popupWidth - marginX
+  else if (left + popupWidth + marginRight >= window.innerWidth) {
+    left = window.innerWidth - popupWidth - marginLeft - marginRight
   }
 
   let selection = window.getSelection()
