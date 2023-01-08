@@ -91,6 +91,59 @@ export function parseEndic(data) {
   return html
 }
 
+export function parseEndicAPI(data) {
+  if (!data || !data.searchResultMap)
+    return
+
+  let items = data.searchResultMap.searchResultListMap.WORD.items
+
+  if (items.length > 0) {
+    let html = ''
+
+    for (let i = 0; i < items.length; i++) {
+      const word = items[i].expEntry
+      const means = items[i].meansCollector[0].means
+      const phonetic = items[i].searchPhoneticSymbolList[0]
+      const partOfSpeech = items[i].meansCollector[0].partOfSpeech
+
+      if (audio == null && items[i].searchPhoneticSymbolList.length > 0) {
+        audio = items[i].searchPhoneticSymbolList[0].symbolFile
+      }
+
+      const linkURL = "https://dict.naver.com/search.dict?dicQuery=" + word
+      html += '<div class="naverdic-wordTitle"><a href="' + linkURL + ' " target="_blank">' + word + '</a>'
+
+      if (partOfSpeech) {
+        html += ' [' + partOfSpeech + ']'
+      }
+
+      if (audio && noAudios == 0) {
+        if (phonetic && phonetic.symbolValue) {
+          html += '<span>[' + phonetic.symbolValue + ']</span>'
+        }
+
+        const audioID = 'proaudio' + ++noAudios;
+        const playAudio = '<span><audio class=naverdic-audio controls src="' + audio + '" id="' + audioID + '" controlslist="nodownload nooption"></audio></span>'
+        html += playAudio
+      }
+      html += '</div>'
+
+      for (let j = 0; j < means.length; j++) {
+        let itemStyle = "margin-bottom:2px;"
+        if (j == means.length - 1) {
+          itemStyle = "margin-bottom:5px;"
+        }
+        html += '<div style=' + itemStyle + '>' + means[j].order + '. ' + means[j].value + '</div>'
+      }
+    }
+
+    audio == null
+    noAudios = 0
+
+    return html
+  }
+}
+
 function showFrame(e, datain, top, left) {
   let div = document.createElement('div')
   div.innerHTML = datain
@@ -164,6 +217,22 @@ async function consultDic(e, word, top, left) {
   })
 }
 
+async function endicAPI(e, word, top, left) {
+  const url = 'https://en.dict.naver.com/api3/enko/search?m=mobile&lang=ko&query=' + word
+
+  chrome.runtime.sendMessage({
+    method: 'GET',
+    action: 'endicAPI',
+    url: url,
+    }, function(data) {
+      if (!data) {
+        return
+      }
+
+      showFrame(e, parseEndicAPI(data), top, left)
+  })
+}
+
 async function translate(e, text, top, left, id, secret) {
   const url = 'http://www.gencode.me/api/papago/'
 
@@ -204,7 +273,7 @@ function openPopup(e, id, secret, type='search') {
 
       let english = /^[A-Za-z]*$/
       if (english.test(text[0]) && text.split(/\s+/).length < 4) {
-        consultDic(e, text.toLowerCase(), top, left)
+        endicAPI(e, text.toLowerCase(), top, left)
       }
       else if (type == 'translate') {
         translate(e, text, top, left, id, secret)

@@ -1,0 +1,19 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "referer",
+          "operation": "set",
+          "value": "https://en.dict.naver.com"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "https://en.dict.naver.com/"
+    }
+  }
+]

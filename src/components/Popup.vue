@@ -1,23 +1,23 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { parseEndic } from '/src/content.js'
+import { parseEndicAPI } from '/src/content.js'
 import { getText } from '/src/text.js'
 
 const word = ref('')
 
 async function searchWord(word) {
-  const url = 'https://dict.naver.com/search.dict?dicQuery=' + word
+  const url = 'https://en.dict.naver.com/api3/enko/search?m=mobile&lang=ko&query=' + word
 
   chrome.runtime.sendMessage({
     method: 'GET',
-    action: 'endic',
+    action: 'endicAPI',
     url: url,
     }, function(data) {
       if (!data) {
         return
       }
 
-      document.getElementById('content').innerHTML = parseEndic(data)
+      document.getElementById('content').innerHTML = parseEndicAPI(data)
   })
 }
 

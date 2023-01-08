@@ -34,12 +34,21 @@
       "matches": [ "<all_urls>" ]
     }
   ],
+  "declarative_net_request": {
+    "rule_resources": [{
+      "id": "rule_endic",
+      "enabled": true,
+      "path": "rule_endic.json"
+    }]
+  },
   "permissions": [
     "scripting",
-    "storage"
+    "storage",
+    "declarativeNetRequest"
   ],
   "host_permissions" : [
     "https://dict.naver.com/",
+    "https://en.dict.naver.com/",
     "http://www.gencode.me/"
   ]
 }

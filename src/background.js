@@ -1,5 +1,13 @@
 chrome.runtime.onMessage.addListener(function(request, sender, callback) {
-  if (request.action == "endic") {
+  if (request.action == 'endicAPI') {
+    fetch(request.url, {
+      method: request.method
+    })
+    .then(response => response.json())
+    .then(data => callback(data))
+    return true
+  }
+  else if (request.action == 'endic') {
     fetch(request.url, {
       method: request.method
     })
@@ -7,7 +15,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, callback) {
     .then(data => callback(data))
     return true
   }
-  else if (request.action == "papago") {
+  else if (request.action == 'papago') {
     let formdata = new FormData()
     formdata.append('source', request.data['source'])
     formdata.append('target', request.data['target'])
