@@ -92,13 +92,14 @@ export function parseEndic(data) {
 }
 
 export function parseEndicAPI(data) {
-  if (!data || !data.searchResultMap)
+  if (!data || !data.searchResultMap) {
     return
+  }
 
+  let html = ''
   let items = data.searchResultMap.searchResultListMap.WORD.items
 
   if (items.length > 0) {
-    let html = ''
 
     for (let i = 0; i < items.length; i++) {
       const word = items[i].expEntry
@@ -139,12 +140,15 @@ export function parseEndicAPI(data) {
 
     audio == null
     noAudios = 0
-
-    return html
   }
+  return html
 }
 
 function showFrame(e, datain, top, left) {
+  if (!datain) {
+    return
+  }
+
   let div = document.createElement('div')
   div.innerHTML = datain
   div.setAttribute('id', 'popupFrame')
