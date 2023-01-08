@@ -36,7 +36,6 @@ onMounted(() => {
         type="text"
         id="naverdic-dic"
         class="naverdic-dic"
-        ref="inputRef"
       >
       <input
         type="button"
@@ -84,6 +83,7 @@ input.naverdic-search {
   vertical-align: top;
   border-radius: 4px;
   border-style: none;
+  cursor:pointer;
 }
 input.naverdic-search:hover {
   opacity: 0.87;

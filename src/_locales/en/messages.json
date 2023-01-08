@@ -10,5 +10,106 @@
   },
   "SETTING": {
     "message": "Setting"
+  },
+  "VERSION": {
+    "message": "Version"
+  },
+  "PAPAGO": {
+    "message": "Papago"
+  },
+  "POPUP_SETTING": {
+    "message": "Popup setting"
+  },
+  "POPUP_BGCOLOR": {
+    "message": "Popup bgcolor: "
+  },
+  "POPUP_FONTCOLOR": {
+    "message": "font color: "
+  },
+  "POPUP_FONTSIZE": {
+    "message": "font size(pt): "
+  },
+  "DCLICK_DESC": {
+    "message": "Show popup on double click."
+  },
+  "DRAG_DESC": {
+    "message": "Show popup on dragging."
+  },
+  "PAPAGO_TRANSLATION": {
+    "message": "use Papago translation"
+  },
+  "TRIGGER": {
+    "message": "Trigger key: "
+  },
+  "DCLICK" : {
+    "message": "Double click"
+  },
+  "CTRL_DCLICK": {
+    "message": "$ctrl$ + Double click",
+    "placeholders": {
+      "ctrl": {
+        "content": "$1"
+      }
+    }
+  },
+  "ALT_DCLICK": {
+    "message": "alt + Double click"
+  },
+  "CTRL_ALT_DCLICK": {
+    "message": "$ctrl$ + alt + Double click",
+    "placeholders": {
+      "ctrl": {
+        "content": "$1"
+      }
+    }
+  },
+  "DRAG" : {
+    "message": "Drag"
+  },
+  "CTRL_DRAG": {
+    "message": "$ctrl$ + drag",
+    "placeholders": {
+      "ctrl": {
+        "content": "$1"
+      }
+    }
+  },
+  "ALT_DRAG": {
+    "message": "alt + drag"
+  },
+  "CTRL_ALT_DRAG": {
+    "message": "$ctrl$ + alt + drag",
+    "placeholders": {
+      "ctrl": {
+        "content": "$1"
+      }
+    }
+  },
+  "CLIENT_ID": {
+    "message": "Client ID: "
+  },
+  "CLIENT_SECRET": {
+    "message": "Client Secret: "
+  },
+  "PAPAGO_DESC": {
+    "message": "Please check Papago instruction to use it."
+  },
+  "PAPAGO_INSTRUCTION": {
+    "message": "Papago instruction"
+  },
+  "NAVER_DEV": {
+    "message": "Go to Naver developers"
+  },
+  "SAVE_STATUS": {
+    "message": "Saved. Please reload opened windows."
+  },
+  "RESET_STATUS": {
+    "message": "Options reset."
+  },
+  "SAVE": {
+    "message": "Save"
+  },
+  "RESET": {
+    "message": "Reset"
   }
 }

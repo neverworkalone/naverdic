@@ -1,11 +1,25 @@
+export const DEFAULT_OPTIONS = {
+  DCLICK: true,
+  DCLICK_TRIGGER: 'none',
+  DRAG: true,
+  DRAG_TRIGGER: 'ctrl',
+  TRANSLATE: false,
+  TRANSLATE_TRIGGER: 'ctrlalt',
+  PAPAGO_CLIENT_ID: '',
+  PAPAGO_CLIENT_SECRET: '',
+  POPUP_BG_COLOR: '#FFFFDD',
+  POPUP_FONT_COLOR: '#000000',
+  POPUP_FONT_SIZE: '11'
+}
+
 const marginX = 10
 const marginY = 20
 const popupWidth = 360
 let noAudios = 0
 let audio = null
-let popupColor = '#FFFFDD'
-let popupFontColor = 'black'
-let popupFontsize = '11'
+let popupColor = DEFAULT_OPTIONS.POPUP_BG_COLOR
+let popupFontColor = DEFAULT_OPTIONS.POPUP_FONT_COLOR
+let popupFontsize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
 
 
 export function parseEndic(data) {
@@ -149,7 +163,7 @@ async function consultDic(e, word, top, left) {
   })
 }
 
-function openPopup(e, naver_client_id, naver_client_secret, type='search') {
+function openPopup(e, id, secret, type='search') {
   let top = e.clientY + window.scrollY + marginY
   let left = e.clientX - 120 + window.scrollX
 
@@ -173,24 +187,24 @@ function openPopup(e, naver_client_id, naver_client_secret, type='search') {
         consultDic(e, text.toLowerCase(), top, left)
       }
       else if (type == 'translate') {
-        translate(e, text, top, left, naver_client_id, naver_client_secret)
+        translate(e, text, top, left, id, secret)
       }
   }
 }
 
-function registerEventListener() {
+function registerEventListener(defaultOptions) {
   chrome.storage.sync.get({
-    dclick: true,
-    dclick_trigger_key: 'none',
-    drag: true,
-    drag_trigger_key: 'ctrl',
-    translate: false,
-    translate_trigger_key: 'ctrlalt',
-    naver_client_id: '',
-    naver_client_secret: '',
-    popup_bgcolor: '#FFFFDD',
-    popup_color: 'black',
-    popup_fontsize: '11'
+    dclick: DEFAULT_OPTIONS.DCLICK,
+    dclick_trigger_key: DEFAULT_OPTIONS.DCLICK_TRIGGER,
+    drag: DEFAULT_OPTIONS.DRAG,
+    drag_trigger_key: DEFAULT_OPTIONS.DRAG_TRIGGER,
+    translate: DEFAULT_OPTIONS.TRANSLATE,
+    translate_trigger_key: DEFAULT_OPTIONS.TRANSLATE_TRIGGER,
+    naver_client_id: DEFAULT_OPTIONS.PAPAGO_CLIENT_ID,
+    naver_client_secret: DEFAULT_OPTIONS.PAPAGO_CLIENT_SECRET,
+    popup_bgcolor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
+    popup_fontcolor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
+    popup_fontsize: DEFAULT_OPTIONS.POPUP_FONT_SIZE
   }, function(items) {
     if (!items.dclick && !items.drag && !items.translate) {
       return
@@ -206,8 +220,8 @@ function registerEventListener() {
     if (items.popup_bgcolor) {
       popupColor = items.popup_bgcolor
     }
-    if (items.popup_color) {
-      popupFontColor = items.popup_color
+    if (items.popup_fontcolor) {
+      popupFontColor = items.popup_fontcolor
     }
     if (items.popup_fontsize) {
       popupFontsize = items.popup_fontsize
@@ -242,7 +256,7 @@ function registerEventListener() {
       }
       else if (!mousemove && items.dclick && checkTrigger(e, items.dclick_trigger_key)) {
         mousedown = false
-        clicks++
+        ++clicks
 
         if (clicks == 1) {
           timeout = setTimeout(function () {

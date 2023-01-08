@@ -10,6 +10,10 @@
     "48": "icon.png",
     "128": "icon.png"
   },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
   "action": {
     "default_popup": "popup.html"
   },
@@ -31,8 +35,8 @@
     }
   ],
   "permissions": [
-    "storage",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "host_permissions" : [
     "https://dict.naver.com/",

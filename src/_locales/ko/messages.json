@@ -10,5 +10,106 @@
   },
   "SETTING": {
     "message": "설정"
+  },
+  "VERSION": {
+    "message": "버전"
+  },
+  "PAPAGO": {
+    "message": "파파고 번역"
+  },
+  "POPUP_SETTING": {
+    "message": "팝업"
+  },
+  "POPUP_BGCOLOR": {
+    "message": "팝업 배경색: "
+  },
+  "POPUP_FONTCOLOR": {
+    "message": "팝업 글자색: "
+  },
+  "POPUP_FONTSIZE": {
+    "message": "글자 크기(pt): "
+  },
+  "DCLICK_DESC": {
+    "message": "단어를 더블 클릭했을 때 팝업을 보여줍니다."
+  },
+  "DRAG_DESC": {
+    "message": "드래그하여 단어나 숙어를 선택했을 때 팝업을 보여줍니다."
+  },
+  "PAPAGO_TRANSLATION": {
+    "message": "파파고 번역 기능 사용"
+  },
+  "TRIGGER": {
+    "message": "트리거 키: "
+  },
+  "DCLICK" : {
+    "message": "더블 클릭"
+  },
+  "CTRL_DCLICK": {
+    "message": "$ctrl$ + 더블 클릭",
+    "placeholders": {
+      "ctrl": {
+        "content": "$1"
+      }
+    }
+  },
+  "ALT_DCLICK": {
+    "message": "alt + 더블 클릭"
+  },
+  "CTRL_ALT_DCLICK": {
+    "message": "$ctrl$ + alt + 더블 클릭",
+    "placeholders": {
+      "ctrl": {
+        "content": "$1"
+      }
+    }
+  },
+  "DRAG" : {
+    "message": "드래그"
+  },
+  "CTRL_DRAG": {
+    "message": "$ctrl$ + 드래그",
+    "placeholders": {
+      "ctrl": {
+        "content": "$1"
+      }
+    }
+  },
+  "ALT_DRAG": {
+    "message": "alt + 드래그"
+  },
+  "CTRL_ALT_DRAG": {
+    "message": "$ctrl$ + alt + 드래그",
+    "placeholders": {
+      "ctrl": {
+        "content": "$1"
+      }
+    }
+  },
+  "CLIENT_ID": {
+    "message": "Client ID: "
+  },
+  "CLIENT_SECRET": {
+    "message": "Client Secret: "
+  },
+  "PAPAGO_DESC": {
+    "message": "파파고 번역 기능을 이용하려면 파파고 사용법 보기를 참고하세요."
+  },
+  "PAPAGO_INSTRUCTION": {
+    "message": "파파고 사용법 보기"
+  },
+  "NAVER_DEV": {
+    "message": "NAVER Developers 가기"
+  },
+  "SAVE_STATUS": {
+    "message": "저장했습니다. 열려있는 창은 새로 고침 후 반영됩니다."
+  },
+  "RESET_STATUS": {
+    "message": "초기화 되었습니다."
+  },
+  "SAVE": {
+    "message": "저장"
+  },
+  "RESET": {
+    "message": "초기화"
   }
 }

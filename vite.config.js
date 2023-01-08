@@ -9,6 +9,7 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, 'index.html'),
         popup: resolve(__dirname, 'popup.html'),
+        options: resolve(__dirname, 'options.html'),
       }
     }
   },
