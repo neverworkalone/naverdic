@@ -100,9 +100,8 @@ export function parseEndicAPI(data) {
   let items = data.searchResultMap.searchResultListMap.WORD.items
 
   if (items.length > 0) {
-
     for (let i = 0; i < items.length; i++) {
-      const word = items[i].expEntry
+      const word = items[i].handleEntry
       const means = items[i].meansCollector[0].means
       const phonetic = items[i].searchPhoneticSymbolList[0]
       const partOfSpeech = items[i].meansCollector[0].partOfSpeech
