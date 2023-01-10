@@ -7,7 +7,7 @@ export const DEFAULT_OPTIONS = {
   TRANSLATE_TRIGGER: 'ctrlalt',
   PAPAGO_CLIENT_ID: '',
   PAPAGO_CLIENT_SECRET: '',
-  POPUP_BG_COLOR: '#FFFFDD',
+  POPUP_BG_COLOR: '#FFF59D',
   POPUP_FONT_COLOR: '#000000',
   POPUP_FONT_SIZE: '11'
 }
@@ -157,7 +157,7 @@ function showFrame(e, datain, top, left) {
   document.body.appendChild(div)
 
   const height = document.getElementById('popupFrame').clientHeight
-  if (height + e.clientY > window.innerHeight) {
+  if ((e.clientY > height) && (e.clientY + height > window.innerHeight)) {
     const newtop = top - height - 2 * marginY
     document.getElementById('popupFrame').style.top = newtop + "px"
   }
