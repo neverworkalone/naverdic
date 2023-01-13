@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { parseEndicAPI } from '/src/content.js'
+import { parseEndic } from '/src/content.js'
 import { getText } from '/src/text.js'
 
 const word = ref('')
@@ -10,14 +10,14 @@ async function searchWord(word) {
 
   chrome.runtime.sendMessage({
     method: 'GET',
-    action: 'endicAPI',
+    action: 'endic',
     url: url,
     }, function(data) {
       if (!data) {
         return
       }
 
-      document.getElementById('content').innerHTML = parseEndicAPI(data)
+      document.getElementById('content').innerHTML = parseEndic(data)
   })
 }
 
