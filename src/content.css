@@ -24,21 +24,37 @@ audio.naverdic-audio::-webkit-media-controls-timeline {
 audio.naverdic-audio::-webkit-media-controls-volume-control-container {
   display:none !important;
 }
+
+div.popupFrame {
+  position:absolute;
+  display: block;
+  height: auto;
+  line-height: normal;
+  padding: 5px;
+  box-shadow: 0 0 3px 3px #888;
+  z-index: 99997;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
 div.naverdic-wordTitle {
   margin-bottom:5px;
   padding-left:1px;
 }
+
 div.naverdic-wordTitle a {
   text-decoration:none;
   color: black;
   font-weight:bold;
 }
+
 div.naverdic-wordMeans {
   margin-bottom: 2px;
 }
+
 div.naverdic-wordMeans-last {
   margin-bottom: 5px;
 }
+
 dd.naverdic-means {
   margin-inline-start: 8px;
 }

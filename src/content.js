@@ -88,7 +88,7 @@ function showFrame(e, datain, top, left) {
   div.innerHTML = datain
   div.setAttribute('id', 'popupFrame')
   div.className = 'popupFrame'
-  div.style.cssText = "position:absolute;top:" + top + "px;left:" + left + "px;width:" + popupWidth +"px;height:auto;line-height:normal;display:block;z-index:99997;background-color:" + popupColor + ";padding:5px;font-size: " + popupFontsize + "pt;color:" + popupFontColor + ";box-shadow:0 0 3px 3px #888;"
+  div.style.cssText = "top:" + top + "px;left:" + left + "px;width:" + popupWidth +"px;background-color:" + popupColor + ";font-size: " + popupFontsize + "pt;color:" + popupFontColor + ";"
 
   document.body.appendChild(div)
 
