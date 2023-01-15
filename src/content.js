@@ -34,21 +34,25 @@ export function parseEndic(data) {
   if (items.length > 0) {
     for (let i = 0; i < items.length; i++) {
       const word = items[i].handleEntry
-      const means = items[i].meansCollector[0].means
-      const phonetic = items[i].searchPhoneticSymbolList[0]
-      const partOfSpeech = items[i].meansCollector[0].partOfSpeech
 
-      if (audio == null && items[i].searchPhoneticSymbolList.length > 0) {
-        audio = items[i].searchPhoneticSymbolList[0].symbolFile
+      if (audio == null) {
+        for (let j = 0; j < items[i].searchPhoneticSymbolList.length; j++) {
+          if (items[i].searchPhoneticSymbolList[0].symbolFile) {
+            audio = items[i].searchPhoneticSymbolList[0].symbolFile
+            break
+          }
+        }
       }
 
       const linkURL = "https://dict.naver.com/search.dict?dicQuery=" + word
       html += '<div class="naverdic-wordTitle"><a href="' + linkURL + ' " target="_blank">' + word + '</a>'
 
+      const partOfSpeech = items[i].meansCollector[0].partOfSpeech
       if (partOfSpeech) {
         html += ' [' + partOfSpeech + ']'
       }
 
+      const phonetic = items[i].searchPhoneticSymbolList[0]
       if (audio && noAudios == 0) {
         if (phonetic && phonetic.symbolValue) {
           html += '<span>[' + phonetic.symbolValue + ']</span>'
@@ -60,12 +64,14 @@ export function parseEndic(data) {
       }
       html += '</div>'
 
+      const means = items[i].meansCollector[0].means
       for (let j = 0; j < means.length; j++) {
-        let itemStyle = "margin-bottom:2px;"
+        let meansClass = 'naverdic-wordMeans'
         if (j == means.length - 1) {
-          itemStyle = "margin-bottom:5px;"
+          meansClass = 'naverdic-wordMeans-last'
         }
-        html += '<div style=' + itemStyle + '>' + means[j].order + '. ' + means[j].value + '</div>'
+
+        html += '<div class=' + meansClass + '>' + means[j].order + '. ' + means[j].value + '</div>'
       }
     }
   }

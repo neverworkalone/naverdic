@@ -5,10 +5,6 @@ audio.naverdic-audio {
   opacity: 0.8;
 }
 
-/*audio.naverdic-audio::-webkit-media-controls-panel {
-  background-color: #FFF59D;
-}*/
-
 audio.naverdic-audio::-webkit-media-controls-timeline-container {
   display:none !important;
 }
@@ -36,6 +32,12 @@ div.naverdic-wordTitle a {
   text-decoration:none;
   color: black;
   font-weight:bold;
+}
+div.naverdic-wordMeans {
+  margin-bottom: 2px;
+}
+div.naverdic-wordMeans-last {
+  margin-bottom: 5px;
 }
 dd.naverdic-means {
   margin-inline-start: 8px;
