@@ -143,6 +143,8 @@ function checkTrigger(e, key) {
 async function consultDic(e, word, top, left) {
   const url = 'https://en.dict.naver.com/api3/enko/search?m=mobile&lang=ko&query=' + word
 
+  console.log(word)
+
   chrome.runtime.sendMessage({
     method: 'GET',
     action: 'endic',
@@ -175,7 +177,7 @@ async function translate(e, text, top, left, id, secret) {
   })
 }
 
-function openPopup(e, id, secret, type='search') {
+function openPopup(e, id=null, secret=null, type='search') {
   let top = e.clientY + window.scrollY + marginY
   let left = e.clientX - 120 + window.scrollX
 
@@ -194,12 +196,14 @@ function openPopup(e, id, secret, type='search') {
         return
       }
 
-      let english = /^[A-Za-z]*$/
-      if (english.test(text[0]) && text.split(/\s+/).length < 4) {
-        consultDic(e, text.toLowerCase(), top, left)
-      }
-      else if (type == 'translate') {
+      if (type == 'translate') {
         translate(e, text, top, left, id, secret)
+      }
+      else {
+        let english = /^[A-Za-z]*$/
+        if (english.test(text[0]) && text.split(/\s+/).length < 6) {
+          consultDic(e, text.toLowerCase(), top, left)
+        }
       }
   }
 }
@@ -257,7 +261,7 @@ function registerEventListener(defaultOptions) {
         if (document.getElementById('popupFrame')) {
           document.getElementById('popupFrame').remove()
         }
-        openPopup(e, items.naver_client_id, items.naver_client_secret)
+        openPopup(e)
       }
       else if (mousemove && items.translate && checkTrigger(e, items.translate_trigger_key)) {
         mousedown = mousemove = false
@@ -276,13 +280,13 @@ function registerEventListener(defaultOptions) {
               document.getElementById('popupFrame').remove()
             }
             clicks = 0
-          }, 400)
+          }, 200)
         } else {
           if (document.getElementById('popupFrame')) {
             document.getElementById('popupFrame').remove()
           }
           clearTimeout(timeout)
-          openPopup(e, items.naver_client_id, items.naver_client_secret)
+          openPopup(e)
           clicks = 0
         }
       }
