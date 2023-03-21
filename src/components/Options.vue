@@ -6,6 +6,7 @@ import { DEFAULT_OPTIONS } from '/src/content.js'
 const options = reactive({
   dClick: DEFAULT_OPTIONS.DCLICK,
   dClickTrigger: DEFAULT_OPTIONS.DCLICK_TRIGGER,
+  dClickSpeed: DEFAULT_OPTIONS.DCLICK_SPEED,
   drag: DEFAULT_OPTIONS.DRAG,
   dragTrigger: DEFAULT_OPTIONS.DRAG_TRIGGER,
   translate: DEFAULT_OPTIONS.TRANSLATE,
@@ -26,6 +27,7 @@ function saveOptions() {
   chrome.storage.sync.set({
     dclick: options.dClick,
     dclick_trigger_key: options.dClickTrigger,
+    dclick_speed: options.dClickSpeed,
     drag: options.drag,
     drag_trigger_key: options.dragTrigger,
     translate: options.translate,
@@ -47,6 +49,7 @@ function loadOptions() {
   chrome.storage.sync.get({
     dclick: DEFAULT_OPTIONS.DCLICK,
     dclick_trigger_key: DEFAULT_OPTIONS.DCLICK_TRIGGER,
+    dclick_speed: DEFAULT_OPTIONS.DCLICK_SPEED,
     drag: DEFAULT_OPTIONS.DRAG,
     drag_trigger_key: DEFAULT_OPTIONS.DRAG_TRIGGER,
     translate: DEFAULT_OPTIONS.TRANSLATE,
@@ -59,6 +62,7 @@ function loadOptions() {
   }, function(items) {
     options.dClick = items.dclick
     options.dClickTrigger = items.dclick_trigger_key
+    options.dClickSpeed = items.dclick_speed
     options.drag = items.drag
     options.dragTrigger = items.drag_trigger_key
     options.translate = items.translate
@@ -74,6 +78,7 @@ function loadOptions() {
 function resetOptions() {
   options.dClick = DEFAULT_OPTIONS.DCLICK
   options.dClickTrigger = DEFAULT_OPTIONS.DCLICK_TRIGGER
+  options.dClickSpeed = DEFAULT_OPTIONS.DCLICK_SPEED
   options.drag = DEFAULT_OPTIONS.DRAG
   options.dragTrigger = DEFAULT_OPTIONS.DRAG_TRIGGER
   options.translate = DEFAULT_OPTIONS.TRANSLATE
@@ -87,6 +92,7 @@ function resetOptions() {
   chrome.storage.sync.set({
     dclick: options.dClick,
     dclick_trigger_key: options.dClickTrigger,
+    dclick_speed: options.dClickSpeed,
     drag: options.drag,
     drag_trigger_key: options.dragTrigger,
     translate: options.translate,
@@ -174,6 +180,18 @@ onMounted(() => {
               <option value="ctrl">{{ getText('CTRL_DCLICK', [ctrl]) }}</option>
               <option value="alt">{{ getText('ALT_DCLICK') }}</option>
               <option value="ctrlalt">{{ getText('CTRL_ALT_DCLICK', [ctrl]) }}</option>
+            </select>
+          </span>
+          <br>
+          <span class="options-description">
+            {{ getText('DCLICK_SPEED') }}
+            <select
+              v-model="options.dClickSpeed"
+            >
+              <option value="200">{{ getText('DCLICK_SPEED_FASTEST') }}</option>
+              <option value="300">{{ getText('DCLICK_SPEED_FAST') }}</option>
+              <option value="400">{{ getText('DCLICK_SPEED_SLOW') }}</option>
+              <option value="500">{{ getText('DCLICK_SPEED_SLOWEST') }}</option>
             </select>
           </span>
 

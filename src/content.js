@@ -1,6 +1,7 @@
 export const DEFAULT_OPTIONS = {
   DCLICK: true,
   DCLICK_TRIGGER: 'none',
+  DCLICK_SPEED: 400,
   DRAG: true,
   DRAG_TRIGGER: 'ctrl',
   TRANSLATE: false,
@@ -19,6 +20,7 @@ const popupWidth = 360
 let popupColor = DEFAULT_OPTIONS.POPUP_BG_COLOR
 let popupFontColor = DEFAULT_OPTIONS.POPUP_FONT_COLOR
 let popupFontsize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
+let dClickSpeed = DEFAULT_OPTIONS.DCLICK_SPEED
 
 
 export function parseEndic(data) {
@@ -143,8 +145,6 @@ function checkTrigger(e, key) {
 async function consultDic(e, word, top, left) {
   const url = 'https://en.dict.naver.com/api3/enko/search?m=mobile&lang=ko&query=' + word
 
-  console.log(word)
-
   chrome.runtime.sendMessage({
     method: 'GET',
     action: 'endic',
@@ -212,6 +212,7 @@ function registerEventListener(defaultOptions) {
   chrome.storage.sync.get({
     dclick: DEFAULT_OPTIONS.DCLICK,
     dclick_trigger_key: DEFAULT_OPTIONS.DCLICK_TRIGGER,
+    dclick_speed: DEFAULT_OPTIONS.DCLICK_SPEED,
     drag: DEFAULT_OPTIONS.DRAG,
     drag_trigger_key: DEFAULT_OPTIONS.DRAG_TRIGGER,
     translate: DEFAULT_OPTIONS.TRANSLATE,
@@ -241,6 +242,9 @@ function registerEventListener(defaultOptions) {
     }
     if (items.popup_fontsize) {
       popupFontsize = items.popup_fontsize
+    }
+    if (items.dclick_speed) {
+      dClickSpeed = items.dclick_speed
     }
 
     document.body.onmousedown = function(e) {
@@ -275,12 +279,12 @@ function registerEventListener(defaultOptions) {
         ++clicks
 
         if (clicks == 1) {
+          if (document.getElementById('popupFrame')) {
+            document.getElementById('popupFrame').remove()
+          }
           timeout = setTimeout(function () {
-            if (document.getElementById('popupFrame')) {
-              document.getElementById('popupFrame').remove()
-            }
             clicks = 0
-          }, 200)
+          }, dClickSpeed)
         } else {
           if (document.getElementById('popupFrame')) {
             document.getElementById('popupFrame').remove()

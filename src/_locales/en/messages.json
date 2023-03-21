@@ -66,6 +66,21 @@
       }
     }
   },
+  "DCLICK_SPEED": {
+    "message": "Double click speed: "
+  },
+  "DCLICK_SPEED_FASTEST": {
+    "message": "Faster"
+  },
+  "DCLICK_SPEED_FAST": {
+    "message": "Fast"
+  },
+  "DCLICK_SPEED_SLOW": {
+    "message": "Slow"
+  },
+  "DCLICK_SPEED_SLOWEST": {
+    "message": "Slower"
+  },
   "DRAG" : {
     "message": "Drag"
   },

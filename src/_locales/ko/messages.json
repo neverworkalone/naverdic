@@ -66,6 +66,21 @@
       }
     }
   },
+  "DCLICK_SPEED": {
+    "message": "더블 클릭 스피드: "
+  },
+  "DCLICK_SPEED_FASTEST": {
+    "message": "더 빠르게"
+  },
+  "DCLICK_SPEED_FAST": {
+    "message": "빠르게"
+  },
+  "DCLICK_SPEED_SLOW": {
+    "message": "느리게"
+  },
+  "DCLICK_SPEED_SLOWEST": {
+    "message": "더 느리게"
+  },
   "DRAG" : {
     "message": "드래그"
   },
