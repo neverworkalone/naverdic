@@ -6,27 +6,27 @@ audio.naverdic-audio {
 }
 
 audio.naverdic-audio::-webkit-media-controls-timeline-container {
-  display:none !important;
+  display: none !important;
 }
 
 audio.naverdic-audio::-webkit-media-controls-current-time-display {
-  display:none !important;
+  display: none !important;
 }
 
 audio.naverdic-audio::-webkit-media-controls-time-remaining-display {
-  display:none !important;
+  display: none !important;
 }
 
 audio.naverdic-audio::-webkit-media-controls-timeline {
-  display:none !important;
+  display: none !important;
 }
 
 audio.naverdic-audio::-webkit-media-controls-volume-control-container {
-  display:none !important;
+  display: none !important;
 }
 
 div.popupFrame {
-  position:absolute;
+  position: absolute;
   display: block;
   height: auto;
   line-height: normal;
@@ -37,14 +37,14 @@ div.popupFrame {
 }
 
 div.naverdic-wordTitle {
-  margin-bottom:5px;
-  padding-left:1px;
+  margin-bottom: 5px;
+  padding-left: 1px;
 }
 
 div.naverdic-wordTitle a {
-  text-decoration:none;
+  text-decoration: none;
   color: black;
-  font-weight:bold;
+  font-weight: bold;
 }
 
 div.naverdic-wordMeans {

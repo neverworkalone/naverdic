@@ -86,13 +86,25 @@ function showFrame(e, datain, top, left) {
     return
   }
 
+  let shadowRoot = document.createElement('div')
+  shadowRoot.setAttribute('id', 'popupFrame')
+
+  let shadow = shadowRoot.attachShadow({mode: 'open'});
+  fetch(chrome.runtime.getURL("content.css"), {
+    method: 'GET'
+  })
+  .then(resp => resp.text())
+  .then(css => {
+    shadow.innerHTML += `<style>${css}</style>`
+  })
+
   let div = document.createElement('div')
   div.innerHTML = datain
-  div.setAttribute('id', 'popupFrame')
   div.className = 'popupFrame'
   div.style.cssText = "top:" + top + "px;left:" + left + "px;width:" + popupWidth +"px;background-color:" + popupColor + ";font-size: " + popupFontsize + "pt;color:" + popupFontColor + ";"
 
-  document.body.appendChild(div)
+  shadow.appendChild(div)
+  document.body.appendChild(shadowRoot)
 
   const height = document.getElementById('popupFrame').clientHeight
   if ((e.clientY > height) && (e.clientY + height > window.innerHeight)) {

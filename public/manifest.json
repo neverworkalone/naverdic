@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "__MSG_APP_NAME__",
   "description": "__MSG_APP_DESCRIPTION__",
-  "version": "5.5",
+  "version": "5.6",
   "default_locale": "ko",
   "icons": {
     "16": "icon.png",
@@ -30,7 +30,7 @@
   }],
   "web_accessible_resources": [
     {
-      "resources": ["content.js"],
+      "resources": ["content.js", "content.css"],
       "matches": [ "<all_urls>" ]
     }
   ],
