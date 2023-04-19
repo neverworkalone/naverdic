@@ -100,16 +100,17 @@ function showFrame(e, datain, top, left) {
 
   let div = document.createElement('div')
   div.innerHTML = datain
+  div.setAttribute('id', 'popupShadow')
   div.className = 'popupFrame'
   div.style.cssText = "top:" + top + "px;left:" + left + "px;width:" + popupWidth +"px;background-color:" + popupColor + ";font-size: " + popupFontsize + "pt;color:" + popupFontColor + ";"
 
   shadow.appendChild(div)
   document.body.appendChild(shadowRoot)
 
-  const height = document.getElementById('popupFrame').clientHeight
+  const height = div.clientHeight
   if ((e.clientY > height) && (e.clientY + height > window.innerHeight)) {
-    const newtop = top - height - 2 * marginY
-    document.getElementById('popupFrame').style.top = newtop + "px"
+    const newtop = top - height - 2.5 * marginY
+    shadow.getElementById('popupShadow').style.top = newtop + "px"
   }
 
   document.getElementById('popupFrame').onmousedown = function(e) {
