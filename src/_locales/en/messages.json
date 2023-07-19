@@ -103,6 +103,12 @@
       }
     }
   },
+  "URL_SETTING": {
+    "message": "Deny list"
+  },
+  "URL_DESC": {
+    "message": "Comma serparated URLs for deny list. i.e) google.com,naver.com"
+  },
   "CLIENT_ID": {
     "message": "Client ID: "
   },

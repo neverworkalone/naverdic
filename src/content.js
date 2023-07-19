@@ -10,7 +10,8 @@ export const DEFAULT_OPTIONS = {
   PAPAGO_CLIENT_SECRET: '',
   POPUP_BG_COLOR: '#FFF59D',
   POPUP_FONT_COLOR: '#000000',
-  POPUP_FONT_SIZE: '11'
+  POPUP_FONT_SIZE: '11',
+  SAFE_URLS: []
 }
 
 const marginLeft = 10
@@ -234,9 +235,16 @@ function registerEventListener(defaultOptions) {
     naver_client_secret: DEFAULT_OPTIONS.PAPAGO_CLIENT_SECRET,
     popup_bgcolor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
     popup_fontcolor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
-    popup_fontsize: DEFAULT_OPTIONS.POPUP_FONT_SIZE
+    popup_fontsize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
+    safe_urls: DEFAULT_OPTIONS.SAFE_URLS,
   }, function(items) {
     if (!items.dclick && !items.drag && !items.translate) {
+      return
+    }
+
+    const host = window.location.host;
+    const urls = items.safe_urls.split(',')
+    if (urls && urls[0].length > 3 && urls.some(v=>host.includes(v))) {
       return
     }
 

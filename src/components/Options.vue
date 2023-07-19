@@ -15,7 +15,8 @@ const options = reactive({
   papagoClientSecret: DEFAULT_OPTIONS.PAPAGO_CLIENT_SECRET,
   popupBGColor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
   popupFontColor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
-  popupFontSize: DEFAULT_OPTIONS.POPUP_FONT_SIZE
+  popupFontSize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
+  safeURLs: DEFAULT_OPTIONS.SAFE_URLS,
 })
 let statusText = ref('')
 
@@ -36,7 +37,8 @@ function saveOptions() {
     naver_client_secret: options.papagoClientSecret,
     popup_bgcolor: options.popupBGColor,
     popup_fontcolor: options.popupFontColor,
-    popup_fontsize: options.popupFontSize
+    popup_fontsize: options.popupFontSize,
+    safe_urls: options.safeURLs.replace(/\s/g, '')
   }, function() {
     statusText.value = getText('SAVE_STATUS');
     setTimeout(function() {
@@ -58,7 +60,8 @@ function loadOptions() {
     naver_client_secret: DEFAULT_OPTIONS.PAPAGO_CLIENT_SECRET,
     popup_bgcolor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
     popup_fontcolor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
-    popup_fontsize: DEFAULT_OPTIONS.POPUP_FONT_SIZE
+    popup_fontsize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
+    safe_urls: DEFAULT_OPTIONS.SAFE_URLS
   }, function(items) {
     options.dClick = items.dclick
     options.dClickTrigger = items.dclick_trigger_key
@@ -72,6 +75,7 @@ function loadOptions() {
     options.popupBGColor = items.popup_bgcolor
     options.popupFontColor = items.popup_fontcolor
     options.popupFontSize = items.popup_fontsize
+    options.safeURLs = items.safe_urls
   })
 }
 
@@ -88,6 +92,7 @@ function resetOptions() {
   options.popupBGColor = DEFAULT_OPTIONS.POPUP_BG_COLOR
   options.popupFontColor = DEFAULT_OPTIONS.POPUP_FONT_COLOR
   options.popupFontSize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
+  options.safeURLs = DEFAULT_OPTIONS.SAFE_URLS
 
   chrome.storage.sync.set({
     dclick: options.dClick,
@@ -101,7 +106,8 @@ function resetOptions() {
     naver_client_secret: options.papagoClientSecret,
     popup_bgcolor: options.popupBGColor,
     popup_fontcolor: options.popupFontColor,
-    popup_fontsize: options.popupFontSize
+    popup_fontsize: options.popupFontSize,
+    safe_urls: options.safeURLs
   }, function() {
     statusText.value = getText('RESET_STATUS');
     setTimeout(function() {
@@ -214,6 +220,20 @@ onMounted(() => {
               <option value="ctrlalt">{{ getText('CTRL_ALT_DRAG', [ctrl]) }}</option>
             </select>
           </span>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="title">
+          {{ getText('URL_SETTING') }}
+        </td>
+        <td align="left">
+          <textarea
+            class="options-url"
+            v-model="options.safeURLs"
+            :placeholder="getText('URL_DESC')"
+            rows=3
+          ></textarea>
         </td>
       </tr>
 
@@ -383,6 +403,10 @@ input.button-reset:hover {
 }
 span.options-status {
   margin-left: 15px;
+}
+textarea.options-url {
+  width: 90%;
+  padding: 5px;
 }
 a:link {color:#1867c0; text-decoration:none;}
 a:visited {color:#1867c0; text-decoration:none;}

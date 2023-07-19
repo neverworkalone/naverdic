@@ -103,6 +103,12 @@
       }
     }
   },
+  "URL_SETTING": {
+    "message": "중지 목록"
+  },
+  "URL_DESC": {
+    "message": "팝업 사전 사용을 중지할 웹사이트를 콤마(,)로 구분해서 넣으세요. 도메인만 넣으면 됩니다. 예) google.com,naver.com"
+  },
   "CLIENT_ID": {
     "message": "Client ID: "
   },
