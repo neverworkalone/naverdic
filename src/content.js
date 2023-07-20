@@ -12,7 +12,7 @@ export const DEFAULT_OPTIONS = {
   POPUP_FONT_COLOR: '#000000',
   POPUP_FONT_SIZE: '11',
   USE_DENY_LIST: false,
-  SAFE_URLS: []
+  SAFE_URLS: null
 }
 
 const marginLeft = 10
@@ -245,10 +245,12 @@ function registerEventListener(defaultOptions) {
     }
 
     if (items.use_deny_list) {
-      const host = window.location.host;
-      const urls = items.safe_urls.split(',')
-      if (urls && urls[0].length > 3 && urls.some(v=>host.includes(v))) {
-        return
+      if (items.safe_urls) {
+        const host = window.location.host;
+        const urls = items.safe_urls.split(',')
+        if (urls && urls[0].length > 3 && urls.some(v=>host.includes(v))) {
+          return
+        }
       }
     }
 

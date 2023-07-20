@@ -26,6 +26,10 @@ const ctrl = ((navigator.platform.includes('Mac')) ? 'cmd' : 'ctrl')
 
 
 function saveOptions() {
+  if (options.useDenyList && options.safeURLs) {
+    options.safeURLs = options.safeURLs.replace(/\s/g, '')
+  }
+
   chrome.storage.sync.set({
     dclick: options.dClick,
     dclick_trigger_key: options.dClickTrigger,
@@ -40,7 +44,7 @@ function saveOptions() {
     popup_fontcolor: options.popupFontColor,
     popup_fontsize: options.popupFontSize,
     use_deny_list: options.useDenyList,
-    safe_urls: options.safeURLs.replace(/\s/g, '')
+    safe_urls: options.safeURLs
   }, function() {
     statusText.value = getText('SAVE_STATUS');
     setTimeout(function() {
