@@ -16,7 +16,8 @@ const options = reactive({
   popupBGColor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
   popupFontColor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
   popupFontSize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
-  safeURLs: DEFAULT_OPTIONS.SAFE_URLS,
+  useDenyList: DEFAULT_OPTIONS.USE_DENY_LIST,
+  safeURLs: DEFAULT_OPTIONS.SAFE_URLS
 })
 let statusText = ref('')
 
@@ -38,6 +39,7 @@ function saveOptions() {
     popup_bgcolor: options.popupBGColor,
     popup_fontcolor: options.popupFontColor,
     popup_fontsize: options.popupFontSize,
+    use_deny_list: options.useDenyList,
     safe_urls: options.safeURLs.replace(/\s/g, '')
   }, function() {
     statusText.value = getText('SAVE_STATUS');
@@ -61,6 +63,7 @@ function loadOptions() {
     popup_bgcolor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
     popup_fontcolor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
     popup_fontsize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
+    use_deny_list: DEFAULT_OPTIONS.USE_DENY_LIST,
     safe_urls: DEFAULT_OPTIONS.SAFE_URLS
   }, function(items) {
     options.dClick = items.dclick
@@ -75,6 +78,7 @@ function loadOptions() {
     options.popupBGColor = items.popup_bgcolor
     options.popupFontColor = items.popup_fontcolor
     options.popupFontSize = items.popup_fontsize
+    options.useDenyList = items.use_deny_list
     options.safeURLs = items.safe_urls
   })
 }
@@ -92,6 +96,7 @@ function resetOptions() {
   options.popupBGColor = DEFAULT_OPTIONS.POPUP_BG_COLOR
   options.popupFontColor = DEFAULT_OPTIONS.POPUP_FONT_COLOR
   options.popupFontSize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
+  options.useDenyList = DEFAULT_OPTIONS.USE_DENY_LIST
   options.safeURLs = DEFAULT_OPTIONS.SAFE_URLS
 
   chrome.storage.sync.set({
@@ -107,6 +112,7 @@ function resetOptions() {
     popup_bgcolor: options.popupBGColor,
     popup_fontcolor: options.popupFontColor,
     popup_fontsize: options.popupFontSize,
+    use_deny_list: options.useDenyList,
     safe_urls: options.safeURLs
   }, function() {
     statusText.value = getText('RESET_STATUS');
@@ -220,19 +226,18 @@ onMounted(() => {
               <option value="ctrlalt">{{ getText('CTRL_ALT_DRAG', [ctrl]) }}</option>
             </select>
           </span>
-        </td>
-      </tr>
-
-      <tr>
-        <td class="title">
-          {{ getText('URL_SETTING') }}
-        </td>
-        <td align="left">
+          <br>
+          <label>
+            <input
+              type="checkbox"
+              v-model="options.useDenyList"
+            > {{ getText('URL_SETTING') }}
+          </label>
           <textarea
             class="options-url"
             v-model="options.safeURLs"
             :placeholder="getText('URL_DESC')"
-            rows=3
+            rows=2
           ></textarea>
         </td>
       </tr>

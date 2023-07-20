@@ -11,6 +11,7 @@ export const DEFAULT_OPTIONS = {
   POPUP_BG_COLOR: '#FFF59D',
   POPUP_FONT_COLOR: '#000000',
   POPUP_FONT_SIZE: '11',
+  USE_DENY_LIST: false,
   SAFE_URLS: []
 }
 
@@ -236,16 +237,19 @@ function registerEventListener(defaultOptions) {
     popup_bgcolor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
     popup_fontcolor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
     popup_fontsize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
-    safe_urls: DEFAULT_OPTIONS.SAFE_URLS,
+    use_deny_list: DEFAULT_OPTIONS.USE_DENY_LIST,
+    safe_urls: DEFAULT_OPTIONS.SAFE_URLS
   }, function(items) {
     if (!items.dclick && !items.drag && !items.translate) {
       return
     }
 
-    const host = window.location.host;
-    const urls = items.safe_urls.split(',')
-    if (urls && urls[0].length > 3 && urls.some(v=>host.includes(v))) {
-      return
+    if (items.use_deny_list) {
+      const host = window.location.host;
+      const urls = items.safe_urls.split(',')
+      if (urls && urls[0].length > 3 && urls.some(v=>host.includes(v))) {
+        return
+      }
     }
 
     let mousedown = false

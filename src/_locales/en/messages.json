@@ -104,7 +104,7 @@
     }
   },
   "URL_SETTING": {
-    "message": "Deny list"
+    "message": "Use Deny list"
   },
   "URL_DESC": {
     "message": "Comma serparated URLs for deny list. i.e) google.com,naver.com"
