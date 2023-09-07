@@ -4,6 +4,9 @@ import { defineConfig } from 'vite'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 export default defineConfig({
+  server: {
+    port: 3000,
+  },
   build: {
     rollupOptions: {
       input: {

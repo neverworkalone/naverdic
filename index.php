@@ -19,7 +19,7 @@
   curl_close ($ch);
 
   $json_response = json_decode($response, true);
-  $translatedText = $json_response['message']['result']['translatedText'];
+  $translatedText = @$json_response['message']['result']['translatedText'];
 
   if($status_code == 200) {
     echo $translatedText;

@@ -48,7 +48,7 @@ export function parseEndic(data) {
         }
       }
 
-      const linkURL = "https://dict.naver.com/search.dict?dicQuery=" + word
+      const linkURL = "https://en.dict.naver.com/#/search?query=" + word
       html += '<div class="naverdic-wordTitle"><a href="' + linkURL + ' " target="_blank">' + word + '</a>'
 
       const partOfSpeech = items[i].meansCollector[0].partOfSpeech
