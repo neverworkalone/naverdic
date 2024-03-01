@@ -11,8 +11,7 @@ const options = reactive({
   dragTrigger: DEFAULT_OPTIONS.DRAG_TRIGGER,
   translate: DEFAULT_OPTIONS.TRANSLATE,
   translateTrigger: DEFAULT_OPTIONS.TRANSLATE_TRIGGER,
-  papagoClientID: DEFAULT_OPTIONS.PAPAGO_CLIENT_ID,
-  papagoClientSecret: DEFAULT_OPTIONS.PAPAGO_CLIENT_SECRET,
+  deeplAuthKey: DEFAULT_OPTIONS.DEEPL_AUTH_KEY,
   popupBGColor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
   popupFontColor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
   popupFontSize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
@@ -38,8 +37,7 @@ function saveOptions() {
     drag_trigger_key: options.dragTrigger,
     translate: options.translate,
     translate_trigger_key: options.translateTrigger,
-    naver_client_id: options.papagoClientID,
-    naver_client_secret: options.papagoClientSecret,
+    deepl_auth_key: options.deeplAuthKey,
     popup_bgcolor: options.popupBGColor,
     popup_fontcolor: options.popupFontColor,
     popup_fontsize: options.popupFontSize,
@@ -62,8 +60,7 @@ function loadOptions() {
     drag_trigger_key: DEFAULT_OPTIONS.DRAG_TRIGGER,
     translate: DEFAULT_OPTIONS.TRANSLATE,
     translate_trigger_key: DEFAULT_OPTIONS.TRANSLATE_TRIGGER,
-    naver_client_id: DEFAULT_OPTIONS.PAPAGO_CLIENT_ID,
-    naver_client_secret: DEFAULT_OPTIONS.PAPAGO_CLIENT_SECRET,
+    deepl_auth_key: DEFAULT_OPTIONS.DEEPL_AUTH_KEY,
     popup_bgcolor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
     popup_fontcolor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
     popup_fontsize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
@@ -77,8 +74,7 @@ function loadOptions() {
     options.dragTrigger = items.drag_trigger_key
     options.translate = items.translate
     options.translateTrigger = items.translate_trigger_key
-    options.papagoClientID = items.naver_client_id
-    options.papagoClientSecret = items.naver_client_secret
+    options.deeplAuthKey = items.deepl_auth_key
     options.popupBGColor = items.popup_bgcolor
     options.popupFontColor = items.popup_fontcolor
     options.popupFontSize = items.popup_fontsize
@@ -95,8 +91,7 @@ function resetOptions() {
   options.dragTrigger = DEFAULT_OPTIONS.DRAG_TRIGGER
   options.translate = DEFAULT_OPTIONS.TRANSLATE
   options.translateTrigger = DEFAULT_OPTIONS.TRANSLATE_TRIGGER
-  options.papagoClientID = DEFAULT_OPTIONS.PAPAGO_CLIENT_ID
-  options.papagoClientSecret = DEFAULT_OPTIONS.PAPAGO_CLIENT_SECRET
+  options.deeplAuthKey = DEFAULT_OPTIONS.DEEPL_AUTH_KEY
   options.popupBGColor = DEFAULT_OPTIONS.POPUP_BG_COLOR
   options.popupFontColor = DEFAULT_OPTIONS.POPUP_FONT_COLOR
   options.popupFontSize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
@@ -111,8 +106,7 @@ function resetOptions() {
     drag_trigger_key: options.dragTrigger,
     translate: options.translate,
     translate_trigger_key: options.translateTrigger,
-    naver_client_id: options.papagoClientID,
-    naver_client_secret: options.papagoClientSecret,
+    deepl_auth_key: options.deeplAuthKey,
     popup_bgcolor: options.popupBGColor,
     popup_fontcolor: options.popupFontColor,
     popup_fontsize: options.popupFontSize,
@@ -175,6 +169,7 @@ onMounted(() => {
                 <input
                   v-model="options.popupFontSize"
                   type="text"
+                  class="option-popup-input"
                 >
               </td>
             </tr>
@@ -246,57 +241,60 @@ onMounted(() => {
         </td>
       </tr>
 
-      <tr class="papago">
+      <tr class="translation">
         <td class="title">
-          {{ getText('PAPAGO') }}
+          {{ getText('DEEPL') }}
         </td>
         <td align="left">
-          <label>
-            <input
-              type="checkbox"
-              v-model="options.translate"
-            > {{ getText('PAPAGO_TRANSLATION') }}
-          </label>
-          <br>
-          <span class="options-description">
-            {{ getText('TRIGGER') }}
-            <select
-              v-model="options.translateTrigger"
-            >
-              <option value="none">{{ getText('DRAG') }}</option>
-              <option value="ctrl">{{ getText('CTRL_DRAG', [ctrl]) }}</option>
-              <option value="alt">{{ getText('ALT_DRAG') }}</option>
-              <option value="ctrlalt">{{ getText('CTRL_ALT_DRAG', [ctrl]) }}</option>
-            </select>
-          </span>
-
           <table>
             <tr>
-              <td width="88px">
-                <label>{{ getText('CLIENT_ID') }}</label><br>
-                <label>{{ getText('CLIENT_SECRET') }}</label>
+              <td colspan="2">
+                <input
+                  type="checkbox"
+                  v-model="options.translate"
+                > {{ getText('DEEPL_TRANSLATION') }}
+              </td>
+            </tr>
+            <tr>
+              <td width="60px">
+                <label
+                  style="padding-bottom:5px;"
+                >{{ getText('TRIGGER') }}</label><br>
+              </td>
+              <td>
+                <select
+                  v-model="options.translateTrigger"
+                >
+                  <option value="none">{{ getText('DRAG') }}</option>
+                  <option value="ctrl">{{ getText('CTRL_DRAG', [ctrl]) }}</option>
+                  <option value="alt">{{ getText('ALT_DRAG') }}</option>
+                  <option value="ctrlalt">{{ getText('CTRL_ALT_DRAG', [ctrl]) }}</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td width="60px">
+                <label
+                  style="padding-bottom:5px;"
+                >{{ getText('DEEPL_AUTH_KEY') }}</label><br>
               </td>
               <td>
                 <input
-                  v-model="options.papagoClientID"
+                  v-model="options.deeplAuthKey"
                   type="text"
-                  class="option-popup-input"
+                  class="option-authkey-input"
                 ><br>
-                <input
-                  v-model="options.papagoClientSecret"
-                  type="text"
-                >
               </td>
             </tr>
 
             <tr>
               <td colspan="2" align="right">
-                <font color="#E54F44">{{ getText('PAPAGO_DESC') }}</font><br>
-                <a href="https://gencode.me/blogs/post/48/" target="_blank">
-                  {{ getText('PAPAGO_INSTRUCTION') }}
+                <font color="#E54F44">{{ getText('DEEPL_DESC') }}</font><br>
+                <a href="https://gencode.me/blogs/post/93/" target="_blank">
+                  {{ getText('DEEPL_INSTRUCTION') }}
                 </a><br>
-                <a href="https://developers.naver.com/apps/#/myapps" target="_blank">
-                  {{ getText('NAVER_DEV') }}
+                <a href="https://www.deepl.com/ko/pro-api?cta=header-pro-api" target="_blank">
+                  {{ getText('DEEPL_API') }}
                 </a>
               </td>
             </tr>
@@ -347,7 +345,7 @@ tr.header {
     rgba(0, 0, 0, 0.5)
   );
 }
-tr.papago {
+tr.translation {
   border-top: 1pt solid;
 }
 td {
@@ -382,7 +380,11 @@ div.options-savearea {
   margin-left: 40px;
 }
 input.option-popup-input {
+  width: 110px;
   margin-bottom:2px;
+}
+input.option-authkey-input {
+  width: 280px;
 }
 input.options-button {
   width: 60px;

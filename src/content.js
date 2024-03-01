@@ -6,8 +6,7 @@ export const DEFAULT_OPTIONS = {
   DRAG_TRIGGER: 'ctrl',
   TRANSLATE: false,
   TRANSLATE_TRIGGER: 'ctrlalt',
-  PAPAGO_CLIENT_ID: '',
-  PAPAGO_CLIENT_SECRET: '',
+  DEEPL_AUTH_KEY: '',
   POPUP_BG_COLOR: '#FFF59D',
   POPUP_FONT_COLOR: '#000000',
   POPUP_FONT_SIZE: '11',
@@ -164,35 +163,36 @@ async function consultDic(e, word, top, left) {
     method: 'GET',
     action: 'endic',
     url: url,
-    }, function(data) {
-      if (!data) {
-        return
-      }
+  }, function(data) {
+    if (!data) {
+      return
+    }
 
-      showFrame(e, parseEndic(data), top, left)
+    showFrame(e, parseEndic(data), top, left)
   })
 }
 
-async function translate(e, text, top, left, id, secret) {
-  const url = 'http://www.gencode.me/api/papago/'
+async function translate(e, text, top, left, key) {
+  const url = 'https://api-free.deepl.com/v2/translate'
 
   chrome.runtime.sendMessage({
     method: 'POST',
-    action: 'papago',
-    data: {
-      source: 'en',
-      target: 'ko',
-      client_id: id,
-      client_secret: secret,
-      text: text
-    },
+    action: 'translation',
     url: url,
-    }, function(data) {
-      showFrame(e, data, top, left);
+    key: key,
+    data: {
+      text: [text],
+      target_lang: 'ko'
+    },
+  }, function(data) {
+    if (!data) {
+      return
+    }
+    showFrame(e, data['translations'][0]['text'], top, left);
   })
 }
 
-function openPopup(e, id=null, secret=null, type='search') {
+function openPopup(e, key=null, type='search') {
   let top = e.clientY + window.scrollY + marginY
   let left = e.clientX - 120 + window.scrollX
 
@@ -212,7 +212,7 @@ function openPopup(e, id=null, secret=null, type='search') {
       }
 
       if (type == 'translate') {
-        translate(e, text, top, left, id, secret)
+        translate(e, text, top, left, key)
       }
       else {
         let english = /^[A-Za-z]*$/
@@ -232,8 +232,7 @@ function registerEventListener(defaultOptions) {
     drag_trigger_key: DEFAULT_OPTIONS.DRAG_TRIGGER,
     translate: DEFAULT_OPTIONS.TRANSLATE,
     translate_trigger_key: DEFAULT_OPTIONS.TRANSLATE_TRIGGER,
-    naver_client_id: DEFAULT_OPTIONS.PAPAGO_CLIENT_ID,
-    naver_client_secret: DEFAULT_OPTIONS.PAPAGO_CLIENT_SECRET,
+    deepl_auth_key: DEFAULT_OPTIONS.DEEPL_AUTH_KEY,
     popup_bgcolor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
     popup_fontcolor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
     popup_fontsize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
@@ -299,7 +298,7 @@ function registerEventListener(defaultOptions) {
         if (document.getElementById('popupFrame')) {
           document.getElementById('popupFrame').remove()
         }
-        openPopup(e, items.naver_client_id, items.naver_client_secret, 'translate')
+        openPopup(e, items.deepl_auth_key, 'translate')
       }
       else if (!mousemove && items.dclick && checkTrigger(e, items.dclick_trigger_key)) {
         mousedown = false

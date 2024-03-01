@@ -1,9 +1,9 @@
 {
   "APP_NAME": {
-    "message": "Naver dictionary"
+    "message": "Naver dictionary (DeepL)"
   },
   "APP_DESCRIPTION": {
-    "message": "English - Korean dictionary supports not only searching but from selecting words on the web pages."
+    "message": "Enter your own words or select an English word from a webpage to show the definition of the English word. Drag a sentence from a webpage to translate it to DeepL."
   },
   "SEARCH": {
     "message": "OK"
@@ -14,8 +14,8 @@
   "VERSION": {
     "message": "Version"
   },
-  "PAPAGO": {
-    "message": "Papago"
+  "DEEPL": {
+    "message": "DeepL Translate"
   },
   "POPUP_SETTING": {
     "message": "Popup setting"
@@ -38,8 +38,8 @@
   "DRAG_DESC": {
     "message": "Show popup on dragging."
   },
-  "PAPAGO_TRANSLATION": {
-    "message": "use Papago translation"
+  "DEEPL_TRANSLATION": {
+    "message": "use DeepL translation"
   },
   "TRIGGER": {
     "message": "Trigger key: "
@@ -109,20 +109,17 @@
   "URL_DESC": {
     "message": "Comma serparated URLs for deny list. i.e) google.com,naver.com"
   },
-  "CLIENT_ID": {
-    "message": "Client ID: "
+  "DEEPL_AUTH_KEY": {
+    "message": "Auth Key: "
   },
-  "CLIENT_SECRET": {
-    "message": "Client Secret: "
+  "DEEPL_DESC": {
+    "message": "Please check DeepL instruction to use it."
   },
-  "PAPAGO_DESC": {
-    "message": "Please check Papago instruction to use it."
+  "DEEPL_INSTRUCTION": {
+    "message": "DeepL instruction"
   },
-  "PAPAGO_INSTRUCTION": {
-    "message": "Papago instruction"
-  },
-  "NAVER_DEV": {
-    "message": "Go to Naver developers"
+  "DEEPL_API": {
+    "message": "Go to DeepL API"
   },
   "SAVE_STATUS": {
     "message": "Saved. Please reload opened windows."

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "__MSG_APP_NAME__",
   "description": "__MSG_APP_DESCRIPTION__",
-  "version": "5.10",
+  "version": "6.0",
   "default_locale": "ko",
   "icons": {
     "16": "icon.png",
@@ -48,6 +48,6 @@
   "host_permissions" : [
     "https://dict.naver.com/",
     "https://en.dict.naver.com/",
-    "http://www.gencode.me/"
+    "https://api-free.deepl.com/"
   ]
 }

@@ -1,9 +1,9 @@
 {
   "APP_NAME": {
-    "message": "네이버 영어사전"
+    "message": "네이버 영어사전 (DeepL)"
   },
   "APP_DESCRIPTION": {
-    "message": "직접 단어를 입력하거나 웹페이지의 영어 단어를 선택해 영단어의 뜻을 보여줍니다."
+    "message": "직접 단어를 입력하거나 웹페이지의 영어 단어를 선택해 영단어의 뜻을 보여줍니다. 웹페이지의 문장을 드래그하면 DeepL로 번역합니다."
   },
   "SEARCH": {
     "message": "검색"
@@ -14,8 +14,8 @@
   "VERSION": {
     "message": "버전"
   },
-  "PAPAGO": {
-    "message": "파파고 번역"
+  "DEEPL": {
+    "message": "DeepL 번역"
   },
   "POPUP_SETTING": {
     "message": "팝업"
@@ -38,8 +38,8 @@
   "DRAG_DESC": {
     "message": "드래그하여 단어나 숙어를 선택했을 때 팝업을 보여줍니다."
   },
-  "PAPAGO_TRANSLATION": {
-    "message": "파파고 번역 기능 사용"
+  "DEEPL_TRANSLATION": {
+    "message": "DeepL 번역 기능 사용"
   },
   "TRIGGER": {
     "message": "트리거 키: "
@@ -109,20 +109,17 @@
   "URL_DESC": {
     "message": "팝업 사전 사용을 중지할 웹사이트를 콤마(,)로 구분해서 넣으세요. 도메인만 넣으면 됩니다. 예) google.com,naver.com"
   },
-  "CLIENT_ID": {
-    "message": "Client ID: "
+  "DEEPL_AUTH_KEY": {
+    "message": "인증키: "
   },
-  "CLIENT_SECRET": {
-    "message": "Client Secret: "
+  "DEEPL_DESC": {
+    "message": "DeepL 번역 기능을 이용하려면 DeepL 사용법 보기를 참고하세요."
   },
-  "PAPAGO_DESC": {
-    "message": "파파고 번역 기능을 이용하려면 파파고 사용법 보기를 참고하세요."
+  "DEEPL_INSTRUCTION": {
+    "message": "DeepL 사용법 보기"
   },
-  "PAPAGO_INSTRUCTION": {
-    "message": "파파고 사용법 보기"
-  },
-  "NAVER_DEV": {
-    "message": "NAVER Developers 가기"
+  "DEEPL_API": {
+    "message": "DeepL API 가기"
   },
   "SAVE_STATUS": {
     "message": "저장했습니다. 열려있는 창은 새로 고침 후 반영됩니다."
