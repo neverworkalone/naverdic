@@ -42,7 +42,7 @@
     "message": "use DeepL translation"
   },
   "TRIGGER": {
-    "message": "Trigger key: "
+    "message": "Trigger: "
   },
   "DCLICK" : {
     "message": "Double click"

@@ -130,7 +130,7 @@ onMounted(() => {
     <table class="setting-box">
       <tr class="header">
         <td colspan="2" class="header">
-          {{ getText('APP_NAME') }} <font color="#F4F382">{{ getText('SETTING') }}</font>
+          {{ getText('APP_NAME') }} <font color="#85736C">{{ getText('SETTING') }}</font>
         </td>
       </tr>
 
@@ -175,12 +175,13 @@ onMounted(() => {
             </tr>
           </table>
 
-          <label>
             <input
               type="checkbox"
               v-model="options.dClick"
-            > {{ getText('DCLICK_DESC') }}
-          </label>
+            >
+            <span
+              class="checkbox-label"
+            >{{ getText('DCLICK_DESC') }}</span>
           <br>
           <span class="options-description">
             {{ getText('TRIGGER') }}
@@ -304,21 +305,21 @@ onMounted(() => {
 
       <tr>
         <td align="left" valign="top" height="60px" colspan="2">
-        <div class="options-savearea">
-          <input
-            type="button"
-            @click="resetOptions()"
-            class="options-button button-reset"
-            :value="getText('RESET')"
-          >
-          <input
-            type="button"
-            @click="saveOptions()"
-            class="options-button button-save"
-            :value="getText('SAVE')"
-          >
-          <span class="options-status">{{ statusText }}</span>
-        </div>
+          <div class="options-savearea">
+            <input
+              type="button"
+              @click="resetOptions()"
+              class="options-button button-reset"
+              :value="getText('RESET')"
+            >
+            <input
+              type="button"
+              @click="saveOptions()"
+              class="options-button button-save"
+              :value="getText('SAVE')"
+            >
+            <span class="options-status">{{ statusText }}</span>
+          </div>
         </td>
       </tr>
     </table>
@@ -353,7 +354,7 @@ td {
 }
 td.version {
   text-align: right;
-  padding-right: 10px;
+  padding-right: 20px;
 }
 td.title {
   width: 200px;
@@ -361,9 +362,12 @@ td.title {
   font-size: 14px;
   font-weight:bold;
 }
+span.checkbox-label {
+  margin-left: 3px;
+}
 span.options-description {
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 5px;
+  margin-bottom: 5px;
   margin-left: 10px;
   display:inline-block;
 }

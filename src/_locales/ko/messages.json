@@ -18,7 +18,7 @@
     "message": "DeepL 번역"
   },
   "POPUP_SETTING": {
-    "message": "팝업"
+    "message": "팝업 사전"
   },
   "POPUP_THEME_GUIDE": {
     "message": "테마 가이드"
@@ -33,10 +33,10 @@
     "message": "글자 크기(pt): "
   },
   "DCLICK_DESC": {
-    "message": "단어를 더블 클릭했을 때 팝업을 보여줍니다."
+    "message": "단어를 더블 클릭했을 때 팝업 사전을 보여줍니다."
   },
   "DRAG_DESC": {
-    "message": "드래그하여 단어나 숙어를 선택했을 때 팝업을 보여줍니다."
+    "message": "드래그하여 단어나 숙어를 선택했을 때 팝업 사전을 보여줍니다."
   },
   "DEEPL_TRANSLATION": {
     "message": "DeepL 번역 기능 사용"
