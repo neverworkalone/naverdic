@@ -56,13 +56,21 @@
     }
   },
   "ALT_DCLICK": {
-    "message": "alt + Double click"
+    "message": "$alt$ + Double click",
+    "placeholders": {
+      "alt": {
+        "content": "$1"
+      }
+    }
   },
   "CTRL_ALT_DCLICK": {
-    "message": "$ctrl$ + alt + Double click",
+    "message": "$ctrl$ + $alt$ + Double click",
     "placeholders": {
       "ctrl": {
         "content": "$1"
+      },
+      "alt": {
+        "content": "$2"
       }
     }
   },
@@ -93,13 +101,21 @@
     }
   },
   "ALT_DRAG": {
-    "message": "alt + drag"
+    "message": "$alt$ + drag",
+    "placeholders": {
+      "alt": {
+        "content": "$1"
+      }
+    }
   },
   "CTRL_ALT_DRAG": {
-    "message": "$ctrl$ + alt + drag",
+    "message": "$ctrl$ + $alt$ + drag",
     "placeholders": {
       "ctrl": {
         "content": "$1"
+      },
+      "alt": {
+        "content": "$2"
       }
     }
   },

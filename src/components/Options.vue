@@ -18,10 +18,16 @@ const options = reactive({
   useDenyList: DEFAULT_OPTIONS.USE_DENY_LIST,
   safeURLs: DEFAULT_OPTIONS.SAFE_URLS
 })
+const version = chrome.runtime.getManifest().version
 let statusText = ref('')
 
-const version = chrome.runtime.getManifest().version
-const ctrl = ((navigator.platform.includes('Mac')) ? 'cmd' : 'ctrl')
+let ctrl = 'ctrl'
+let alt = 'alt'
+
+if (window.navigator.userAgentData.platform.includes('macOS')) {
+  ctrl = 'cmd'
+  alt = 'option'
+}
 
 
 function saveOptions() {
@@ -190,8 +196,8 @@ onMounted(() => {
             >
               <option value="none">{{ getText('DCLICK') }}</option>
               <option value="ctrl">{{ getText('CTRL_DCLICK', [ctrl]) }}</option>
-              <option value="alt">{{ getText('ALT_DCLICK') }}</option>
-              <option value="ctrlalt">{{ getText('CTRL_ALT_DCLICK', [ctrl]) }}</option>
+              <option value="alt">{{ getText('ALT_DCLICK', [alt]) }}</option>
+              <option value="ctrlalt">{{ getText('CTRL_ALT_DCLICK', [ctrl, alt]) }}</option>
             </select>
           </span>
           <br>
@@ -222,8 +228,8 @@ onMounted(() => {
             >
               <option value="none">{{ getText('DRAG') }}</option>
               <option value="ctrl">{{ getText('CTRL_DRAG', [ctrl]) }}</option>
-              <option value="alt">{{ getText('ALT_DRAG') }}</option>
-              <option value="ctrlalt">{{ getText('CTRL_ALT_DRAG', [ctrl]) }}</option>
+              <option value="alt">{{ getText('ALT_DRAG', [alt]) }}</option>
+              <option value="ctrlalt">{{ getText('CTRL_ALT_DRAG', [ctrl, alt]) }}</option>
             </select>
           </span>
           <br>
@@ -268,8 +274,8 @@ onMounted(() => {
                 >
                   <option value="none">{{ getText('DRAG') }}</option>
                   <option value="ctrl">{{ getText('CTRL_DRAG', [ctrl]) }}</option>
-                  <option value="alt">{{ getText('ALT_DRAG') }}</option>
-                  <option value="ctrlalt">{{ getText('CTRL_ALT_DRAG', [ctrl]) }}</option>
+                  <option value="alt">{{ getText('ALT_DRAG', [alt]) }}</option>
+                  <option value="ctrlalt">{{ getText('CTRL_ALT_DRAG', [ctrl, alt]) }}</option>
                 </select>
               </td>
             </tr>

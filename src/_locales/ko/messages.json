@@ -56,13 +56,21 @@
     }
   },
   "ALT_DCLICK": {
-    "message": "alt + 더블 클릭"
+    "message": "$alt$ + 더블 클릭",
+    "placeholders": {
+      "alt": {
+        "content": "$1"
+      }
+    }
   },
   "CTRL_ALT_DCLICK": {
-    "message": "$ctrl$ + alt + 더블 클릭",
+    "message": "$ctrl$ + $alt$ + 더블 클릭",
     "placeholders": {
       "ctrl": {
         "content": "$1"
+      },
+      "alt": {
+        "content": "$2"
       }
     }
   },
@@ -93,13 +101,21 @@
     }
   },
   "ALT_DRAG": {
-    "message": "alt + 드래그"
+    "message": "$alt$ + 드래그",
+    "placeholders": {
+      "alt": {
+        "content": "$1"
+      }
+    }
   },
   "CTRL_ALT_DRAG": {
-    "message": "$ctrl$ + alt + 드래그",
+    "message": "$ctrl$ + $alt$ + 드래그",
     "placeholders": {
       "ctrl": {
         "content": "$1"
+      },
+      "alt": {
+        "content": "$2"
       }
     }
   },
