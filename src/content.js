@@ -129,7 +129,7 @@ function showFrame(e, datain, top, left) {
 function checkTrigger(e, key) {
   let ctrlKey = e.ctrlKey
 
-  if (window.navigator.platform.includes('Mac')) {
+  if (window.navigator.userAgentData.platform.includes('macOS')) {
     ctrlKey = e.metaKey
   }
 
