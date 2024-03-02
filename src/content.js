@@ -100,7 +100,7 @@ function showFrame(e, datain, top, left) {
   })
 
   let div = document.createElement('div')
-  div.innerHTML = datain
+  div.innerHTML = datain.replace(/(?:\r\n|\r|\n)/g, '<br />')
   div.setAttribute('id', 'popupShadow')
   div.className = 'popupFrame'
   div.style.cssText = "top:" + top + "px;left:" + left + "px;width:" + popupWidth +"px;background-color:" + popupColor + ";font-size: " + popupFontsize + "pt;color:" + popupFontColor + ";"
@@ -206,7 +206,7 @@ function openPopup(e, key=null, type='search') {
   let selection = window.getSelection()
 
   if (selection.rangeCount > 0) {
-      let text = selection.getRangeAt(0).cloneContents().textContent.trim()
+      let text = selection.toString()
       if (!text) {
         return
       }
@@ -223,7 +223,7 @@ function openPopup(e, key=null, type='search') {
   }
 }
 
-function registerEventListener(defaultOptions) {
+function registerEventListener() {
   chrome.storage.sync.get({
     dclick: DEFAULT_OPTIONS.DCLICK,
     dclick_trigger_key: DEFAULT_OPTIONS.DCLICK_TRIGGER,
