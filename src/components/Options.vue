@@ -24,11 +24,12 @@ let statusText = ref('')
 let ctrl = 'ctrl'
 let alt = 'alt'
 
-if (window.navigator.userAgentData.platform.includes('macOS')) {
-  ctrl = 'cmd'
-  alt = 'option'
+if (navigator.userAgentData) {
+  if (navigator.userAgentData.platform.includes('mac')) {
+    ctrl = 'cmd'
+    alt = 'option'
+  }
 }
-
 
 function saveOptions() {
   if (options.useDenyList && options.safeURLs) {

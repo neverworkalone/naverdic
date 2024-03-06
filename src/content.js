@@ -129,8 +129,10 @@ function showFrame(e, datain, top, left) {
 function checkTrigger(e, key) {
   let ctrlKey = e.ctrlKey
 
-  if (window.navigator.userAgentData.platform.includes('macOS')) {
-    ctrlKey = e.metaKey
+  if (navigator.userAgentData) {
+    if (navigator.userAgentData.platform.includes('mac')) {
+      ctrlKey = e.metaKey
+    }
   }
 
   switch (key) {
