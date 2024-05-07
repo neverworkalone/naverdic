@@ -164,7 +164,7 @@ onMounted(() => {
                   v-model="options.popupBGColor"
                   type="text"
                   class="option-popup-input"
-                > <a href="https://gencode.me/blogs/post/89/" target="_blank">
+                > <a href="https://gencode.me/blogs/post/75/네이버_사전_추천_테마" target="_blank">
                   {{ getText('POPUP_THEME_GUIDE') }}
                 </a>
                 <br>
@@ -298,7 +298,7 @@ onMounted(() => {
             <tr>
               <td colspan="2" align="right">
                 <font color="#E54F44">{{ getText('DEEPL_DESC') }}</font><br>
-                <a href="https://gencode.me/blogs/post/93/" target="_blank">
+                <a href="https://gencode.me/blogs/post/76/네이버_영어사전에_DeepL_번역_API_연동하기" target="_blank">
                   {{ getText('DEEPL_INSTRUCTION') }}
                 </a><br>
                 <a href="https://www.deepl.com/ko/pro-api?cta=header-pro-api" target="_blank">
