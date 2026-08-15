@@ -10,6 +10,11 @@ Chrome 웹 스토어에서 설치하세요.
 https://chrome.google.com/webstore/detail/네이버-사전-naver-dictionary/imnbhbjodhdinfaifjbpgkpknejadfjk
 
 
+## Help
+
+https://neverworkalone.github.io/naverdic/
+
+
 ## Stacks
 Vue 3 + Vite for Chrome extension manifest 3
 
