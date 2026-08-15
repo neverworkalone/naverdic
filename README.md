@@ -1,27 +1,39 @@
-## Naver dictionary
-Chrome 확장 프로그램
+# Naver English Dictionary
 
-직접 단어를 입력하거나 웹페이지의 영어 단어에 더블클릭하면 네이버 사전을 통해 영단어의 뜻을 보여줍니다. 문장을 드래그하면 네이버 파파고를 통해 영한통번역을 지원합니다.
+A Chrome extension for looking up English words with Naver Dictionary and translating sentences with DeepL.
 
+## Features
+
+- Search for a word by entering it directly
+- Look up an English word by double-clicking it on a webpage
+- Select a word or phrase to search for its meaning
+- Translate selected sentences and paragraphs with DeepL
+- Customize the dictionary trigger key
 
 ## Install
-Chrome 웹 스토어에서 설치하세요.
 
-https://chrome.google.com/webstore/detail/네이버-사전-naver-dictionary/imnbhbjodhdinfaifjbpgkpknejadfjk
-
+Install the extension from the [Chrome Web Store](https://chrome.google.com/webstore/detail/네이버-사전-naver-dictionary/imnbhbjodhdinfaifjbpgkpknejadfjk).
 
 ## Help
 
-https://neverworkalone.github.io/naverdic/
+See the [Help page](https://neverworkalone.github.io/naverdic/) for setup instructions and usage details.
 
+## Tech Stack
 
-## Stacks
-Vue 3 + Vite for Chrome extension manifest 3
+- Vue 3
+- Vite
+- Chrome Extension Manifest V3
 
+## Development
 
-## Hot Reload extension
-    $ yarn build
+### Build the extension
 
+```bash
+yarn build
+```
 
-## Hot Reload webpage for testing
-    $ yarn dev
+### Run the webpage development server
+
+```bash
+yarn dev
+```
