@@ -40,6 +40,10 @@ export default defineConfig({
           dest: 'dictionary'
         },
         {
+          src: 'src/dictionary/normalizer.mjs',
+          dest: 'dictionary'
+        },
+        {
           src: 'src/content.css',
           dest: '.'
         },
