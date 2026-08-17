@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "test": "node --test tests/*.test.mjs",
-    "build": "vite build --watch",
+    "build": "vite build",
+    "package": "bash pack.sh",
     "preview": "vite preview"
   },
   "dependencies": {
