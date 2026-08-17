@@ -6,6 +6,7 @@ import {
   getSelectionText,
   isDeniedSite
 } from './content-interaction.mjs'
+import { createStorageLifecycle } from './content-storage.mjs'
 
 export const DEFAULT_OPTIONS = {
   DCLICK: true,
@@ -48,10 +49,7 @@ export const STORAGE_DEFAULTS = {
 }
 
 let activeInteractionController = null
-let storageChangeListener = null
-let eventRegistrationStarted = false
-let optionsRevision = 0
-let currentItems = {...STORAGE_DEFAULTS}
+let storageLifecycle = null
 
 
 function appendTextWithLineBreaks(element, value) {
@@ -239,7 +237,6 @@ function removePopup() {
 
 function applyOptions(items) {
   const nextItems = {...STORAGE_DEFAULTS, ...(items || {})}
-  currentItems = nextItems
 
   activeInteractionController?.destroy()
   activeInteractionController = null
@@ -269,75 +266,26 @@ function applyOptions(items) {
   })
 }
 
-function registerStorageChangeListener(storage) {
-  if (storageChangeListener || !storage?.onChanged?.addListener) {
-    return
-  }
-
-  storageChangeListener = (changes, areaName) => {
-    if (areaName && areaName !== 'sync') {
-      return
-    }
-
-    const relevantChanges = Object.keys(changes || {}).filter(key => key in STORAGE_DEFAULTS)
-    if (relevantChanges.length === 0) {
-      return
-    }
-
-    optionsRevision += 1
-    const nextItems = {...currentItems}
-    relevantChanges.forEach(key => {
-      const change = changes[key]
-      nextItems[key] = change?.newValue === undefined
-        ? STORAGE_DEFAULTS[key]
-        : change.newValue
-    })
-    applyOptions(nextItems)
-  }
-
-  storage.onChanged.addListener(storageChangeListener)
-}
-
 export function unregisterEventListener() {
-  optionsRevision += 1
+  storageLifecycle?.stop()
+  storageLifecycle = null
   activeInteractionController?.destroy()
   activeInteractionController = null
-
-  if (storageChangeListener && typeof chrome !== 'undefined') {
-    chrome.storage?.onChanged?.removeListener?.(storageChangeListener)
-  }
-
-  storageChangeListener = null
-  eventRegistrationStarted = false
-  currentItems = {...STORAGE_DEFAULTS}
   removePopup()
 }
 
 export function registerEventListener() {
-  if (eventRegistrationStarted) {
+  if (storageLifecycle) {
     return
   }
 
-  eventRegistrationStarted = true
   const storage = typeof chrome === 'undefined' ? null : chrome.storage
-  const syncStorage = storage?.sync
-
-  registerStorageChangeListener(storage)
-
-  if (!syncStorage?.get) {
-    applyOptions(STORAGE_DEFAULTS)
-    return
-  }
-
-  const revisionAtRequest = optionsRevision
-  syncStorage.get(STORAGE_DEFAULTS, items => {
-    // A storage update may arrive before this asynchronous initial read.
-    // Do not let the stale read rebind an older configuration.
-    if (revisionAtRequest !== optionsRevision) {
-      return
-    }
-    applyOptions(items)
+  storageLifecycle = createStorageLifecycle({
+    storage,
+    defaults: STORAGE_DEFAULTS,
+    onApply: applyOptions
   })
+  storageLifecycle.start()
 }
 
 export function main() {
