@@ -30,7 +30,7 @@
   }],
   "web_accessible_resources": [
     {
-      "resources": ["content.js", "content.css"],
+      "resources": ["content.js", "content.css", "dictionary/parser.mjs"],
       "matches": [ "<all_urls>" ]
     }
   ],
