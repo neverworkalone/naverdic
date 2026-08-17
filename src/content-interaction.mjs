@@ -1,15 +1,21 @@
 const DEFAULT_SELECTION_DISTANCE = 8
 
-function getNavigatorPlatform() {
-  if (typeof navigator === 'undefined') {
-    return ''
-  }
+export function getNavigatorPlatform(navigatorLike) {
+  const currentNavigator = navigatorLike === undefined
+    ? (typeof navigator === 'undefined' ? null : navigator)
+    : navigatorLike
 
-  return navigator.userAgentData?.platform || navigator.platform || ''
+  return currentNavigator?.userAgentData?.platform || currentNavigator?.platform || ''
 }
 
 export function isMacPlatform(platform = getNavigatorPlatform()) {
   return /mac/i.test(String(platform))
+}
+
+export function getTriggerLabels(platform = getNavigatorPlatform()) {
+  return isMacPlatform(platform)
+    ? {ctrl: 'cmd', alt: 'option'}
+    : {ctrl: 'ctrl', alt: 'alt'}
 }
 
 /**
@@ -137,7 +143,7 @@ function normalizeHost(value) {
 export function normalizeDenyList(value) {
   const entries = Array.isArray(value)
     ? value
-    : String(value ?? '').split(/[,;\n]+/)
+    : String(value ?? '').split(/[,;\r\n]+/)
 
   return entries
     .map(normalizeHost)

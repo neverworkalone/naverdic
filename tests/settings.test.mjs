@@ -126,6 +126,17 @@ test('maps the shared storage contract to the existing Options form shape', () =
   assert.equal(storageValues.dclick_speed, '200')
   assert.equal(storageValues.use_deny_list, true)
   assert.equal(storageValues.safe_urls, 'example.com')
+
+  const multilineStorageValues = settingsFromOptionForm({
+    ...defaults,
+    useDenyList: true,
+    safeURLs: ' example.com \n naver.com '
+  })
+  assert.equal(multilineStorageValues.safe_urls, 'example.com \n naver.com')
+  assert.equal(
+    optionFormFromSettings(multilineStorageValues).safeURLs,
+    'example.com \n naver.com'
+  )
 })
 
 test('loads normalized settings without writing defaults back', () => {
