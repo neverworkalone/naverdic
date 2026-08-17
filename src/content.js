@@ -1,3 +1,5 @@
+import { buildNaverApiUrl, parseNaverDictionaryResponse } from './dictionary/parser.mjs'
+
 export const DEFAULT_OPTIONS = {
   DCLICK: true,
   DCLICK_TRIGGER: 'none',
@@ -24,66 +26,73 @@ let popupFontsize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
 let dClickSpeed = DEFAULT_OPTIONS.DCLICK_SPEED
 
 
-export function parseEndic(data) {
-  if (!data || !data.searchResultMap) {
-    return
-  }
-
-  let html = ''
-  let audio = null
-  let noAudios = 0
-  let items = data.searchResultMap.searchResultListMap.WORD.items
-
-  if (items.length > 0) {
-    for (let i = 0; i < items.length; i++) {
-      const word = items[i].handleEntry
-
-      if (audio == null) {
-        for (let j = 0; j < items[i].searchPhoneticSymbolList.length; j++) {
-          if (items[i].searchPhoneticSymbolList[0].symbolFile) {
-            audio = items[i].searchPhoneticSymbolList[0].symbolFile
-            break
-          }
-        }
-      }
-
-      const linkURL = "https://en.dict.naver.com/#/search?query=" + word
-      html += '<div class="naverdic-wordTitle"><a href="' + linkURL + ' " target="_blank">' + word + '</a>'
-
-      const partOfSpeech = items[i].meansCollector[0].partOfSpeech
-      if (partOfSpeech) {
-        html += ' [' + partOfSpeech + ']'
-      }
-
-      const phonetic = items[i].searchPhoneticSymbolList[0]
-      if (audio && noAudios == 0) {
-        if (phonetic && phonetic.symbolValue) {
-          html += '<span>[' + phonetic.symbolValue + ']</span>'
-        }
-
-        const audioID = 'proaudio' + ++noAudios;
-        const playAudio = '<span><audio class=naverdic-audio controls src="' + audio + '" id="' + audioID + '" controlslist="nodownload nooption"></audio></span>'
-        html += playAudio
-      }
-      html += '</div>'
-
-      const means = items[i].meansCollector[0].means
-      for (let j = 0; j < means.length; j++) {
-        let meansClass = 'naverdic-wordMeans'
-        if (j == means.length - 1) {
-          meansClass = 'naverdic-wordMeans-last'
-        }
-
-        html += '<div class=' + meansClass + '>' + means[j].order + '. ' + means[j].value + '</div>'
-      }
+function appendTextWithLineBreaks(element, value) {
+  const lines = String(value).split(/(?:\r\n|\r|\n)/g)
+  lines.forEach((line, index) => {
+    if (index > 0) {
+      element.appendChild(document.createElement('br'))
     }
-  }
-
-  return html
+    element.appendChild(document.createTextNode(line))
+  })
 }
 
-function showFrame(e, datain, top, left) {
-  if (!datain) {
+function renderDictionary(container, entries) {
+  let audioShown = false
+
+  entries.forEach(entry => {
+    const title = document.createElement('div')
+    title.className = 'naverdic-wordTitle'
+
+    const wordLink = document.createElement('a')
+    wordLink.href = entry.dictionaryUrl
+    wordLink.target = '_blank'
+    wordLink.rel = 'noopener noreferrer'
+    appendTextWithLineBreaks(wordLink, entry.word)
+    title.appendChild(wordLink)
+
+    if (entry.partOfSpeech) {
+      appendTextWithLineBreaks(title, ` [${entry.partOfSpeech}]`)
+    }
+
+    if (!audioShown && entry.audioUrl) {
+      audioShown = true
+
+      if (entry.phoneticSymbol) {
+        const phonetic = document.createElement('span')
+        appendTextWithLineBreaks(phonetic, ` [${entry.phoneticSymbol}]`)
+        title.appendChild(phonetic)
+      }
+
+      const audioWrapper = document.createElement('span')
+      const audio = document.createElement('audio')
+      audio.className = 'naverdic-audio'
+      audio.controls = true
+      audio.src = entry.audioUrl
+      audio.id = 'proaudio1'
+      audio.setAttribute('controlslist', 'nodownload nooption')
+      audioWrapper.appendChild(audio)
+      title.appendChild(audioWrapper)
+    }
+
+    container.appendChild(title)
+
+    entry.meanings.forEach((meaning, meaningIndex) => {
+      const meaningElement = document.createElement('div')
+      meaningElement.className = meaningIndex === entry.meanings.length - 1
+        ? 'naverdic-wordMeans-last'
+        : 'naverdic-wordMeans'
+      appendTextWithLineBreaks(meaningElement, `${meaning.order}. ${meaning.value}`)
+      container.appendChild(meaningElement)
+    })
+  })
+}
+
+function renderTranslation(container, text) {
+  appendTextWithLineBreaks(container, text)
+}
+
+function showFrame(e, datain, top, left, type = 'dictionary') {
+  if (!datain || (Array.isArray(datain) && datain.length === 0)) {
     return
   }
 
@@ -96,14 +105,21 @@ function showFrame(e, datain, top, left) {
   })
   .then(resp => resp.text())
   .then(css => {
-    shadow.innerHTML += `<style>${css}</style>`
+    const style = document.createElement('style')
+    style.textContent = css
+    shadow.appendChild(style)
   })
 
   let div = document.createElement('div')
-  div.innerHTML = datain.replace(/(?:\r\n|\r|\n)/g, '<br />')
   div.setAttribute('id', 'popupShadow')
   div.className = 'popupFrame'
   div.style.cssText = "top:" + top + "px;left:" + left + "px;width:" + popupWidth +"px;background-color:" + popupColor + ";font-size: " + popupFontsize + "pt;color:" + popupFontColor + ";"
+
+  if (type === 'dictionary') {
+    renderDictionary(div, datain)
+  } else {
+    renderTranslation(div, datain)
+  }
 
   shadow.appendChild(div)
   document.body.appendChild(shadowRoot)
@@ -159,7 +175,7 @@ function checkTrigger(e, key) {
 }
 
 async function consultDic(e, word, top, left) {
-  const url = 'https://en.dict.naver.com/api3/enko/search?m=mobile&lang=ko&query=' + word
+  const url = buildNaverApiUrl(word)
 
   chrome.runtime.sendMessage({
     method: 'GET',
@@ -170,7 +186,7 @@ async function consultDic(e, word, top, left) {
       return
     }
 
-    showFrame(e, parseEndic(data), top, left)
+    showFrame(e, parseNaverDictionaryResponse(data), top, left)
   })
 }
 
@@ -190,7 +206,7 @@ async function translate(e, text, top, left, key) {
     if (!data) {
       return
     }
-    showFrame(e, data['translations'][0]['text'], top, left);
+    showFrame(e, data['translations'][0]['text'], top, left, 'translation');
   })
 }
 

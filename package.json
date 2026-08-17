@@ -4,6 +4,7 @@
   "version": "6.5.0",
   "scripts": {
     "dev": "vite",
+    "test": "node --test tests/*.test.mjs",
     "build": "vite build --watch",
     "preview": "vite preview"
   },
