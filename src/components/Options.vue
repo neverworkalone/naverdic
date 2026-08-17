@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { getText } from '/src/text.js'
-import { DEFAULT_OPTIONS } from '/src/settings/defaults.js'
+import { DEFAULT_OPTIONS } from '/src/content.js'
 
 const options = reactive({
   dClick: DEFAULT_OPTIONS.DCLICK,
