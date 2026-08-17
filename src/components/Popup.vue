@@ -1,24 +1,32 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { parseEndic } from '/src/content.js'
+import { computed, ref, onMounted } from 'vue'
+import { buildNaverApiUrl, parseNaverDictionaryResponse } from '/src/dictionary/parser.mjs'
+import {
+  createDictionaryRequest,
+  reportMessageFailure,
+  sendRuntimeMessage
+} from '/src/messaging.mjs'
 import { getText } from '/src/text.js'
 
 const word = ref('')
+const entries = ref([])
+const audioEntryIndex = computed(() => entries.value.findIndex(entry => entry.audioUrl))
 
-async function searchWord(word) {
-  const url = 'https://en.dict.naver.com/api3/enko/search?m=mobile&lang=ko&query=' + word
+async function searchWord(searchTerm) {
+  const url = buildNaverApiUrl(searchTerm)
 
-  chrome.runtime.sendMessage({
-    method: 'GET',
-    action: 'endic',
-    url: url,
-    }, function(data) {
-      if (!data) {
-        return
-      }
+  const response = await sendRuntimeMessage(
+    chrome.runtime,
+    createDictionaryRequest({method: 'GET', url})
+  )
 
-      document.getElementById('content').innerHTML = parseEndic(data)
-  })
+  if (!response.ok) {
+    entries.value = []
+    reportMessageFailure('dictionary lookup', response)
+    return
+  }
+
+  entries.value = parseNaverDictionaryResponse(response.data)
 }
 
 onMounted(() => {
@@ -46,6 +54,38 @@ onMounted(() => {
     </form>
 
     <div id="content" align="left">
+      <template
+        v-for="(entry, entryIndex) in entries"
+        :key="`${entry.word}-${entryIndex}`"
+      >
+        <div class="naverdic-wordTitle">
+          <a
+            :href="entry.dictionaryUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >{{ entry.word }}</a>
+          <template v-if="entry.partOfSpeech"> [{{ entry.partOfSpeech }}]</template>
+          <template v-if="entryIndex === audioEntryIndex">
+            <span v-if="entry.phoneticSymbol"> [{{ entry.phoneticSymbol }}]</span>
+            <span>
+              <audio
+                id="proaudio1"
+                class="naverdic-audio"
+                controls
+                :src="entry.audioUrl"
+                controlslist="nodownload nooption"
+              />
+            </span>
+          </template>
+        </div>
+        <div
+          v-for="(meaning, meaningIndex) in entry.meanings"
+          :key="`${entryIndex}-${meaningIndex}`"
+          :class="meaningIndex === entry.meanings.length - 1 ? 'naverdic-wordMeans-last' : 'naverdic-wordMeans'"
+        >
+          {{ meaning.order }}. {{ meaning.value }}
+        </div>
+      </template>
     </div>
     <hr>
 

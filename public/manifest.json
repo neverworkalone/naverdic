@@ -2,13 +2,13 @@
   "manifest_version": 3,
   "name": "__MSG_APP_NAME__",
   "description": "__MSG_APP_DESCRIPTION__",
-  "version": "6.5",
+  "version": "6.6",
   "default_locale": "ko",
   "icons": {
-    "16": "icon.png",
-    "32": "icon.png",
-    "48": "icon.png",
-    "128": "icon.png"
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
   },
   "options_ui": {
     "page": "options.html",
@@ -30,7 +30,7 @@
   }],
   "web_accessible_resources": [
     {
-      "resources": ["content.js", "content.css"],
+      "resources": ["content.js", "content-interaction.mjs", "content-storage.mjs", "messaging.mjs", "settings.mjs", "content.css", "dictionary/parser.mjs", "dictionary/normalizer.mjs"],
       "matches": [ "<all_urls>" ]
     }
   ],

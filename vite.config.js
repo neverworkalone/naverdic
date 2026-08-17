@@ -24,8 +24,36 @@ export default defineConfig({
           dest: '.'
         },
         {
+          src: 'src/background-handler.mjs',
+          dest: '.'
+        },
+        {
+          src: 'src/messaging.mjs',
+          dest: '.'
+        },
+        {
           src: 'src/content.js',
           dest: '.'
+        },
+        {
+          src: 'src/content-interaction.mjs',
+          dest: '.'
+        },
+        {
+          src: 'src/content-storage.mjs',
+          dest: '.'
+        },
+        {
+          src: 'src/settings.mjs',
+          dest: '.'
+        },
+        {
+          src: 'src/dictionary/parser.mjs',
+          dest: 'dictionary'
+        },
+        {
+          src: 'src/dictionary/normalizer.mjs',
+          dest: 'dictionary'
         },
         {
           src: 'src/content.css',
