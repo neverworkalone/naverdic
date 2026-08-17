@@ -265,3 +265,36 @@ test('preserves unchanged settings when storage changes during initial read', ()
   lifecycle.stop()
   assert.equal(storage.listeners.size, 0)
 })
+
+test('normalizes shared settings and keeps the storage lifecycle single-registration', () => {
+  const storage = new FakeStorage()
+  const applied = []
+  const lifecycle = createStorageLifecycle({
+    storage,
+    onApply: items => applied.push(items)
+  })
+
+  lifecycle.start()
+  lifecycle.start()
+  assert.equal(storage.reads.length, 1)
+  assert.equal(storage.listeners.size, 1)
+
+  storage.resolveNext({
+    dclick: 'damaged',
+    dclick_speed: 'damaged',
+    popup_fontsize: ' 15 '
+  })
+  assert.equal(applied.length, 1)
+  assert.equal(applied[0].dclick, true)
+  assert.equal(applied[0].dclick_speed, 400)
+  assert.equal(applied[0].popup_fontsize, '15')
+
+  storage.emit({dclick: {newValue: 'false'}})
+  assert.equal(storage.reads.length, 1)
+  storage.resolveNext({dclick: 'false'})
+  assert.equal(applied.length, 2)
+  assert.equal(applied[1].dclick, false)
+
+  lifecycle.stop()
+  assert.equal(storage.listeners.size, 0)
+})

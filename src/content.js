@@ -7,22 +7,13 @@ import {
   isDeniedSite
 } from './content-interaction.mjs'
 import { createStorageLifecycle } from './content-storage.mjs'
+import {
+  DEFAULT_OPTIONS,
+  normalizeSettings,
+  STORAGE_DEFAULTS
+} from './settings.mjs'
 
-export const DEFAULT_OPTIONS = {
-  DCLICK: true,
-  DCLICK_TRIGGER: 'none',
-  DCLICK_SPEED: 400,
-  DRAG: true,
-  DRAG_TRIGGER: 'ctrl',
-  TRANSLATE: false,
-  TRANSLATE_TRIGGER: 'ctrlalt',
-  DEEPL_AUTH_KEY: '',
-  POPUP_BG_COLOR: '#FFF59D',
-  POPUP_FONT_COLOR: '#000000',
-  POPUP_FONT_SIZE: '11',
-  USE_DENY_LIST: false,
-  SAFE_URLS: null
-}
+export { DEFAULT_OPTIONS, STORAGE_DEFAULTS }
 
 const marginLeft = 10
 const marginRight = 30
@@ -31,22 +22,6 @@ const popupWidth = 360
 let popupColor = DEFAULT_OPTIONS.POPUP_BG_COLOR
 let popupFontColor = DEFAULT_OPTIONS.POPUP_FONT_COLOR
 let popupFontsize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
-
-export const STORAGE_DEFAULTS = {
-  dclick: DEFAULT_OPTIONS.DCLICK,
-  dclick_trigger_key: DEFAULT_OPTIONS.DCLICK_TRIGGER,
-  dclick_speed: DEFAULT_OPTIONS.DCLICK_SPEED,
-  drag: DEFAULT_OPTIONS.DRAG,
-  drag_trigger_key: DEFAULT_OPTIONS.DRAG_TRIGGER,
-  translate: DEFAULT_OPTIONS.TRANSLATE,
-  translate_trigger_key: DEFAULT_OPTIONS.TRANSLATE_TRIGGER,
-  deepl_auth_key: DEFAULT_OPTIONS.DEEPL_AUTH_KEY,
-  popup_bgcolor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
-  popup_fontcolor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
-  popup_fontsize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
-  use_deny_list: DEFAULT_OPTIONS.USE_DENY_LIST,
-  safe_urls: DEFAULT_OPTIONS.SAFE_URLS
-}
 
 let activeInteractionController = null
 let storageLifecycle = null
@@ -236,15 +211,15 @@ function removePopup() {
 }
 
 function applyOptions(items) {
-  const nextItems = {...STORAGE_DEFAULTS, ...(items || {})}
+  const nextItems = normalizeSettings(items)
 
   activeInteractionController?.destroy()
   activeInteractionController = null
   removePopup()
 
-  popupColor = nextItems.popup_bgcolor || DEFAULT_OPTIONS.POPUP_BG_COLOR
-  popupFontColor = nextItems.popup_fontcolor || DEFAULT_OPTIONS.POPUP_FONT_COLOR
-  popupFontsize = nextItems.popup_fontsize || DEFAULT_OPTIONS.POPUP_FONT_SIZE
+  popupColor = nextItems.popup_bgcolor
+  popupFontColor = nextItems.popup_fontcolor
+  popupFontsize = nextItems.popup_fontsize
 
   if (!nextItems.dclick && !nextItems.drag && !nextItems.translate) {
     return
@@ -282,7 +257,6 @@ export function registerEventListener() {
   const storage = typeof chrome === 'undefined' ? null : chrome.storage
   storageLifecycle = createStorageLifecycle({
     storage,
-    defaults: STORAGE_DEFAULTS,
     onApply: applyOptions
   })
   storageLifecycle.start()
