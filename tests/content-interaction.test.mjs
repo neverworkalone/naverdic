@@ -5,6 +5,8 @@ import {
   checkTrigger,
   createInteractionController,
   getDictionaryQuery,
+  getNavigatorPlatform,
+  getTriggerLabels,
   getSelectionText,
   isDeniedSite,
   normalizeDenyList,
@@ -120,10 +122,32 @@ test('matches configured trigger keys on Windows and macOS', () => {
   assert.equal(checkTrigger(mouseEvent({metaKey: true, ctrlKey: true}), 'ctrl', 'MacIntel'), false)
 })
 
+test('uses one platform rule for trigger labels and navigator fallbacks', () => {
+  assert.equal(getNavigatorPlatform({
+    userAgentData: {platform: 'macOS'},
+    platform: 'Win32'
+  }), 'macOS')
+  assert.equal(getNavigatorPlatform({platform: 'MacIntel'}), 'MacIntel')
+
+  assert.deepEqual(getTriggerLabels('macOS'), {ctrl: 'cmd', alt: 'option'})
+  assert.deepEqual(getTriggerLabels('MACOS'), {ctrl: 'cmd', alt: 'option'})
+  assert.deepEqual(getTriggerLabels('MacIntel'), {ctrl: 'cmd', alt: 'option'})
+  assert.deepEqual(getTriggerLabels('Win32'), {ctrl: 'ctrl', alt: 'alt'})
+})
+
 test('matches deny-list hosts by exact domain or subdomain boundary', () => {
   assert.deepEqual(normalizeDenyList(' example.com, https://www.naver.com/path\n'), [
     'example.com',
     'www.naver.com'
+  ])
+  const multipleLines = 'example.com\nnaver.com'
+  assert.deepEqual(normalizeDenyList(multipleLines), ['example.com', 'naver.com'])
+  assert.equal(isDeniedSite('example.com', multipleLines), true)
+  assert.equal(isDeniedSite('www.naver.com', multipleLines), true)
+  assert.equal(isDeniedSite('docs.naver.com', multipleLines), true)
+  assert.deepEqual(normalizeDenyList('example.com; naver.com'), [
+    'example.com',
+    'naver.com'
   ])
   assert.equal(isDeniedSite('example.com', 'example.com'), true)
   assert.equal(isDeniedSite('docs.example.com', 'example.com'), true)

@@ -7,26 +7,14 @@ import {
   settingsFromOptionForm
 } from '/src/settings.mjs'
 import { loadSettings, saveSettings } from '/src/settings-storage.mjs'
+import { getTriggerLabels } from '/src/content-interaction.mjs'
 
 const options = reactive(createOptionForm())
 const version = chrome.runtime.getManifest().version
 let statusText = ref('')
-
-let ctrl = 'ctrl'
-let alt = 'alt'
-
-if (navigator.userAgentData) {
-  if (navigator.userAgentData.platform.includes('mac')) {
-    ctrl = 'cmd'
-    alt = 'option'
-  }
-}
+const {ctrl, alt} = getTriggerLabels()
 
 function saveOptions() {
-  if (options.useDenyList && options.safeURLs) {
-    options.safeURLs = options.safeURLs.replace(/\s/g, '')
-  }
-
   saveSettings(chrome.storage, settingsFromOptionForm(options), function() {
     statusText.value = getText('SAVE_STATUS');
     setTimeout(function() {
