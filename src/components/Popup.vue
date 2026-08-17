@@ -1,6 +1,11 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { buildNaverApiUrl, parseNaverDictionaryResponse } from '/src/dictionary/parser.mjs'
+import {
+  createDictionaryRequest,
+  reportMessageFailure,
+  sendRuntimeMessage
+} from '/src/messaging.mjs'
 import { getText } from '/src/text.js'
 
 const word = ref('')
@@ -10,18 +15,18 @@ const audioEntryIndex = computed(() => entries.value.findIndex(entry => entry.au
 async function searchWord(searchTerm) {
   const url = buildNaverApiUrl(searchTerm)
 
-  chrome.runtime.sendMessage({
-    method: 'GET',
-    action: 'endic',
-    url: url,
-    }, function(data) {
-      if (!data) {
-        entries.value = []
-        return
-      }
+  const response = await sendRuntimeMessage(
+    chrome.runtime,
+    createDictionaryRequest({method: 'GET', url})
+  )
 
-      entries.value = parseNaverDictionaryResponse(data)
-  })
+  if (!response.ok) {
+    entries.value = []
+    reportMessageFailure('dictionary lookup', response)
+    return
+  }
+
+  entries.value = parseNaverDictionaryResponse(response.data)
 }
 
 onMounted(() => {
