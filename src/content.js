@@ -1,4 +1,11 @@
 import { buildNaverApiUrl, parseNaverDictionaryResponse } from './dictionary/parser.mjs'
+import {
+  checkTrigger,
+  createInteractionController,
+  getDictionaryQuery,
+  getSelectionText,
+  isDeniedSite
+} from './content-interaction.mjs'
 
 export const DEFAULT_OPTIONS = {
   DCLICK: true,
@@ -23,7 +30,28 @@ const popupWidth = 360
 let popupColor = DEFAULT_OPTIONS.POPUP_BG_COLOR
 let popupFontColor = DEFAULT_OPTIONS.POPUP_FONT_COLOR
 let popupFontsize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
-let dClickSpeed = DEFAULT_OPTIONS.DCLICK_SPEED
+
+export const STORAGE_DEFAULTS = {
+  dclick: DEFAULT_OPTIONS.DCLICK,
+  dclick_trigger_key: DEFAULT_OPTIONS.DCLICK_TRIGGER,
+  dclick_speed: DEFAULT_OPTIONS.DCLICK_SPEED,
+  drag: DEFAULT_OPTIONS.DRAG,
+  drag_trigger_key: DEFAULT_OPTIONS.DRAG_TRIGGER,
+  translate: DEFAULT_OPTIONS.TRANSLATE,
+  translate_trigger_key: DEFAULT_OPTIONS.TRANSLATE_TRIGGER,
+  deepl_auth_key: DEFAULT_OPTIONS.DEEPL_AUTH_KEY,
+  popup_bgcolor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
+  popup_fontcolor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
+  popup_fontsize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
+  use_deny_list: DEFAULT_OPTIONS.USE_DENY_LIST,
+  safe_urls: DEFAULT_OPTIONS.SAFE_URLS
+}
+
+let activeInteractionController = null
+let storageChangeListener = null
+let eventRegistrationStarted = false
+let optionsRevision = 0
+let currentItems = {...STORAGE_DEFAULTS}
 
 
 function appendTextWithLineBreaks(element, value) {
@@ -142,38 +170,6 @@ function showFrame(e, datain, top, left, type = 'dictionary') {
 }
 
 
-function checkTrigger(e, key) {
-  let ctrlKey = e.ctrlKey
-
-  if (navigator.userAgentData) {
-    if (navigator.userAgentData.platform.includes('mac')) {
-      ctrlKey = e.metaKey
-    }
-  }
-
-  switch (key) {
-    case 'ctrl':
-      if (!ctrlKey || e.altKey)
-        return false
-      break
-    case 'alt':
-      if (ctrlKey || !e.altKey)
-        return false
-      break
-    case 'ctrlalt':
-      if (!ctrlKey || !e.altKey)
-        return false
-      break
-    case 'none':
-    default:
-      if (ctrlKey || e.altKey)
-        return false
-      break
-  }
-
-  return true
-}
-
 async function consultDic(e, word, top, left) {
   const url = buildNaverApiUrl(word)
 
@@ -221,133 +217,128 @@ function openPopup(e, key=null, type='search') {
     left = window.innerWidth - popupWidth - marginLeft - marginRight
   }
 
-  let selection = window.getSelection()
+  const text = getSelectionText(window.getSelection())
+  if (!text) {
+    return
+  }
 
-  if (selection.rangeCount > 0) {
-      let text = selection.toString()
-      if (!text) {
-        return
-      }
-
-      if (type == 'translate') {
-        translate(e, text, top, left, key)
-      }
-      else {
-        let english = /^[A-Za-z]*$/
-        if (english.test(text[0]) && text.split(/\s+/).length < 6) {
-          consultDic(e, text.toLowerCase(), top, left)
-        }
-      }
+  if (type === 'translate') {
+    translate(e, text, top, left, key)
+  }
+  else {
+    const word = getDictionaryQuery(text)
+    if (word) {
+      consultDic(e, word, top, left)
+    }
   }
 }
 
-function registerEventListener() {
-  chrome.storage.sync.get({
-    dclick: DEFAULT_OPTIONS.DCLICK,
-    dclick_trigger_key: DEFAULT_OPTIONS.DCLICK_TRIGGER,
-    dclick_speed: DEFAULT_OPTIONS.DCLICK_SPEED,
-    drag: DEFAULT_OPTIONS.DRAG,
-    drag_trigger_key: DEFAULT_OPTIONS.DRAG_TRIGGER,
-    translate: DEFAULT_OPTIONS.TRANSLATE,
-    translate_trigger_key: DEFAULT_OPTIONS.TRANSLATE_TRIGGER,
-    deepl_auth_key: DEFAULT_OPTIONS.DEEPL_AUTH_KEY,
-    popup_bgcolor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
-    popup_fontcolor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
-    popup_fontsize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
-    use_deny_list: DEFAULT_OPTIONS.USE_DENY_LIST,
-    safe_urls: DEFAULT_OPTIONS.SAFE_URLS
-  }, function(items) {
-    if (!items.dclick && !items.drag && !items.translate) {
-      return
-    }
+function removePopup() {
+  document.getElementById('popupFrame')?.remove()
+}
 
-    if (items.use_deny_list) {
-      if (items.safe_urls) {
-        const host = window.location.host;
-        const urls = items.safe_urls.split(',')
-        if (urls && urls[0].length > 3 && urls.some(v=>host.includes(v))) {
-          return
-        }
-      }
-    }
+function applyOptions(items) {
+  const nextItems = {...STORAGE_DEFAULTS, ...(items || {})}
+  currentItems = nextItems
 
-    let mousedown = false
-    let mousemove = false
-    let clicks = 0
-    let timeout
-    let prevX
-    const scrollXOffset = 8
+  activeInteractionController?.destroy()
+  activeInteractionController = null
+  removePopup()
 
-    if (items.popup_bgcolor) {
-      popupColor = items.popup_bgcolor
-    }
-    if (items.popup_fontcolor) {
-      popupFontColor = items.popup_fontcolor
-    }
-    if (items.popup_fontsize) {
-      popupFontsize = items.popup_fontsize
-    }
-    if (items.dclick_speed) {
-      dClickSpeed = items.dclick_speed
-    }
+  popupColor = nextItems.popup_bgcolor || DEFAULT_OPTIONS.POPUP_BG_COLOR
+  popupFontColor = nextItems.popup_fontcolor || DEFAULT_OPTIONS.POPUP_FONT_COLOR
+  popupFontsize = nextItems.popup_fontsize || DEFAULT_OPTIONS.POPUP_FONT_SIZE
 
-    document.body.onmousedown = function(e) {
-      mousedown = true
-      prevX = e.pageX
-    }
+  if (!nextItems.dclick && !nextItems.drag && !nextItems.translate) {
+    return
+  }
 
-    document.body.onmousemove = function(e) {
-      if (!mousedown)
-        return
-      if (Math.abs(e.pageX - prevX) > scrollXOffset)
-        mousemove = true
-    }
+  const host = window.location.hostname || window.location.host
+  if (isDeniedSite(host, nextItems.safe_urls, nextItems.use_deny_list)) {
+    return
+  }
 
-    document.body.onmouseup = function(e) {
-      if (mousemove && items.drag && checkTrigger(e, items.drag_trigger_key)) {
-        mousedown = mousemove = false
-        if (document.getElementById('popupFrame')) {
-          document.getElementById('popupFrame').remove()
-        }
-        openPopup(e)
-      }
-      else if (mousemove && items.translate && checkTrigger(e, items.translate_trigger_key)) {
-        mousedown = mousemove = false
-        if (document.getElementById('popupFrame')) {
-          document.getElementById('popupFrame').remove()
-        }
-        openPopup(e, items.deepl_auth_key, 'translate')
-      }
-      else if (!mousemove && items.dclick && checkTrigger(e, items.dclick_trigger_key)) {
-        mousedown = false
-        ++clicks
-
-        if (clicks == 1) {
-          if (document.getElementById('popupFrame')) {
-            document.getElementById('popupFrame').remove()
-          }
-          timeout = setTimeout(function () {
-            clicks = 0
-          }, dClickSpeed)
-        } else {
-          if (document.getElementById('popupFrame')) {
-            document.getElementById('popupFrame').remove()
-          }
-          clearTimeout(timeout)
-          openPopup(e)
-          clicks = 0
-        }
-      }
-      else {
-        mousedown = mousemove = false
-        if (document.getElementById('popupFrame')) {
-          document.getElementById('popupFrame').remove()
-        }
-      }
-    }
+  // This content script is injected into every frame (manifest all_frames).
+  // Binding to this frame's document keeps selection and events local to the
+  // browsing context; events do not bubble across iframe boundaries.
+  activeInteractionController = createInteractionController(nextItems, {
+    target: document,
+    openPopup,
+    removePopup,
+    checkTrigger
   })
 }
 
+function registerStorageChangeListener(storage) {
+  if (storageChangeListener || !storage?.onChanged?.addListener) {
+    return
+  }
+
+  storageChangeListener = (changes, areaName) => {
+    if (areaName && areaName !== 'sync') {
+      return
+    }
+
+    const relevantChanges = Object.keys(changes || {}).filter(key => key in STORAGE_DEFAULTS)
+    if (relevantChanges.length === 0) {
+      return
+    }
+
+    optionsRevision += 1
+    const nextItems = {...currentItems}
+    relevantChanges.forEach(key => {
+      const change = changes[key]
+      nextItems[key] = change?.newValue === undefined
+        ? STORAGE_DEFAULTS[key]
+        : change.newValue
+    })
+    applyOptions(nextItems)
+  }
+
+  storage.onChanged.addListener(storageChangeListener)
+}
+
+export function unregisterEventListener() {
+  optionsRevision += 1
+  activeInteractionController?.destroy()
+  activeInteractionController = null
+
+  if (storageChangeListener && typeof chrome !== 'undefined') {
+    chrome.storage?.onChanged?.removeListener?.(storageChangeListener)
+  }
+
+  storageChangeListener = null
+  eventRegistrationStarted = false
+  currentItems = {...STORAGE_DEFAULTS}
+  removePopup()
+}
+
+export function registerEventListener() {
+  if (eventRegistrationStarted) {
+    return
+  }
+
+  eventRegistrationStarted = true
+  const storage = typeof chrome === 'undefined' ? null : chrome.storage
+  const syncStorage = storage?.sync
+
+  registerStorageChangeListener(storage)
+
+  if (!syncStorage?.get) {
+    applyOptions(STORAGE_DEFAULTS)
+    return
+  }
+
+  const revisionAtRequest = optionsRevision
+  syncStorage.get(STORAGE_DEFAULTS, items => {
+    // A storage update may arrive before this asynchronous initial read.
+    // Do not let the stale read rebind an older configuration.
+    if (revisionAtRequest !== optionsRevision) {
+      return
+    }
+    applyOptions(items)
+  })
+}
 
 export function main() {
   registerEventListener()
