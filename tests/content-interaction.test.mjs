@@ -10,6 +10,7 @@ import {
   normalizeDenyList,
   normalizeSelectionText
 } from '../src/content-interaction.mjs'
+import { createStorageLifecycle } from '../src/content-storage.mjs'
 
 class FakeEventTarget {
   constructor() {
@@ -33,6 +34,28 @@ class FakeEventTarget {
 
   listenerCount(type) {
     return this.listeners.get(type)?.size || 0
+  }
+}
+
+class FakeStorage {
+  constructor() {
+    this.listeners = new Set()
+    this.reads = []
+    this.onChanged = {
+      addListener: listener => this.listeners.add(listener),
+      removeListener: listener => this.listeners.delete(listener)
+    }
+    this.sync = {
+      get: (_defaults, callback) => this.reads.push(callback)
+    }
+  }
+
+  emit(changes, areaName = 'sync') {
+    this.listeners.forEach(listener => listener(changes, areaName))
+  }
+
+  resolveNext(items) {
+    this.reads.shift()?.(items)
   }
 }
 
@@ -198,4 +221,47 @@ test('routes a triggered drag to translation when dictionary drag is disabled', 
 
   assert.deepEqual(opened, [[event, 'test-key', 'translate']])
   controller.destroy()
+})
+
+test('preserves unchanged settings when storage changes during initial read', () => {
+  const storage = new FakeStorage()
+  const defaults = {
+    dclick: true,
+    popup_bgcolor: '#FFF59D',
+    popup_fontsize: '11'
+  }
+  const applied = []
+  const lifecycle = createStorageLifecycle({
+    storage,
+    defaults,
+    onApply: items => applied.push(items)
+  })
+
+  lifecycle.start()
+  assert.equal(storage.reads.length, 1)
+
+  storage.emit({popup_fontsize: {newValue: '15'}})
+  assert.equal(storage.reads.length, 2)
+
+  // The initial read is stale and must not replace the newer read.
+  storage.resolveNext({
+    dclick: false,
+    popup_bgcolor: 'red',
+    popup_fontsize: '11'
+  })
+  assert.deepEqual(applied, [])
+
+  storage.resolveNext({
+    dclick: false,
+    popup_bgcolor: 'red',
+    popup_fontsize: '15'
+  })
+  assert.deepEqual(applied, [{
+    dclick: false,
+    popup_bgcolor: 'red',
+    popup_fontsize: '15'
+  }])
+
+  lifecycle.stop()
+  assert.equal(storage.listeners.size, 0)
 })

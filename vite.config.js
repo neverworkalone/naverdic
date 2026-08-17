@@ -32,6 +32,10 @@ export default defineConfig({
           dest: '.'
         },
         {
+          src: 'src/content-storage.mjs',
+          dest: '.'
+        },
+        {
           src: 'src/dictionary/parser.mjs',
           dest: 'dictionary'
         },
