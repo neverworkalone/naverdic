@@ -4,8 +4,17 @@ import test from 'node:test'
 import {
   buildDictionaryUrl,
   buildNaverApiUrl,
+  normalizeNaverDictionaryEntries,
+  parseNaverDictionaryItems,
   parseNaverDictionaryResponse
 } from '../src/dictionary/parser.mjs'
+import {
+  normalizeDictionaryEntry,
+  normalizeHttpUrl,
+  normalizeMeanings,
+  normalizeString,
+  normalizeStringList
+} from '../src/dictionary/normalizer.mjs'
 
 function response(items) {
   return {
@@ -43,6 +52,39 @@ test('parses a normal single dictionary result', () => {
       { order: '1', value: '안녕하세요' },
       { order: '2', value: '여보세요' }
     ]
+  }])
+})
+
+test('keeps parsing and normalization as separate contracts', () => {
+  const rawEntries = parseNaverDictionaryItems(response([{
+    handleEntry: '  hello  ',
+    meansCollector: [{
+      partOfSpeech: ' 명사 ',
+      means: [{ order: 1, value: ' 안녕하세요 ' }]
+    }],
+    searchPhoneticSymbolList: [{
+      symbolValue: ' həˈloʊ ',
+      symbolFile: ' https://audio.example/hello.mp3 '
+    }]
+  }]))
+
+  assert.deepEqual(rawEntries, [{
+    word: '  hello  ',
+    partOfSpeech: ' 명사 ',
+    meanings: [{ order: 1, value: ' 안녕하세요 ' }],
+    phonetics: [{
+      phoneticSymbol: ' həˈloʊ ',
+      audioUrl: ' https://audio.example/hello.mp3 '
+    }]
+  }])
+
+  assert.deepEqual(normalizeNaverDictionaryEntries(rawEntries), [{
+    word: 'hello',
+    dictionaryUrl: 'https://en.dict.naver.com/#/search?query=hello',
+    partOfSpeech: '명사',
+    phoneticSymbol: 'həˈloʊ',
+    audioUrl: 'https://audio.example/hello.mp3',
+    meanings: [{ order: '1', value: '안녕하세요' }]
   }])
 })
 
@@ -140,6 +182,68 @@ test('does not let missing meanings or invalid audio URLs throw', () => {
   assert.deepEqual(result[0].meanings, [])
   assert.equal(result[0].phoneticSymbol, '')
   assert.equal(result[0].audioUrl, '')
+})
+
+test('normalizes scalar and array values consistently', () => {
+  assert.equal(normalizeString(null), '')
+  assert.equal(normalizeString(undefined), '')
+  assert.equal(normalizeString('  text  '), 'text')
+  assert.equal(normalizeString(12), '12')
+  assert.equal(normalizeString(false), 'false')
+  assert.equal(normalizeString({value: 'text'}), '')
+
+  assert.deepEqual(normalizeStringList(null), [])
+  assert.deepEqual(normalizeStringList('text'), [])
+  assert.deepEqual(normalizeStringList([' text ', '', null, 12, false, ['nested']]), [
+    'text',
+    '12',
+    'false'
+  ])
+})
+
+test('normalizes missing and invalid entry fields to the stable contract', () => {
+  assert.deepEqual(normalizeDictionaryEntry({
+    word: '  partial ',
+    partOfSpeech: null,
+    meanings: [
+      null,
+      { order: 1, value: ' first ' },
+      'invalid',
+      { order: undefined, value: undefined }
+    ],
+    phonetics: [
+      { phoneticSymbol: 'bad', audioUrl: 'javascript:alert(1)' },
+      { phoneticSymbol: 'good', audioUrl: ' https://audio.example/good.mp3 ' }
+    ]
+  }), {
+    word: 'partial',
+    partOfSpeech: '',
+    phoneticSymbol: 'good',
+    audioUrl: 'https://audio.example/good.mp3',
+    meanings: [
+      { order: '1', value: 'first' },
+      { order: '', value: '' }
+    ]
+  })
+
+  assert.equal(normalizeDictionaryEntry(null), null)
+  assert.deepEqual(normalizeMeanings(null), [])
+  assert.deepEqual(normalizeMeanings([]), [])
+  assert.equal(normalizeHttpUrl(null), '')
+  assert.equal(normalizeHttpUrl('data:audio/wav;base64,abc'), '')
+})
+
+test('ignores invalid sibling entries while preserving valid response order', () => {
+  const result = parseNaverDictionaryResponse(response([
+    null,
+    'invalid',
+    { handleEntry: ' first ', meansCollector: [{ means: [] }] },
+    { handleEntry: 'second', meansCollector: undefined }
+  ]))
+
+  assert.deepEqual(result.map(entry => entry.word), ['first', 'second'])
+  assert.equal(result[0].dictionaryUrl, 'https://en.dict.naver.com/#/search?query=first')
+  assert.deepEqual(result[1].meanings, [])
 })
 
 test('keeps HTML-looking response values as plain data', () => {

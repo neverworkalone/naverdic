@@ -1,103 +1,127 @@
+import {
+  normalizeDictionaryEntries,
+  normalizeString
+} from './normalizer.mjs'
+
 const NAVER_API_URL = 'https://en.dict.naver.com/api3/enko/search?m=mobile&lang=ko&query='
 const NAVER_DICTIONARY_URL = 'https://en.dict.naver.com/#/search?query='
 
-function toText(value) {
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return String(value)
-  }
-
-  return ''
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
-function toHttpUrl(value) {
-  const candidate = toText(value).trim()
-  if (!candidate) {
-    return ''
+function getWordItems(data) {
+  if (!isRecord(data)) {
+    return []
   }
 
-  try {
-    const parsed = new URL(candidate)
-    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return candidate
-    }
-  } catch {
-    // Ignore malformed external URLs.
-  }
+  const searchResultMap = data.searchResultMap
+  const listMap = isRecord(searchResultMap)
+    ? searchResultMap.searchResultListMap
+    : null
+  const wordResults = isRecord(listMap) ? listMap.WORD : null
 
-  return ''
+  return isRecord(wordResults) && Array.isArray(wordResults.items)
+    ? wordResults.items
+    : []
 }
 
-function getFirstAudioEntry(item) {
-  if (!Array.isArray(item.searchPhoneticSymbolList)) {
+function getFirstRecord(value) {
+  if (!Array.isArray(value)) {
     return null
   }
 
-  for (const phoneticEntry of item.searchPhoneticSymbolList) {
-    if (!phoneticEntry || typeof phoneticEntry !== 'object') {
-      continue
-    }
-
-    const audioUrl = toHttpUrl(phoneticEntry.symbolFile)
-    if (audioUrl) {
-      return {
-        phoneticSymbol: toText(phoneticEntry.symbolValue),
-        audioUrl
-      }
+  for (const item of value) {
+    if (isRecord(item)) {
+      return item
     }
   }
 
   return null
 }
 
-function getFirstCollector(item) {
-  if (!Array.isArray(item.meansCollector)) {
-    return null
-  }
-
-  return item.meansCollector.find(collector => collector && typeof collector === 'object') || null
-}
-
-function getMeanings(collector) {
-  if (!collector || !Array.isArray(collector.means)) {
+function parsePhoneticEntries(value) {
+  if (!Array.isArray(value)) {
     return []
   }
 
-  return collector.means
-    .filter(meaning => meaning && typeof meaning === 'object')
-    .map(meaning => ({
-      order: toText(meaning.order),
-      value: toText(meaning.value)
+  return value
+    .filter(isRecord)
+    .map(item => ({
+      phoneticSymbol: item.symbolValue,
+      audioUrl: item.symbolFile
     }))
 }
 
-export function buildNaverApiUrl(query) {
-  return NAVER_API_URL + encodeURIComponent(toText(query))
+/**
+ * Parse one API item into the raw dictionary-entry shape consumed by the
+ * normalizer. No trimming, URL validation, or presentation URL generation is
+ * performed here.
+ */
+export function parseNaverDictionaryItem(item) {
+  if (!isRecord(item)) {
+    return null
+  }
+
+  const collector = getFirstRecord(item.meansCollector)
+
+  return {
+    word: item.handleEntry,
+    partOfSpeech: collector?.partOfSpeech,
+    meanings: Array.isArray(collector?.means) ? collector.means : [],
+    phonetics: parsePhoneticEntries(item.searchPhoneticSymbolList)
+  }
 }
 
-export function buildDictionaryUrl(word) {
-  return NAVER_DICTIONARY_URL + encodeURIComponent(toText(word))
-}
+/**
+ * Parse only the known Naver response envelope and preserve the API values.
+ * The returned records are deliberately not renderer-ready; callers should
+ * pass them through normalizeNaverDictionaryEntries.
+ */
+export function parseNaverDictionaryItems(data) {
+  let items
 
-export function parseNaverDictionaryResponse(data) {
-  const items = data?.searchResultMap?.searchResultListMap?.WORD?.items
-  if (!Array.isArray(items)) {
+  try {
+    items = getWordItems(data)
+  } catch {
     return []
   }
 
-  return items
-    .filter(item => item && typeof item === 'object')
-    .map(item => {
-      const word = toText(item.handleEntry)
-      const collector = getFirstCollector(item)
-      const audioEntry = getFirstAudioEntry(item)
-
-      return {
-        word,
-        dictionaryUrl: buildDictionaryUrl(word),
-        partOfSpeech: toText(collector?.partOfSpeech),
-        phoneticSymbol: audioEntry?.phoneticSymbol || '',
-        audioUrl: audioEntry?.audioUrl || '',
-        meanings: getMeanings(collector)
+  const parsedItems = []
+  for (const item of items) {
+    try {
+      const parsedItem = parseNaverDictionaryItem(item)
+      if (parsedItem) {
+        parsedItems.push(parsedItem)
       }
-    })
+    } catch {
+      // Ignore one malformed item without discarding valid sibling entries.
+    }
+  }
+
+  return parsedItems
+}
+
+/**
+ * Convert parsed entries to the stable renderer contract used by Popup.vue
+ * and content.js. The dictionary URL is derived only after the headword has
+ * been normalized.
+ */
+export function normalizeNaverDictionaryEntries(entries) {
+  return normalizeDictionaryEntries(entries).map(entry => ({
+    ...entry,
+    dictionaryUrl: buildDictionaryUrl(entry.word)
+  }))
+}
+
+export function buildNaverApiUrl(query) {
+  return NAVER_API_URL + encodeURIComponent(normalizeString(query))
+}
+
+export function buildDictionaryUrl(word) {
+  return NAVER_DICTIONARY_URL + encodeURIComponent(normalizeString(word))
+}
+
+export function parseNaverDictionaryResponse(data) {
+  return normalizeNaverDictionaryEntries(parseNaverDictionaryItems(data))
 }
