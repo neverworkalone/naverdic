@@ -1,3 +1,5 @@
+import { getDefaultSettings, normalizeSettings } from './settings.mjs'
+
 /**
  * Keep the content-script configuration in sync with chrome.storage.
  *
@@ -6,22 +8,26 @@
  * of merging a partial change into defaults while the initial read is still
  * pending.
  */
-export function createStorageLifecycle({storage, defaults, onApply}) {
+export function createStorageLifecycle({storage, defaults, normalize, onApply}) {
+  const storageDefaults = defaults || getDefaultSettings()
+  const normalizeItems = normalize || (defaults
+    ? items => ({...storageDefaults, ...(items || {})})
+    : normalizeSettings)
   let listener = null
   let started = false
   let revision = 0
-  let currentItems = {...defaults}
+  let currentItems = normalizeItems(storageDefaults)
 
   function readLatest() {
     const revisionAtRequest = revision
 
-    storage.sync.get(defaults, items => {
+    storage.sync.get(storageDefaults, items => {
       if (revisionAtRequest !== revision) {
         return
       }
 
-      currentItems = {...defaults, ...(items || {})}
-      onApply(currentItems)
+      currentItems = normalizeItems(items)
+      onApply?.(currentItems)
     })
   }
 
@@ -29,18 +35,18 @@ export function createStorageLifecycle({storage, defaults, onApply}) {
     const nextItems = {...currentItems}
 
     Object.keys(changes || {}).forEach(key => {
-      if (!(key in defaults)) {
+      if (!(key in storageDefaults)) {
         return
       }
 
       const change = changes[key]
       nextItems[key] = change?.newValue === undefined
-        ? defaults[key]
+        ? storageDefaults[key]
         : change.newValue
     })
 
-    currentItems = nextItems
-    onApply(currentItems)
+    currentItems = normalizeItems(nextItems)
+    onApply?.(currentItems)
   }
 
   function handleStorageChange(changes, areaName) {
@@ -48,7 +54,7 @@ export function createStorageLifecycle({storage, defaults, onApply}) {
       return
     }
 
-    const hasRelevantChange = Object.keys(changes || {}).some(key => key in defaults)
+    const hasRelevantChange = Object.keys(changes || {}).some(key => key in storageDefaults)
     if (!hasRelevantChange) {
       return
     }
@@ -83,8 +89,8 @@ export function createStorageLifecycle({storage, defaults, onApply}) {
       return
     }
 
-    currentItems = {...defaults}
-    onApply(currentItems)
+    currentItems = normalizeItems(storageDefaults)
+    onApply?.(currentItems)
   }
 
   function stop() {
@@ -96,7 +102,7 @@ export function createStorageLifecycle({storage, defaults, onApply}) {
 
     listener = null
     started = false
-    currentItems = {...defaults}
+    currentItems = normalizeItems(storageDefaults)
   }
 
   return {start, stop}

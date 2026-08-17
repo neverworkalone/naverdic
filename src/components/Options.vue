@@ -1,23 +1,14 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { getText } from '/src/text.js'
-import { DEFAULT_OPTIONS } from '/src/content.js'
+import {
+  createOptionForm,
+  optionFormFromSettings,
+  settingsFromOptionForm
+} from '/src/settings.mjs'
+import { loadSettings, saveSettings } from '/src/settings-storage.mjs'
 
-const options = reactive({
-  dClick: DEFAULT_OPTIONS.DCLICK,
-  dClickTrigger: DEFAULT_OPTIONS.DCLICK_TRIGGER,
-  dClickSpeed: DEFAULT_OPTIONS.DCLICK_SPEED,
-  drag: DEFAULT_OPTIONS.DRAG,
-  dragTrigger: DEFAULT_OPTIONS.DRAG_TRIGGER,
-  translate: DEFAULT_OPTIONS.TRANSLATE,
-  translateTrigger: DEFAULT_OPTIONS.TRANSLATE_TRIGGER,
-  deeplAuthKey: DEFAULT_OPTIONS.DEEPL_AUTH_KEY,
-  popupBGColor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
-  popupFontColor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
-  popupFontSize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
-  useDenyList: DEFAULT_OPTIONS.USE_DENY_LIST,
-  safeURLs: DEFAULT_OPTIONS.SAFE_URLS
-})
+const options = reactive(createOptionForm())
 const version = chrome.runtime.getManifest().version
 let statusText = ref('')
 
@@ -36,21 +27,7 @@ function saveOptions() {
     options.safeURLs = options.safeURLs.replace(/\s/g, '')
   }
 
-  chrome.storage.sync.set({
-    dclick: options.dClick,
-    dclick_trigger_key: options.dClickTrigger,
-    dclick_speed: options.dClickSpeed,
-    drag: options.drag,
-    drag_trigger_key: options.dragTrigger,
-    translate: options.translate,
-    translate_trigger_key: options.translateTrigger,
-    deepl_auth_key: options.deeplAuthKey,
-    popup_bgcolor: options.popupBGColor,
-    popup_fontcolor: options.popupFontColor,
-    popup_fontsize: options.popupFontSize,
-    use_deny_list: options.useDenyList,
-    safe_urls: options.safeURLs
-  }, function() {
+  saveSettings(chrome.storage, settingsFromOptionForm(options), function() {
     statusText.value = getText('SAVE_STATUS');
     setTimeout(function() {
       statusText.value = ''
@@ -59,67 +36,15 @@ function saveOptions() {
 }
 
 function loadOptions() {
-  chrome.storage.sync.get({
-    dclick: DEFAULT_OPTIONS.DCLICK,
-    dclick_trigger_key: DEFAULT_OPTIONS.DCLICK_TRIGGER,
-    dclick_speed: DEFAULT_OPTIONS.DCLICK_SPEED,
-    drag: DEFAULT_OPTIONS.DRAG,
-    drag_trigger_key: DEFAULT_OPTIONS.DRAG_TRIGGER,
-    translate: DEFAULT_OPTIONS.TRANSLATE,
-    translate_trigger_key: DEFAULT_OPTIONS.TRANSLATE_TRIGGER,
-    deepl_auth_key: DEFAULT_OPTIONS.DEEPL_AUTH_KEY,
-    popup_bgcolor: DEFAULT_OPTIONS.POPUP_BG_COLOR,
-    popup_fontcolor: DEFAULT_OPTIONS.POPUP_FONT_COLOR,
-    popup_fontsize: DEFAULT_OPTIONS.POPUP_FONT_SIZE,
-    use_deny_list: DEFAULT_OPTIONS.USE_DENY_LIST,
-    safe_urls: DEFAULT_OPTIONS.SAFE_URLS
-  }, function(items) {
-    options.dClick = items.dclick
-    options.dClickTrigger = items.dclick_trigger_key
-    options.dClickSpeed = items.dclick_speed
-    options.drag = items.drag
-    options.dragTrigger = items.drag_trigger_key
-    options.translate = items.translate
-    options.translateTrigger = items.translate_trigger_key
-    options.deeplAuthKey = items.deepl_auth_key
-    options.popupBGColor = items.popup_bgcolor
-    options.popupFontColor = items.popup_fontcolor
-    options.popupFontSize = items.popup_fontsize
-    options.useDenyList = items.use_deny_list
-    options.safeURLs = items.safe_urls
+  loadSettings(chrome.storage, function(items) {
+    Object.assign(options, optionFormFromSettings(items))
   })
 }
 
 function resetOptions() {
-  options.dClick = DEFAULT_OPTIONS.DCLICK
-  options.dClickTrigger = DEFAULT_OPTIONS.DCLICK_TRIGGER
-  options.dClickSpeed = DEFAULT_OPTIONS.DCLICK_SPEED
-  options.drag = DEFAULT_OPTIONS.DRAG
-  options.dragTrigger = DEFAULT_OPTIONS.DRAG_TRIGGER
-  options.translate = DEFAULT_OPTIONS.TRANSLATE
-  options.translateTrigger = DEFAULT_OPTIONS.TRANSLATE_TRIGGER
-  options.deeplAuthKey = DEFAULT_OPTIONS.DEEPL_AUTH_KEY
-  options.popupBGColor = DEFAULT_OPTIONS.POPUP_BG_COLOR
-  options.popupFontColor = DEFAULT_OPTIONS.POPUP_FONT_COLOR
-  options.popupFontSize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
-  options.useDenyList = DEFAULT_OPTIONS.USE_DENY_LIST
-  options.safeURLs = DEFAULT_OPTIONS.SAFE_URLS
+  Object.assign(options, createOptionForm())
 
-  chrome.storage.sync.set({
-    dclick: options.dClick,
-    dclick_trigger_key: options.dClickTrigger,
-    dclick_speed: options.dClickSpeed,
-    drag: options.drag,
-    drag_trigger_key: options.dragTrigger,
-    translate: options.translate,
-    translate_trigger_key: options.translateTrigger,
-    deepl_auth_key: options.deeplAuthKey,
-    popup_bgcolor: options.popupBGColor,
-    popup_fontcolor: options.popupFontColor,
-    popup_fontsize: options.popupFontSize,
-    use_deny_list: options.useDenyList,
-    safe_urls: options.safeURLs
-  }, function() {
+  saveSettings(chrome.storage, settingsFromOptionForm(options), function() {
     statusText.value = getText('RESET_STATUS');
     setTimeout(function() {
       statusText.value = ''
