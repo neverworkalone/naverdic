@@ -1,7 +1,7 @@
 {
   "name": "naverdic",
   "private": true,
-  "version": "6.5.0",
+  "version": "6.6.0",
   "scripts": {
     "dev": "vite",
     "test": "node --test tests/*.test.mjs",
