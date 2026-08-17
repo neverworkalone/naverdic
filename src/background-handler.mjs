@@ -163,16 +163,34 @@ function timeoutError() {
   return error
 }
 
-/**
- * Race a background fetch against a bounded timeout. AbortController is used
- * when available, while the race also protects test and older runtimes whose
- * fetch implementation does not support abort signals.
- */
-export async function fetchWithTimeout(fetchFn, url, options, timeoutMs) {
+function invalidJsonError() {
+  const error = new Error('The network response was not valid JSON.')
+  error.code = MESSAGE_ERROR_CODES.INVALID_RESPONSE
+  return error
+}
+
+function effectiveTimeout(timeoutMs) {
   const normalizedTimeout = Number(timeoutMs)
-  const effectiveTimeout = Number.isFinite(normalizedTimeout) && normalizedTimeout > 0
+  return Number.isFinite(normalizedTimeout) && normalizedTimeout > 0
     ? normalizedTimeout
     : DEFAULT_MESSAGE_TIMEOUT_MS
+}
+
+/**
+ * Race a background fetch and response processing against one bounded
+ * deadline. The optional responseHandler is used to parse the body while the
+ * same timer is still active. AbortController is used when available, while
+ * the race also protects test and older runtimes whose fetch implementation
+ * does not support abort signals.
+ */
+export async function fetchWithTimeout(
+  fetchFn,
+  url,
+  options,
+  timeoutMs,
+  responseHandler = response => response
+) {
+  const timeout = effectiveTimeout(timeoutMs)
   const controller = typeof AbortController === 'function'
     ? new AbortController()
     : null
@@ -183,16 +201,22 @@ export async function fetchWithTimeout(fetchFn, url, options, timeoutMs) {
   }
 
   let timeoutId = null
-  const fetchPromise = Promise.resolve().then(() => fetchFn(url, fetchOptions))
+  let rejectTimeout
   const timeoutPromise = new Promise((_resolve, reject) => {
+    rejectTimeout = reject
     timeoutId = setTimeout(() => {
       controller?.abort()
-      reject(timeoutError())
-    }, effectiveTimeout)
+      rejectTimeout(timeoutError())
+    }, timeout)
   })
+  const fetchPromise = Promise.resolve().then(() => fetchFn(url, fetchOptions))
 
   try {
-    return await Promise.race([fetchPromise, timeoutPromise])
+    const response = await Promise.race([fetchPromise, timeoutPromise])
+    return await Promise.race([
+      Promise.resolve().then(() => responseHandler(response)),
+      timeoutPromise
+    ])
   } finally {
     if (timeoutId !== null) {
       clearTimeout(timeoutId)
@@ -241,6 +265,13 @@ function networkErrorResponse(error) {
     )
   }
 
+  if (error?.code === MESSAGE_ERROR_CODES.INVALID_RESPONSE) {
+    return createErrorResponse(
+      MESSAGE_ERROR_CODES.INVALID_RESPONSE,
+      error.message
+    )
+  }
+
   return createErrorResponse(
     MESSAGE_ERROR_CODES.NETWORK_ERROR,
     error?.message || 'The network request failed.'
@@ -282,18 +313,37 @@ export async function handleBackgroundMessage(
     )
   }
 
-  let response
+  let result
   try {
-    response = await fetchWithTimeout(
+    result = await fetchWithTimeout(
       fetchFn,
       request.url,
       requestOptions(request),
-      timeoutMs
+      timeoutMs,
+      async response => {
+        if (!response || typeof response.json !== 'function') {
+          return {response}
+        }
+
+        if (response.ok === false || response.status >= 400) {
+          return {response}
+        }
+
+        let data
+        try {
+          data = await response.json()
+        } catch (_error) {
+          throw invalidJsonError()
+        }
+
+        return {response, data}
+      }
     )
   } catch (error) {
     return networkErrorResponse(error)
   }
 
+  const response = result?.response
   if (!response || typeof response.json !== 'function') {
     return createErrorResponse(
       MESSAGE_ERROR_CODES.INVALID_RESPONSE,
@@ -305,17 +355,7 @@ export async function handleBackgroundMessage(
     return httpErrorResponse(response)
   }
 
-  let data
-  try {
-    data = await response.json()
-  } catch (_error) {
-    return createErrorResponse(
-      MESSAGE_ERROR_CODES.INVALID_RESPONSE,
-      'The network response was not valid JSON.'
-    )
-  }
-
-  return responsePayloadError(request.action, data) || createSuccessResponse(data)
+  return responsePayloadError(request.action, result.data) || createSuccessResponse(result.data)
 }
 
 /**

@@ -162,6 +162,16 @@ test('turns HTTP, network, timeout, and malformed responses into explicit errors
     timeoutMs: 5
   })
   assert.equal(timeout.error.code, MESSAGE_ERROR_CODES.TIMEOUT)
+
+  const bodyTimeout = await handleBackgroundMessage(dictionaryRequest(), {
+    fetchFn: async () => ({
+      ok: true,
+      status: 200,
+      json: () => new Promise(() => {})
+    }),
+    timeoutMs: 5
+  })
+  assert.equal(bodyTimeout.error.code, MESSAGE_ERROR_CODES.TIMEOUT)
 })
 
 test('runtime sender handles lastError, invalid responses, timeout, and duplicate delivery', async () => {
