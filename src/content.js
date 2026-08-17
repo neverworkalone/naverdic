@@ -8,6 +8,13 @@ import {
 } from './content-interaction.mjs'
 import { createStorageLifecycle } from './content-storage.mjs'
 import {
+  MESSAGE_ERROR_CODES,
+  createDictionaryRequest,
+  createTranslationRequest,
+  reportMessageFailure,
+  sendRuntimeMessage
+} from './messaging.mjs'
+import {
   DEFAULT_OPTIONS,
   normalizeSettings,
   STORAGE_DEFAULTS
@@ -146,37 +153,53 @@ function showFrame(e, datain, top, left, type = 'dictionary') {
 async function consultDic(e, word, top, left) {
   const url = buildNaverApiUrl(word)
 
-  chrome.runtime.sendMessage({
-    method: 'GET',
-    action: 'endic',
-    url: url,
-  }, function(data) {
-    if (!data) {
-      return
-    }
+  const response = await sendRuntimeMessage(
+    chrome.runtime,
+    createDictionaryRequest({method: 'GET', url})
+  )
 
-    showFrame(e, parseNaverDictionaryResponse(data), top, left)
-  })
+  if (!response.ok) {
+    reportMessageFailure('dictionary lookup', response)
+    return
+  }
+
+  showFrame(e, parseNaverDictionaryResponse(response.data), top, left)
 }
 
 async function translate(e, text, top, left, key) {
   const url = 'https://api-free.deepl.com/v2/translate'
 
-  chrome.runtime.sendMessage({
-    method: 'POST',
-    action: 'translation',
-    url: url,
-    key: key,
-    data: {
-      text: [text],
-      target_lang: 'ko'
-    },
-  }, function(data) {
-    if (!data) {
-      return
-    }
-    showFrame(e, data['translations'][0]['text'], top, left, 'translation');
-  })
+  const response = await sendRuntimeMessage(
+    chrome.runtime,
+    createTranslationRequest({
+      method: 'POST',
+      url,
+      key,
+      data: {
+        text: [text],
+        target_lang: 'ko'
+      }
+    })
+  )
+
+  if (!response.ok) {
+    reportMessageFailure('translation', response)
+    return
+  }
+
+  const translatedText = response.data?.translations?.[0]?.text
+  if (typeof translatedText !== 'string') {
+    reportMessageFailure('translation', {
+      ok: false,
+      error: {
+        code: MESSAGE_ERROR_CODES.INVALID_RESPONSE,
+        message: 'The translation response did not include translated text.'
+      }
+    })
+    return
+  }
+
+  showFrame(e, translatedText, top, left, 'translation')
 }
 
 function openPopup(e, key=null, type='search') {
