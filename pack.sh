@@ -28,7 +28,11 @@ rm -f \
   "$DIST_DIR/favicon.ico" \
   "$DIST_DIR/logo.png" \
   "$DIST_DIR/icon.png"
-find "$DIST_DIR/assets" -maxdepth 1 -type f -name 'index-*' -delete
+for index_asset in "$DIST_DIR"/assets/index-*; do
+  if [[ -f "$index_asset" ]]; then
+    rm -f "$index_asset"
+  fi
+done
 
 ZIP_NAME="$(python3 "$PROJECT_ROOT/pack.py")"
 ZIP_DIR="${NAVERDIC_ZIP_DIR:-${HOME:-$PROJECT_ROOT}/Downloads}"
