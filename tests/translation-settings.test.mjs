@@ -6,7 +6,10 @@ import {
   providerIdFromName,
   validateCustomProviderForm
 } from '../src/translation-settings.mjs'
-import {testTranslationProvider} from '../src/translation-testing.mjs'
+import {
+  requestTranslationProviderPermission,
+  testTranslationProvider
+} from '../src/translation-testing.mjs'
 import {getProviderPreset} from '../src/translation-provider.mjs'
 
 function jsonResponse(data) {
@@ -123,6 +126,25 @@ test('tests a custom provider only after the optional origin permission is grant
 
   assert.equal(translation.text, '연결됨')
   assert.deepEqual(permissionCalls, [{origins: ['https://api.example.test/*']}])
+})
+
+test('requests custom provider permission before selecting its endpoint', async () => {
+  const form = createCustomProviderForm()
+  form.name = 'Selection API'
+  form.url = 'https://select.example.test/translate'
+  const result = validateCustomProviderForm(form)
+  assert.equal(result.valid, true)
+
+  const permissionCalls = []
+  const granted = await requestTranslationProviderPermission(result.provider, {
+    request(details, callback) {
+      permissionCalls.push(details)
+      callback(true)
+    }
+  })
+
+  assert.equal(granted, true)
+  assert.deepEqual(permissionCalls, [{origins: ['https://select.example.test/*']}])
 })
 
 test('does not attempt a background test for Chrome built-in Translator', async () => {

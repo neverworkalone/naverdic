@@ -11,6 +11,22 @@ import {
   requestProviderOriginPermission
 } from './provider-permissions.mjs'
 
+export async function requestTranslationProviderPermission(
+  provider,
+  permissionApi = globalThis.chrome?.permissions
+) {
+  if (provider?.source !== PROVIDER_SOURCES.CUSTOM) {
+    return true
+  }
+
+  const pattern = getProviderOriginPattern(provider.endpoint?.url)
+  if (!pattern) {
+    return false
+  }
+
+  return requestProviderOriginPermission(permissionApi, provider.endpoint?.url)
+}
+
 export async function testTranslationProvider(provider, {
   secrets = {},
   targetLanguage = 'ko',
@@ -27,7 +43,7 @@ export async function testTranslationProvider(provider, {
   const allowedOrigins = []
   if (provider?.source === PROVIDER_SOURCES.CUSTOM) {
     const pattern = getProviderOriginPattern(provider.endpoint?.url)
-    const granted = await requestProviderOriginPermission(permissionApi, provider.endpoint?.url)
+    const granted = await requestTranslationProviderPermission(provider, permissionApi)
     if (!pattern || !granted) {
       const error = new Error('Permission for the translation provider domain is required.')
       error.code = PROVIDER_ERROR_CODES.PERMISSION_REQUIRED

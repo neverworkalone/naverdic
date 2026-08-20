@@ -3,6 +3,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { getText } from '/src/text.js'
 import {
   PROVIDER_AUTH_MODES,
+  PROVIDER_SOURCES,
   getProviderPreset
 } from '/src/translation-provider.mjs'
 import {
@@ -11,7 +12,10 @@ import {
   getProviderCredential,
   validateCustomProviderForm
 } from '/src/translation-settings.mjs'
-import { testTranslationProvider } from '/src/translation-testing.mjs'
+import {
+  requestTranslationProviderPermission,
+  testTranslationProvider
+} from '/src/translation-testing.mjs'
 
 const props = defineProps({
   draft: {
@@ -38,13 +42,6 @@ const props = defineProps({
 
 const presetCards = Object.freeze([
   Object.freeze({
-    id: 'chrome-translator',
-    providerIds: Object.freeze(['chrome-translator']),
-    nameKey: 'SETTINGS_TRANSLATION_CHROME_NAME',
-    descriptionKey: 'SETTINGS_TRANSLATION_CHROME_DESCRIPTION',
-    badgeKey: 'SETTINGS_TRANSLATION_DEFAULT_BADGE'
-  }),
-  Object.freeze({
     id: 'deepl',
     providerIds: Object.freeze(['deepl-free', 'deepl-pro']),
     nameKey: 'SETTINGS_TRANSLATION_DEEPL_NAME',
@@ -65,8 +62,23 @@ const formErrors = ref([])
 const showApiKey = ref(false)
 const connectionState = ref('idle')
 const connectionMessageKey = ref('')
+const providerSelectionState = ref('idle')
+const providerSelectionMessageKey = ref('')
+let connectionRequestId = 0
+let providerSelectionRequestId = 0
 
 const controlsDisabled = computed(() => props.isLoading || props.isSaving)
+const connectionTesting = computed(() => connectionState.value === 'testing')
+const interactionDisabled = computed(() => (
+  controlsDisabled.value ||
+  connectionTesting.value ||
+  providerSelectionState.value === 'requesting'
+))
+const editorControlsDisabled = computed(() => (
+  controlsDisabled.value ||
+  connectionTesting.value ||
+  providerSelectionState.value === 'requesting'
+))
 const translation = computed(() => props.draft.translation || {})
 const customProviders = computed(() => props.draft.customProviders || {})
 const activeProviderId = computed(() => translation.value.providerId || 'deepl-free')
@@ -133,14 +145,53 @@ function providerName(card) {
   return card.name || text(card.nameKey)
 }
 
-function selectProvider(providerId) {
-  if (controlsDisabled.value || !providerForId(providerId)) {
-    return
+async function requestCustomProviderAccess(provider) {
+  if (provider?.source !== PROVIDER_SOURCES.CUSTOM) {
+    return true
+  }
+
+  const requestId = ++providerSelectionRequestId
+  providerSelectionState.value = 'requesting'
+  providerSelectionMessageKey.value = 'SETTINGS_TRANSLATION_PERMISSION_REQUESTING'
+  const granted = await requestTranslationProviderPermission(provider)
+
+  if (requestId !== providerSelectionRequestId) {
+    return false
+  }
+
+  if (!granted) {
+    providerSelectionState.value = 'error'
+    providerSelectionMessageKey.value = 'SETTINGS_TRANSLATION_PERMISSION_REQUIRED'
+    return false
+  }
+
+  providerSelectionState.value = 'idle'
+  providerSelectionMessageKey.value = ''
+  return true
+}
+
+async function selectProvider(providerId) {
+  if (interactionDisabled.value || !providerForId(providerId)) {
+    return false
+  }
+
+  const provider = providerForId(providerId)
+  providerSelectionState.value = 'idle'
+  providerSelectionMessageKey.value = ''
+
+  if (!await requestCustomProviderAccess(provider)) {
+    return false
   }
 
   props.draft.translation.providerId = providerId
-  connectionState.value = 'idle'
-  connectionMessageKey.value = ''
+  providerSelectionState.value = 'idle'
+  providerSelectionMessageKey.value = ''
+  invalidateConnectionState()
+  return true
+}
+
+function selectProviderFromControl(event) {
+  selectProvider(event.target.value)
 }
 
 function selectCard(card) {
@@ -148,13 +199,13 @@ function selectCard(card) {
 }
 
 function toggleTranslation(event) {
-  if (!controlsDisabled.value) {
+  if (!interactionDisabled.value) {
     props.draft.translation.enabled = event.target.checked
   }
 }
 
 function openPresetEditor(providerId) {
-  if (controlsDisabled.value) {
+  if (interactionDisabled.value) {
     return
   }
 
@@ -167,7 +218,7 @@ function openPresetEditor(providerId) {
 }
 
 function openCustomEditor(providerId) {
-  if (controlsDisabled.value) {
+  if (interactionDisabled.value) {
     return
   }
 
@@ -195,7 +246,7 @@ function openProviderSettings(card) {
 }
 
 function startCustomProvider() {
-  if (controlsDisabled.value) {
+  if (interactionDisabled.value) {
     return
   }
 
@@ -209,6 +260,8 @@ function startCustomProvider() {
 }
 
 function closeEditor() {
+  connectionRequestId += 1
+  providerSelectionRequestId += 1
   editorMode.value = ''
   editorProviderId.value = ''
   formErrors.value = []
@@ -249,6 +302,7 @@ function presetCredentialValue(provider) {
 
 function updatePresetCredential(event) {
   setProviderSecret(editorProvider.value, event.target.value)
+  invalidateConnectionState()
 }
 
 function switchDeepLVariant(event) {
@@ -299,8 +353,8 @@ function applyCustomCredential(provider, result, previousProvider = null) {
   }
 }
 
-function saveCustomProvider() {
-  if (controlsDisabled.value) {
+async function saveCustomProvider() {
+  if (editorControlsDisabled.value) {
     return
   }
 
@@ -318,16 +372,24 @@ function saveCustomProvider() {
   const previousProvider = editorProviderId.value
     ? providers[editorProviderId.value]
     : null
+  const wasActive = activeProviderId.value === previousProvider?.id
+  if (wasActive && !await requestCustomProviderAccess(result.provider)) {
+    return
+  }
+
   if (previousProvider && previousProvider.id !== result.provider.id) {
     delete providers[previousProvider.id]
   }
   providers[result.provider.id] = result.provider
+  if (wasActive) {
+    props.draft.translation.providerId = result.provider.id
+  }
   applyCustomCredential(result.provider, result, previousProvider)
   closeEditor()
 }
 
 function deleteCustomProvider(providerId) {
-  if (controlsDisabled.value) {
+  if (interactionDisabled.value) {
     return
   }
 
@@ -389,6 +451,7 @@ async function runConnectionTest(provider, secrets = props.draftSecrets) {
     return
   }
 
+  const requestId = ++connectionRequestId
   connectionState.value = 'testing'
   connectionMessageKey.value = ''
   try {
@@ -396,9 +459,15 @@ async function runConnectionTest(provider, secrets = props.draftSecrets) {
       secrets,
       targetLanguage: translation.value.targetLanguage
     })
+    if (requestId !== connectionRequestId) {
+      return
+    }
     connectionState.value = 'success'
     connectionMessageKey.value = 'SETTINGS_TRANSLATION_TEST_SUCCESS'
   } catch (error) {
+    if (requestId !== connectionRequestId) {
+      return
+    }
     connectionState.value = 'error'
     connectionMessageKey.value = error?.code === 'UNSUPPORTED_CONTEXT'
       ? 'SETTINGS_TRANSLATION_TEST_UNSUPPORTED'
@@ -411,6 +480,10 @@ function testPresetConnection() {
 }
 
 function testCustomConnection() {
+  if (editorControlsDisabled.value) {
+    return
+  }
+
   const result = validateCustomProviderForm(editorForm, {
     existingIds: customProviderIds.value,
     editingId: editorProviderId.value
@@ -422,6 +495,16 @@ function testCustomConnection() {
 
   formErrors.value = []
   runConnectionTest(result.provider, customTestSecrets(result))
+}
+
+function invalidateConnectionState() {
+  if (connectionState.value === 'testing') {
+    return
+  }
+
+  connectionRequestId += 1
+  connectionState.value = 'idle'
+  connectionMessageKey.value = ''
 }
 
 function syncAuthDefaults() {
@@ -447,8 +530,15 @@ watch(() => props.draftRevision, () => {
     return
   }
 
-  Object.assign(editorForm, createCustomProviderForm(provider, props.draftSecrets))
+  const persistedForm = createCustomProviderForm(provider, props.draftSecrets)
+  if (JSON.stringify(editorForm) === JSON.stringify(persistedForm)) {
+    Object.assign(editorForm, persistedForm)
+  }
 })
+
+watch(editorForm, () => {
+  invalidateConnectionState()
+}, {deep: true})
 </script>
 
 <template>
@@ -463,7 +553,7 @@ watch(() => props.draftRevision, () => {
         id="settings-translation-enabled"
         type="checkbox"
         :checked="translation.enabled"
-        :disabled="controlsDisabled"
+        :disabled="interactionDisabled"
         data-testid="settings-translation-enabled"
         @change="toggleTranslation"
       >
@@ -489,7 +579,7 @@ watch(() => props.draftRevision, () => {
           autocomplete="off"
           spellcheck="false"
           maxlength="12"
-          :disabled="controlsDisabled"
+          :disabled="interactionDisabled"
           data-testid="settings-translation-target-language"
         >
       </div>
@@ -500,11 +590,11 @@ watch(() => props.draftRevision, () => {
         <span>{{ text('SETTINGS_TRANSLATION_PROVIDER_HINT') }}</span>
         <select
           id="settings-translation-provider"
-          v-model="draft.translation.providerId"
-          :disabled="controlsDisabled"
+          :value="activeProviderId"
+          :disabled="interactionDisabled"
+          @change="selectProviderFromControl"
           data-testid="settings-translation-provider"
         >
-          <option value="chrome-translator">{{ text('SETTINGS_TRANSLATION_CHROME_NAME') }}</option>
           <option value="deepl-free">DeepL Free</option>
           <option value="deepl-pro">DeepL Pro</option>
           <option value="gemini">Gemini</option>
@@ -518,6 +608,16 @@ watch(() => props.draftRevision, () => {
         </select>
       </div>
     </div>
+
+    <p
+      v-if="providerSelectionMessageKey"
+      class="translation-settings__selection-status"
+      :class="`translation-settings__selection-status--${providerSelectionState}`"
+      role="status"
+      data-testid="settings-translation-permission-status"
+    >
+      {{ text(providerSelectionMessageKey) }}
+    </p>
 
     <div class="translation-settings__services">
       <div class="translation-settings__services-heading">
@@ -550,22 +650,9 @@ watch(() => props.draftRevision, () => {
             {{ text('SETTINGS_TRANSLATION_ACTIVE') }}
           </span>
           <button
-            v-if="card.id === 'chrome-translator'"
-            type="button"
-            class="translation-provider-card__toggle"
-            :class="{'translation-provider-card__toggle--on': translation.enabled}"
-            :aria-label="text('SETTINGS_TRANSLATION_ENABLED')"
-            :disabled="controlsDisabled"
-            :aria-pressed="translation.enabled"
-            @click="toggleTranslation({target: {checked: !translation.enabled}})"
-          >
-            <span :class="{'translation-provider-card__toggle-thumb--on': translation.enabled}" />
-          </button>
-          <button
-            v-else
             type="button"
             class="translation-provider-card__action"
-            :disabled="controlsDisabled"
+            :disabled="interactionDisabled"
             @click="openProviderSettings(card)"
           >
             {{ text('SETTINGS_TRANSLATION_CONFIGURE') }}
@@ -574,7 +661,7 @@ watch(() => props.draftRevision, () => {
             v-if="!isCardActive(card)"
             type="button"
             class="translation-provider-card__use"
-            :disabled="controlsDisabled"
+            :disabled="interactionDisabled"
             @click="selectCard(card)"
           >
             {{ text('SETTINGS_TRANSLATION_USE') }}
@@ -583,7 +670,7 @@ watch(() => props.draftRevision, () => {
             v-if="card.custom"
             type="button"
             class="translation-provider-card__delete"
-            :disabled="controlsDisabled"
+            :disabled="interactionDisabled"
             :aria-label="text('SETTINGS_TRANSLATION_CUSTOM_DELETE')"
             @click="deleteCustomProvider(card.id)"
           >
@@ -595,7 +682,7 @@ watch(() => props.draftRevision, () => {
       <button
         type="button"
         class="translation-settings__add"
-        :disabled="controlsDisabled"
+        :disabled="interactionDisabled"
         data-testid="settings-translation-add-custom"
         @click="startCustomProvider"
       >
@@ -617,7 +704,7 @@ watch(() => props.draftRevision, () => {
           <h4>{{ editorProvider.name }}</h4>
           <p>{{ text('SETTINGS_TRANSLATION_PRESET_DESCRIPTION') }}</p>
         </div>
-        <button type="button" class="translation-provider-editor__close" @click="closeEditor">
+        <button type="button" class="translation-provider-editor__close" :disabled="controlsDisabled" @click="closeEditor">
           ×
         </button>
       </div>
@@ -629,7 +716,7 @@ watch(() => props.draftRevision, () => {
         <select
           id="settings-translation-deepl-variant"
           :value="editorProviderId"
-          :disabled="controlsDisabled"
+          :disabled="editorControlsDisabled"
           data-testid="settings-translation-deepl-variant"
           @change="switchDeepLVariant"
         >
@@ -648,7 +735,7 @@ watch(() => props.draftRevision, () => {
             :type="showApiKey ? 'text' : 'password'"
             :value="presetCredentialValue(editorProvider)"
             autocomplete="new-password"
-            :disabled="controlsDisabled"
+            :disabled="editorControlsDisabled"
             :placeholder="editorHasCredential ? '••••••••••••••••' : text('SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER')"
             data-testid="settings-translation-preset-api-key"
             @input="updatePresetCredential"
@@ -656,6 +743,7 @@ watch(() => props.draftRevision, () => {
           <button
             type="button"
             class="translation-provider-editor__show-secret"
+            :disabled="editorControlsDisabled"
             :aria-label="text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY')"
             @click="showApiKey = !showApiKey"
           >
@@ -672,7 +760,7 @@ watch(() => props.draftRevision, () => {
         <button
           type="button"
           class="translation-provider-editor__test"
-          :disabled="controlsDisabled || connectionState === 'testing'"
+          :disabled="editorControlsDisabled"
           data-testid="settings-translation-test"
           @click="testPresetConnection"
         >
@@ -704,7 +792,7 @@ watch(() => props.draftRevision, () => {
           <h4>{{ text(editorProviderId ? 'SETTINGS_TRANSLATION_CUSTOM_EDIT' : 'SETTINGS_TRANSLATION_CUSTOM_TITLE') }}</h4>
           <p>{{ text('SETTINGS_TRANSLATION_CUSTOM_DESCRIPTION') }}</p>
         </div>
-        <button type="button" class="translation-provider-editor__close" @click="closeEditor">
+        <button type="button" class="translation-provider-editor__close" :disabled="controlsDisabled" @click="closeEditor">
           ×
         </button>
       </div>
@@ -712,19 +800,19 @@ watch(() => props.draftRevision, () => {
       <div class="translation-provider-editor__grid">
         <label class="translation-provider-editor__field">
           {{ text('SETTINGS_TRANSLATION_CUSTOM_NAME') }}
-          <input v-model="editorForm.name" type="text" autocomplete="off" data-testid="settings-custom-name">
+          <input v-model="editorForm.name" type="text" autocomplete="off" :disabled="editorControlsDisabled" data-testid="settings-custom-name">
           <span>{{ text('SETTINGS_TRANSLATION_CUSTOM_NAME_HINT') }}</span>
         </label>
 
         <label class="translation-provider-editor__field">
           {{ text('SETTINGS_TRANSLATION_CUSTOM_URL') }}
-          <input v-model="editorForm.url" type="url" autocomplete="off" placeholder="https://api.example.com/translate" data-testid="settings-custom-url">
+          <input v-model="editorForm.url" type="url" autocomplete="off" placeholder="https://api.example.com/translate" :disabled="editorControlsDisabled" data-testid="settings-custom-url">
           <span>{{ text('SETTINGS_TRANSLATION_CUSTOM_URL_HINT') }}</span>
         </label>
 
         <label class="translation-provider-editor__field">
           {{ text('SETTINGS_TRANSLATION_CUSTOM_METHOD') }}
-          <select v-model="editorForm.method" data-testid="settings-custom-method">
+          <select v-model="editorForm.method" :disabled="editorControlsDisabled" data-testid="settings-custom-method">
             <option value="POST">POST</option>
             <option value="PUT">PUT</option>
             <option value="PATCH">PATCH</option>
@@ -733,7 +821,7 @@ watch(() => props.draftRevision, () => {
 
         <label class="translation-provider-editor__field">
           {{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_MODE') }}
-          <select v-model="editorForm.authMode" data-testid="settings-custom-auth-mode" @change="syncAuthDefaults">
+          <select v-model="editorForm.authMode" :disabled="editorControlsDisabled" data-testid="settings-custom-auth-mode" @change="syncAuthDefaults">
             <option value="none">{{ text('SETTINGS_TRANSLATION_AUTH_NONE') }}</option>
             <option value="api-key">{{ text('SETTINGS_TRANSLATION_AUTH_API_KEY') }}</option>
             <option value="bearer">{{ text('SETTINGS_TRANSLATION_AUTH_BEARER') }}</option>
@@ -745,7 +833,7 @@ watch(() => props.draftRevision, () => {
       <div v-if="editorForm.authMode !== 'none'" class="translation-provider-editor__grid">
         <label class="translation-provider-editor__field">
           {{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_LOCATION') }}
-          <select v-model="editorForm.authLocation" data-testid="settings-custom-auth-location">
+          <select v-model="editorForm.authLocation" :disabled="editorControlsDisabled" data-testid="settings-custom-auth-location">
             <option value="header">{{ text('SETTINGS_TRANSLATION_AUTH_HEADER') }}</option>
             <option value="query">{{ text('SETTINGS_TRANSLATION_AUTH_QUERY') }}</option>
           </select>
@@ -753,12 +841,12 @@ watch(() => props.draftRevision, () => {
 
         <label class="translation-provider-editor__field">
           {{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_HEADER') }}
-          <input v-model="editorForm.authHeaderName" type="text" autocomplete="off" data-testid="settings-custom-auth-header">
+          <input v-model="editorForm.authHeaderName" type="text" autocomplete="off" :disabled="editorControlsDisabled" data-testid="settings-custom-auth-header">
         </label>
 
         <label class="translation-provider-editor__field">
           {{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_PREFIX') }}
-          <input v-model="editorForm.authPrefix" type="text" autocomplete="off" data-testid="settings-custom-auth-prefix">
+          <input v-model="editorForm.authPrefix" type="text" autocomplete="off" :disabled="editorControlsDisabled" data-testid="settings-custom-auth-prefix">
         </label>
 
         <label class="translation-provider-editor__field">
@@ -768,12 +856,14 @@ watch(() => props.draftRevision, () => {
               v-model="editorForm.apiKey"
               :type="showApiKey ? 'text' : 'password'"
               autocomplete="new-password"
+              :disabled="editorControlsDisabled"
               :placeholder="editorForm.hasCredential ? '••••••••••••••••' : text('SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER')"
               data-testid="settings-custom-api-key"
             >
             <button
               type="button"
               class="translation-provider-editor__show-secret"
+              :disabled="editorControlsDisabled"
               @click="showApiKey = !showApiKey"
             >
               {{ text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY') }}
@@ -781,7 +871,7 @@ watch(() => props.draftRevision, () => {
           </div>
           <span>{{ text('SETTINGS_TRANSLATION_API_KEY_HINT') }}</span>
           <label v-if="editorForm.hasCredential" class="translation-provider-editor__clear-secret">
-            <input v-model="editorForm.clearCredential" type="checkbox">
+            <input v-model="editorForm.clearCredential" type="checkbox" :disabled="editorControlsDisabled">
             {{ text('SETTINGS_TRANSLATION_CUSTOM_CLEAR_KEY') }}
           </label>
         </label>
@@ -789,19 +879,19 @@ watch(() => props.draftRevision, () => {
 
       <label class="translation-provider-editor__field">
         {{ text('SETTINGS_TRANSLATION_CUSTOM_HEADERS') }}
-        <textarea v-model="editorForm.headersText" rows="3" spellcheck="false" data-testid="settings-custom-headers" />
+        <textarea v-model="editorForm.headersText" rows="3" spellcheck="false" :disabled="editorControlsDisabled" data-testid="settings-custom-headers" />
         <span>{{ text('SETTINGS_TRANSLATION_CUSTOM_HEADERS_HINT') }}</span>
       </label>
 
       <label class="translation-provider-editor__field">
         {{ text('SETTINGS_TRANSLATION_CUSTOM_BODY') }}
-        <textarea v-model="editorForm.bodyTemplateText" rows="6" spellcheck="false" data-testid="settings-custom-body" />
+        <textarea v-model="editorForm.bodyTemplateText" rows="6" spellcheck="false" :disabled="editorControlsDisabled" data-testid="settings-custom-body" />
         <span>{{ text('SETTINGS_TRANSLATION_CUSTOM_BODY_HINT') }}</span>
       </label>
 
       <label class="translation-provider-editor__field">
         {{ text('SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH') }}
-        <input v-model="editorForm.responsePath" type="text" autocomplete="off" data-testid="settings-custom-response-path">
+        <input v-model="editorForm.responsePath" type="text" autocomplete="off" :disabled="editorControlsDisabled" data-testid="settings-custom-response-path">
         <span>{{ text('SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH_HINT') }}</span>
       </label>
 
@@ -812,10 +902,10 @@ watch(() => props.draftRevision, () => {
       </ul>
 
       <div class="translation-provider-editor__actions">
-        <button type="submit" class="translation-provider-editor__save" data-testid="settings-custom-save">
+        <button type="submit" class="translation-provider-editor__save" :disabled="editorControlsDisabled" data-testid="settings-custom-save">
           {{ text('SETTINGS_TRANSLATION_CUSTOM_SAVE') }}
         </button>
-        <button type="button" class="translation-provider-editor__test" :disabled="connectionState === 'testing'" data-testid="settings-custom-test" @click="testCustomConnection">
+        <button type="button" class="translation-provider-editor__test" :disabled="editorControlsDisabled" data-testid="settings-custom-test" @click="testCustomConnection">
           {{ text(connectionState === 'testing' ? 'SETTINGS_TRANSLATION_TESTING' : 'SETTINGS_TRANSLATION_TEST') }}
         </button>
         <button type="button" class="translation-provider-editor__cancel" @click="closeEditor">
@@ -911,6 +1001,17 @@ watch(() => props.draftRevision, () => {
 
 .translation-settings__services {
   padding-top: 20px;
+}
+
+.translation-settings__selection-status {
+  margin: 12px 0 0;
+  color: var(--naverdic-settings-text-muted);
+  font-size: 11px;
+  line-height: 17px;
+}
+
+.translation-settings__selection-status--error {
+  color: var(--naverdic-color-danger);
 }
 
 .translation-settings__services-heading h4 {
@@ -1017,34 +1118,6 @@ watch(() => props.draftRevision, () => {
 
 .translation-provider-card__delete {
   color: var(--naverdic-color-danger);
-}
-
-.translation-provider-card__toggle {
-  position: relative;
-  width: 40px;
-  height: 22px;
-  padding: 2px;
-  background: var(--naverdic-settings-text-subtle);
-  border: 0;
-  border-radius: 999px;
-}
-
-.translation-provider-card__toggle span {
-  display: block;
-  width: 18px;
-  height: 18px;
-  background: var(--naverdic-settings-surface);
-  border-radius: 50%;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2);
-  transition: transform 120ms ease;
-}
-
-.translation-provider-card__toggle--on {
-  background: var(--naverdic-settings-primary);
-}
-
-.translation-provider-card__toggle-thumb--on {
-  transform: translateX(18px);
 }
 
 .translation-settings__add {

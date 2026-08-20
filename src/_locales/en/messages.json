@@ -442,6 +442,12 @@
   "SETTINGS_TRANSLATION_EXTERNAL_NOTE": {
     "message": "External services become available after you save an API key."
   },
+  "SETTINGS_TRANSLATION_PERMISSION_REQUESTING": {
+    "message": "Checking permission to access the Custom API domain."
+  },
+  "SETTINGS_TRANSLATION_PERMISSION_REQUIRED": {
+    "message": "Permission to access the Custom API domain is required."
+  },
   "SETTINGS_TRANSLATION_PRESET_DESCRIPTION": {
     "message": "Enter a credential and verify the connection."
   },
