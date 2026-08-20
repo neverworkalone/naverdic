@@ -23,8 +23,10 @@ export const MESSAGE_ERROR_CODES = Object.freeze({
  * {ok: false, error: {code: string, message: string, ...details}}.
  *
  * endic request:       {action: 'endic', method: 'GET', url: string}
- * translation request: {action: 'translation', method: 'POST', url: string,
- *                        key: string, data: {text: string[], target_lang: string}}
+ * translation request: {action: 'translation', method: 'POST', url?: string,
+ *                        key?: string, provider?: ProviderDefinition,
+ *                        data: {text: string[], target_lang?: string,
+ *                        targetLanguage?: string}}
  */
 export const MESSAGE_CONTRACTS = Object.freeze({
   [MESSAGE_ACTIONS.DICTIONARY]: Object.freeze({
@@ -32,8 +34,8 @@ export const MESSAGE_CONTRACTS = Object.freeze({
     response: 'MessageResponse<NaverDictionaryResponse>'
   }),
   [MESSAGE_ACTIONS.TRANSLATION]: Object.freeze({
-    request: "{ action: 'translation', method: 'POST', url: string, key: string, data: TranslationRequest }",
-    response: 'MessageResponse<DeepLTranslationResponse>'
+    request: "{ action: 'translation', method: 'POST', url?: string, key?: string, provider?: ProviderDefinition, data: TranslationRequest }",
+    response: 'MessageResponse<TranslationResponse>'
   })
 })
 
@@ -59,14 +61,20 @@ export function createDictionaryRequest({url, method = 'GET'} = {}) {
   }
 }
 
-export function createTranslationRequest({url, method = 'POST', key, data} = {}) {
-  return {
+export function createTranslationRequest({url, method = 'POST', key, data, provider} = {}) {
+  const request = {
     action: MESSAGE_ACTIONS.TRANSLATION,
     method,
     url,
     key,
     data
   }
+
+  if (provider !== undefined) {
+    request.provider = provider
+  }
+
+  return request
 }
 
 export function createSuccessResponse(data) {

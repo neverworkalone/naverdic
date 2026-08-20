@@ -19,6 +19,7 @@ import {
   normalizeSettings,
   STORAGE_DEFAULTS
 } from './settings.mjs'
+import {getProviderPreset} from './translation-provider.mjs'
 
 export { DEFAULT_OPTIONS, STORAGE_DEFAULTS }
 
@@ -32,6 +33,7 @@ let popupFontsize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
 
 let activeInteractionController = null
 let storageLifecycle = null
+const DEFAULT_TRANSLATION_PROVIDER = getProviderPreset('deepl-free')
 
 
 function appendTextWithLineBreaks(element, value) {
@@ -167,13 +169,10 @@ async function consultDic(e, word, top, left) {
 }
 
 async function translate(e, text, top, left, key) {
-  const url = 'https://api-free.deepl.com/v2/translate'
-
   const response = await sendRuntimeMessage(
     chrome.runtime,
     createTranslationRequest({
-      method: 'POST',
-      url,
+      provider: DEFAULT_TRANSLATION_PROVIDER,
       key,
       data: {
         text: [text],

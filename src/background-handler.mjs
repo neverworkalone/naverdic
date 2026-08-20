@@ -6,6 +6,12 @@ import {
   createSuccessResponse,
   respondOnce
 } from './messaging.mjs'
+import {
+  executeProviderTranslation,
+  PROVIDER_ERROR_CODES
+} from './translation-engine.mjs'
+import {getProviderPreset, normalizeProviderDefinition} from './translation-provider.mjs'
+import {hasProviderOriginPermission} from './provider-permissions.mjs'
 
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -18,7 +24,8 @@ function isHttpUrl(value) {
 
   try {
     const url = new URL(value)
-    return url.protocol === 'http:' || url.protocol === 'https:'
+    return (url.protocol === 'http:' || url.protocol === 'https:') &&
+      !url.username && !url.password
   } catch (_error) {
     return false
   }
@@ -30,6 +37,10 @@ function hasMessageAction(action) {
 
 function expectedMethod(action) {
   return action === MESSAGE_ACTIONS.DICTIONARY ? 'GET' : 'POST'
+}
+
+function hasProvider(request) {
+  return isRecord(request.provider)
 }
 
 /**
@@ -59,35 +70,39 @@ export function validateMessageRequest(request) {
     )
   }
 
-  if (request.url === undefined || request.url === null || request.url === '') {
+  const providerRequest = request.action === MESSAGE_ACTIONS.TRANSLATION && hasProvider(request)
+  if ((request.url === undefined || request.url === null || request.url === '') &&
+      !providerRequest) {
     return createErrorResponse(
       MESSAGE_ERROR_CODES.MISSING_PAYLOAD,
       'The message URL is required.'
     )
   }
 
-  if (!isHttpUrl(request.url)) {
+  if (request.url !== undefined && request.url !== null && request.url !== '' &&
+      !isHttpUrl(request.url)) {
     return createErrorResponse(
       MESSAGE_ERROR_CODES.INVALID_REQUEST,
       'The message URL must be an HTTP or HTTPS URL.'
     )
   }
 
-  if (request.method === undefined || request.method === null || request.method === '') {
+  if ((request.method === undefined || request.method === null || request.method === '') &&
+      !providerRequest) {
     return createErrorResponse(
       MESSAGE_ERROR_CODES.MISSING_PAYLOAD,
       'The message method is required.'
     )
   }
 
-  if (typeof request.method !== 'string') {
+  if (!providerRequest && typeof request.method !== 'string') {
     return createErrorResponse(
       MESSAGE_ERROR_CODES.INVALID_REQUEST,
       'The message method must be a string.'
     )
   }
 
-  if (request.method.toUpperCase() !== expectedMethod(request.action)) {
+  if (!providerRequest && request.method.toUpperCase() !== expectedMethod(request.action)) {
     return createErrorResponse(
       MESSAGE_ERROR_CODES.INVALID_REQUEST,
       `The ${request.action} action requires ${expectedMethod(request.action)}.`
@@ -98,21 +113,21 @@ export function validateMessageRequest(request) {
     return null
   }
 
-  if (request.key === undefined || request.key === null || request.key === '') {
+  if (!providerRequest && (request.key === undefined || request.key === null || request.key === '')) {
     return createErrorResponse(
       MESSAGE_ERROR_CODES.MISSING_PAYLOAD,
       'The translation API key is required.'
     )
   }
 
-  if (typeof request.key !== 'string') {
+  if (!providerRequest && typeof request.key !== 'string') {
     return createErrorResponse(
       MESSAGE_ERROR_CODES.INVALID_REQUEST,
       'The translation API key must be a string.'
     )
   }
 
-  if (!request.key.trim()) {
+  if (!providerRequest && !request.key.trim()) {
     return createErrorResponse(
       MESSAGE_ERROR_CODES.MISSING_PAYLOAD,
       'The translation API key is required.'
@@ -147,7 +162,8 @@ export function validateMessageRequest(request) {
     )
   }
 
-  if (typeof request.data.target_lang !== 'string' || !request.data.target_lang.trim()) {
+  const targetLanguage = request.data.targetLanguage ?? request.data.target_lang
+  if (typeof targetLanguage !== 'string' || !targetLanguage.trim()) {
     return createErrorResponse(
       MESSAGE_ERROR_CODES.MISSING_PAYLOAD,
       'The translation target language is required.'
@@ -232,18 +248,6 @@ function responsePayloadError(action, data) {
     )
   }
 
-  if (action === MESSAGE_ACTIONS.TRANSLATION) {
-    const firstTranslation = data.translations?.[0]
-    if (!Array.isArray(data.translations) ||
-        !isRecord(firstTranslation) ||
-        typeof firstTranslation.text !== 'string') {
-      return createErrorResponse(
-        MESSAGE_ERROR_CODES.INVALID_RESPONSE,
-        'The translation response did not include translated text.'
-      )
-    }
-  }
-
   return null
 }
 
@@ -279,17 +283,109 @@ function networkErrorResponse(error) {
 }
 
 function requestOptions(request) {
-  if (request.action === MESSAGE_ACTIONS.DICTIONARY) {
-    return {method: request.method}
+  return {method: request.method}
+}
+
+function providerSecrets(provider, request) {
+  if (isRecord(request.secrets)) {
+    return request.secrets
   }
 
+  const secretField = provider.auth.secretRef?.split('.').pop() || 'apiKey'
   return {
-    method: request.method,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `DeepL-Auth-Key ${request.key}`
-    },
-    body: JSON.stringify(request.data)
+    providers: {
+      [provider.id]: {
+        [secretField]: typeof request.key === 'string' ? request.key : ''
+      }
+    }
+  }
+}
+
+function providerErrorResponse(error) {
+  const code = error?.code
+  if (code === PROVIDER_ERROR_CODES.AUTH_REQUIRED) {
+    return createErrorResponse(
+      MESSAGE_ERROR_CODES.MISSING_PAYLOAD,
+      'The translation provider credential is required.'
+    )
+  }
+
+  if (code === PROVIDER_ERROR_CODES.PERMISSION_REQUIRED ||
+      code === PROVIDER_ERROR_CODES.INVALID_PROVIDER ||
+      code === PROVIDER_ERROR_CODES.INVALID_ENDPOINT ||
+      code === PROVIDER_ERROR_CODES.UNSUPPORTED_CONTEXT) {
+    return createErrorResponse(
+      MESSAGE_ERROR_CODES.INVALID_REQUEST,
+      error.message
+    )
+  }
+
+  if (code === PROVIDER_ERROR_CODES.HTTP_ERROR) {
+    return createErrorResponse(
+      MESSAGE_ERROR_CODES.HTTP_ERROR,
+      'The translation provider request failed.',
+      {status: error.status}
+    )
+  }
+
+  if (code === PROVIDER_ERROR_CODES.INVALID_RESPONSE) {
+    return createErrorResponse(
+      MESSAGE_ERROR_CODES.INVALID_RESPONSE,
+      error.message
+    )
+  }
+
+  if (code === PROVIDER_ERROR_CODES.TIMEOUT) {
+    return createErrorResponse(
+      MESSAGE_ERROR_CODES.TIMEOUT,
+      'The translation provider request timed out.'
+    )
+  }
+
+  return createErrorResponse(
+    MESSAGE_ERROR_CODES.NETWORK_ERROR,
+    'The translation provider request could not be completed.'
+  )
+}
+
+async function handleProviderTranslation(request, {
+  fetchFn,
+  timeoutMs,
+  permissionApi,
+  allowedOrigins = [],
+  permissionChecker
+} = {}) {
+  const provider = request.provider
+    ? normalizeProviderDefinition(request.provider, {id: request.provider.id})
+    : getProviderPreset('deepl-free')
+
+  if (!provider) {
+    return providerErrorResponse({
+      code: PROVIDER_ERROR_CODES.INVALID_PROVIDER,
+      message: 'The translation provider configuration is invalid.'
+    })
+  }
+
+  const targetLanguage = request.data.targetLanguage ?? request.data.target_lang
+  const checker = permissionChecker || (async (_pattern, endpointUrl) => (
+    hasProviderOriginPermission(permissionApi, endpointUrl)
+  ))
+
+  try {
+    const result = await executeProviderTranslation(provider, {
+      text: request.data.text,
+      targetLanguage,
+      secrets: providerSecrets(provider, request),
+      allowedOrigins,
+      permissionChecker: checker,
+      fetchFn,
+      timeoutMs
+    })
+    // Keep the v6.6 response body stable for content.js while the provider
+    // engine exposes the normalized text to newer callers.
+    return createSuccessResponse(result.raw)
+  } catch (error) {
+    return providerErrorResponse(error)
   }
 }
 
@@ -299,11 +395,27 @@ function requestOptions(request) {
  */
 export async function handleBackgroundMessage(
   request,
-  {fetchFn = globalThis.fetch, timeoutMs = DEFAULT_MESSAGE_TIMEOUT_MS} = {}
+  {
+    fetchFn = globalThis.fetch,
+    timeoutMs = DEFAULT_MESSAGE_TIMEOUT_MS,
+    permissionApi = globalThis.chrome?.permissions,
+    allowedOrigins = [],
+    permissionChecker
+  } = {}
 ) {
   const validationError = validateMessageRequest(request)
   if (validationError) {
     return validationError
+  }
+
+  if (request.action === MESSAGE_ACTIONS.TRANSLATION) {
+    return handleProviderTranslation(request, {
+      fetchFn,
+      timeoutMs,
+      permissionApi,
+      allowedOrigins,
+      permissionChecker
+    })
   }
 
   if (typeof fetchFn !== 'function') {

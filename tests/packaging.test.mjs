@@ -47,6 +47,7 @@ test('package validator follows raw background and content imports', () => {
     'content-storage.mjs',
     'messaging.mjs',
     'settings.mjs',
+    'translation-provider.mjs',
     'dictionary/parser.mjs',
     'dictionary/normalizer.mjs'
   ]) {
