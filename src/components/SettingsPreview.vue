@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { getText } from '/src/text.js'
+import { resolveCssColor } from '/src/settings-colors.mjs'
 
 const props = defineProps({
   activePage: {
@@ -17,20 +18,9 @@ function text(key, placeholders = undefined) {
   return getText(key, placeholders)
 }
 
-function previewColor(value, fallback) {
-  const candidate = String(value ?? '').trim()
-  if (/^#[\da-f]{3,8}$/i.test(candidate) ||
-      /^(?:rgb|hsl)a?\([^)]*\)$/i.test(candidate) ||
-      /^[a-z]+$/i.test(candidate)) {
-    return candidate
-  }
-
-  return fallback
-}
-
 const popupStyle = computed(() => ({
-  backgroundColor: previewColor(props.draft.popup?.backgroundColor, '#FFF59D'),
-  color: previewColor(props.draft.popup?.fontColor, '#000000'),
+  backgroundColor: resolveCssColor(props.draft.popup?.backgroundColor, '#FFF59D'),
+  color: resolveCssColor(props.draft.popup?.fontColor, '#000000'),
   fontSize: `${Number(props.draft.popup?.fontSizePt) > 0 ? Number(props.draft.popup.fontSizePt) : 11}pt`
 }))
 </script>

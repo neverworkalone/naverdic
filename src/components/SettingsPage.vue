@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { getText } from '/src/text.js'
 import { getTriggerLabels } from '/src/content-interaction.mjs'
+import { resolveCssColor } from '/src/settings-colors.mjs'
 import {
   formatDenyList,
   parseDenyListInput
@@ -37,23 +38,13 @@ const props = defineProps({
 const {ctrl, alt} = getTriggerLabels()
 const siteInput = ref('')
 const invalidSiteEntries = ref([])
+const controlsDisabled = computed(() => props.isLoading || props.isSaving)
 
 const pageId = computed(() => props.activePage?.id || '')
 const siteDomains = computed(() => props.draft.sites?.denyList || [])
 
 function text(key, placeholders = undefined) {
   return getText(key, placeholders)
-}
-
-function previewColor(value, fallback) {
-  const candidate = String(value ?? '').trim()
-  if (/^#[\da-f]{3,8}$/i.test(candidate) ||
-      /^(?:rgb|hsl)a?\([^)]*\)$/i.test(candidate) ||
-      /^[a-z]+$/i.test(candidate)) {
-    return candidate
-  }
-
-  return fallback
 }
 
 function syncSiteInput() {
@@ -98,7 +89,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
         <div class="settings-color-control">
           <span
             class="settings-color-control__swatch"
-            :style="{backgroundColor: previewColor(draft.popup.backgroundColor, '#FFF59D')}"
+            :style="{backgroundColor: resolveCssColor(draft.popup.backgroundColor, '#FFF59D')}"
             aria-hidden="true"
           />
           <input
@@ -107,6 +98,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
             type="text"
             autocomplete="off"
             spellcheck="false"
+            :disabled="controlsDisabled"
             data-testid="settings-popup-background-color"
           >
         </div>
@@ -122,7 +114,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
         <div class="settings-color-control">
           <span
             class="settings-color-control__swatch"
-            :style="{backgroundColor: previewColor(draft.popup.fontColor, '#000000')}"
+            :style="{backgroundColor: resolveCssColor(draft.popup.fontColor, '#000000')}"
             aria-hidden="true"
           />
           <input
@@ -131,6 +123,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
             type="text"
             autocomplete="off"
             spellcheck="false"
+            :disabled="controlsDisabled"
             data-testid="settings-popup-font-color"
           >
         </div>
@@ -150,6 +143,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
             type="number"
             min="1"
             step="1"
+            :disabled="controlsDisabled"
             data-testid="settings-popup-font-size"
           >
           <span>pt</span>
@@ -181,6 +175,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
           id="settings-double-click-enabled"
           v-model="draft.dictionary.doubleClick.enabled"
           type="checkbox"
+          :disabled="controlsDisabled"
           data-testid="settings-double-click-enabled"
         >
         <span class="settings-switch__track" aria-hidden="true">
@@ -201,6 +196,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
         <select
           id="settings-double-click-trigger"
           v-model="draft.dictionary.doubleClick.triggerKey"
+          :disabled="controlsDisabled"
           data-testid="settings-double-click-trigger"
         >
           <option value="none">{{ text('DCLICK') }}</option>
@@ -220,6 +216,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
         <select
           id="settings-double-click-speed"
           v-model.number="draft.dictionary.doubleClick.speedMs"
+          :disabled="controlsDisabled"
           data-testid="settings-double-click-speed"
         >
           <option :value="200">{{ text('DCLICK_SPEED_FASTEST') }} · 200ms</option>
@@ -245,6 +242,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
           id="settings-drag-enabled"
           v-model="draft.dictionary.drag.enabled"
           type="checkbox"
+          :disabled="controlsDisabled"
           data-testid="settings-drag-enabled"
         >
         <span class="settings-switch__track" aria-hidden="true">
@@ -265,6 +263,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
         <select
           id="settings-drag-trigger"
           v-model="draft.dictionary.drag.triggerKey"
+          :disabled="controlsDisabled"
           data-testid="settings-drag-trigger"
         >
           <option value="none">{{ text('DRAG') }}</option>
@@ -290,6 +289,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
           id="settings-blocked-sites-enabled"
           v-model="draft.sites.denyListEnabled"
           type="checkbox"
+          :disabled="controlsDisabled"
           data-testid="settings-blocked-sites-enabled"
         >
         <span class="settings-switch__track" aria-hidden="true">
@@ -312,6 +312,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
           :value="siteInput"
           rows="5"
           :placeholder="text('SETTINGS_BLOCKED_SITES_PLACEHOLDER')"
+          :disabled="controlsDisabled"
           data-testid="settings-blocked-sites-input"
           @input="updateSiteInput"
         />
