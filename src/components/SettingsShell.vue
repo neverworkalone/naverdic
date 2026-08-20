@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { getText } from '/src/text.js'
+import SettingsPreview from '/src/components/SettingsPreview.vue'
 import {
   createDefaultSecretsV2,
   createDefaultSettingsV2,
@@ -27,6 +28,7 @@ const navButtonRefs = ref([])
 const isLoading = ref(true)
 const isSaving = ref(false)
 const migrationPending = ref(false)
+const draftRevision = ref(0)
 const hasLoadError = ref(false)
 const saveState = ref('idle')
 
@@ -102,6 +104,7 @@ function resetDraft() {
 
   replaceReactive(draftSettings, defaultSettings)
   replaceReactive(draftSecrets, defaultSecrets)
+  draftRevision.value += 1
   saveState.value = 'reset'
 }
 
@@ -116,6 +119,7 @@ async function initializeSettings() {
     replaceReactive(persistedSecrets, loaded.secrets)
     replaceReactive(draftSettings, loaded.settings)
     replaceReactive(draftSecrets, loaded.secrets)
+    draftRevision.value += 1
     migrationPending.value = loaded.migrationNeeded
 
     if (loaded.migrationNeeded) {
@@ -150,6 +154,7 @@ async function saveDraft() {
     replaceReactive(persistedSecrets, saved.secrets)
     replaceReactive(draftSettings, saved.settings)
     replaceReactive(draftSecrets, saved.secrets)
+    draftRevision.value += 1
     migrationPending.value = false
     hasLoadError.value = false
     saveState.value = 'success'
@@ -219,6 +224,7 @@ defineExpose({
   currentNavigation,
   draftSettings,
   draftSecrets,
+  draftRevision,
   hasPendingChanges,
   initializeSettings,
   isLoading,
@@ -345,6 +351,10 @@ onBeforeUnmount(() => {
             :active-page="currentNavigation"
             :draft="draftSettings"
             :draft-secrets="draftSecrets"
+            :draft-revision="draftRevision"
+            :is-loading="isLoading"
+            :is-saving="isSaving"
+            :reset-draft="resetDraft"
           >
             <div class="settings-placeholder-card" data-testid="settings-page-placeholder">
               <h3>{{ text('SETTINGS_SHELL_PLACEHOLDER_TITLE') }}</h3>
@@ -378,15 +388,10 @@ onBeforeUnmount(() => {
             <h2>{{ text('SETTINGS_SHELL_PREVIEW_TITLE') }}</h2>
             <p>{{ text('SETTINGS_SHELL_PREVIEW_DESCRIPTION') }}</p>
           </div>
-          <div class="settings-preview-card" aria-hidden="true">
-            <div class="settings-preview-card__window">
-              <div class="settings-preview-card__bar" />
-              <div class="settings-preview-card__line settings-preview-card__line--long" />
-              <div class="settings-preview-card__line settings-preview-card__line--medium" />
-              <div class="settings-preview-card__line settings-preview-card__line--short" />
-              <div class="settings-preview-card__surface" />
-            </div>
-          </div>
+          <SettingsPreview
+            :active-page="currentNavigation"
+            :draft="draftSettings"
+          />
         </aside>
       </section>
     </div>
@@ -678,64 +683,6 @@ a {
 
 .settings-placeholder-card__reset:not(:disabled):hover {
   background: var(--naverdic-settings-danger-hover);
-}
-
-.settings-preview-card {
-  min-height: 360px;
-  margin-top: 12px;
-  padding: 22px 15px;
-  overflow: hidden;
-  background: var(--naverdic-settings-preview-surface);
-  border: 1px solid var(--naverdic-settings-border);
-  border-radius: 10px;
-}
-
-.settings-preview-card__window {
-  position: relative;
-  min-height: 300px;
-  padding: 48px 14px 20px;
-  overflow: hidden;
-  background: var(--naverdic-settings-preview-window);
-  border: 1px solid var(--naverdic-settings-border);
-  border-radius: 10px;
-}
-
-.settings-preview-card__bar {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 34px;
-  background: var(--naverdic-settings-preview-bar);
-  border-bottom: 1px solid var(--naverdic-settings-border);
-}
-
-.settings-preview-card__line {
-  height: 8px;
-  margin-bottom: 12px;
-  background: var(--naverdic-settings-divider);
-  border-radius: 4px;
-}
-
-.settings-preview-card__line--long {
-  width: 82%;
-}
-
-.settings-preview-card__line--medium {
-  width: 94%;
-}
-
-.settings-preview-card__line--short {
-  width: 56%;
-}
-
-.settings-preview-card__surface {
-  width: 92%;
-  height: 128px;
-  margin: 22px auto 0;
-  background: var(--naverdic-settings-info);
-  border: 1px solid var(--naverdic-settings-border);
-  border-radius: 6px;
 }
 
 @media (max-width: 1050px) {

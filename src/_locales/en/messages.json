@@ -262,5 +262,106 @@
   },
   "SETTINGS_SHELL_RESET_CONFIRM": {
     "message": "Reset all settings to their defaults? The reset will not affect stored settings until you save."
+  },
+  "SETTINGS_SECTION_POPUP_APPEARANCE": {
+    "message": "Popup appearance"
+  },
+  "SETTINGS_SECTION_POPUP_APPEARANCE_DESCRIPTION": {
+    "message": "Adjust the popup dictionary colors and typography."
+  },
+  "SETTINGS_FIELD_BACKGROUND_COLOR": {
+    "message": "Background color"
+  },
+  "SETTINGS_FIELD_BACKGROUND_COLOR_HINT": {
+    "message": "Popup dictionary background"
+  },
+  "SETTINGS_FIELD_FONT_COLOR": {
+    "message": "Text color"
+  },
+  "SETTINGS_FIELD_FONT_COLOR_HINT": {
+    "message": "Text color used for results"
+  },
+  "SETTINGS_FIELD_FONT_SIZE": {
+    "message": "Text size"
+  },
+  "SETTINGS_FIELD_FONT_SIZE_HINT": {
+    "message": "Result text size"
+  },
+  "SETTINGS_POPUP_THEME_GUIDE": {
+    "message": "View theme guide"
+  },
+  "SETTINGS_SECTION_DOUBLE_CLICK": {
+    "message": "Double-click search"
+  },
+  "SETTINGS_SECTION_DOUBLE_CLICK_DESCRIPTION": {
+    "message": "Configure how the dictionary appears when you double-click a word."
+  },
+  "SETTINGS_FIELD_DOUBLE_CLICK_ENABLED": {
+    "message": "Show dictionary on double-click"
+  },
+  "SETTINGS_FIELD_TRIGGER_KEY": {
+    "message": "Trigger key"
+  },
+  "SETTINGS_FIELD_DOUBLE_CLICK_TRIGGER_HINT": {
+    "message": "Hold a modifier key when needed."
+  },
+  "SETTINGS_FIELD_DOUBLE_CLICK_SPEED": {
+    "message": "Double-click speed"
+  },
+  "SETTINGS_FIELD_DOUBLE_CLICK_SPEED_HINT": {
+    "message": "Shorter intervals respond more quickly."
+  },
+  "SETTINGS_SECTION_DRAG": {
+    "message": "Drag search"
+  },
+  "SETTINGS_SECTION_DRAG_DESCRIPTION": {
+    "message": "Configure dictionary search for selected words or sentences."
+  },
+  "SETTINGS_FIELD_DRAG_ENABLED": {
+    "message": "Enable drag search"
+  },
+  "SETTINGS_FIELD_DRAG_TRIGGER_HINT": {
+    "message": "Choose the modifier key used while dragging."
+  },
+  "SETTINGS_SECTION_BLOCKED_SITES": {
+    "message": "Blocked sites"
+  },
+  "SETTINGS_SECTION_BLOCKED_SITES_DESCRIPTION": {
+    "message": "Manage websites where the popup dictionary should not appear."
+  },
+  "SETTINGS_FIELD_BLOCKED_SITES_ENABLED": {
+    "message": "Enable blocked sites"
+  },
+  "SETTINGS_FIELD_BLOCKED_SITES": {
+    "message": "Site list"
+  },
+  "SETTINGS_BLOCKED_SITES_HINT": {
+    "message": "Enter one per line, or separate entries with commas or semicolons."
+  },
+  "SETTINGS_BLOCKED_SITES_PLACEHOLDER": {
+    "message": "Example: google.com\nnaver.com"
+  },
+  "SETTINGS_BLOCKED_SITES_INVALID": {
+    "message": "$count$ entries need attention. Use a domain or URL.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "SETTINGS_BLOCKED_SITES_NORMALIZED": {
+    "message": "Normalized domains"
+  },
+  "SETTINGS_BLOCKED_SITES_EMPTY": {
+    "message": "No sites have been added."
+  },
+  "SETTINGS_PREVIEW_WORD": {
+    "message": "dictionary"
+  },
+  "SETTINGS_PREVIEW_MEANING": {
+    "message": "Dictionary result preview"
+  },
+  "SETTINGS_PREVIEW_HINT": {
+    "message": "Current popup settings"
   }
 }
