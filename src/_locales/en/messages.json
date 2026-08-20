@@ -392,16 +392,16 @@
     "message": "Manage the built-in service and connected services in one place."
   },
   "SETTINGS_TRANSLATION_CHROME_NAME": {
-    "message": "Chrome built-in Translator API"
+    "message": "Chrome built-in translation (Translator API)"
   },
   "SETTINGS_TRANSLATION_CHROME_DESCRIPTION": {
     "message": "A free built-in translation service"
   },
   "SETTINGS_TRANSLATION_CHROME_PREVIEW_DESCRIPTION": {
-    "message": "A built-in translation service provided by the browser."
+    "message": "The Chrome Translator API provided by the browser."
   },
   "SETTINGS_TRANSLATION_CHROME_PREVIEW_HINT": {
-    "message": "Chrome built-in translation does not require an API key."
+    "message": "The Chrome Translator API does not require an API key."
   },
   "SETTINGS_TRANSLATION_DEEPL_NAME": {
     "message": "DeepL"

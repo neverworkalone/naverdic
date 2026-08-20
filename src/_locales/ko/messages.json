@@ -392,16 +392,16 @@
     "message": "기본 서비스와 추가 연결 서비스를 한 곳에서 관리합니다."
   },
   "SETTINGS_TRANSLATION_CHROME_NAME": {
-    "message": "Chrome 내장 번역 API"
+    "message": "Chrome 내장 번역 (Translator API)"
   },
   "SETTINGS_TRANSLATION_CHROME_DESCRIPTION": {
     "message": "무료로 제공되는 기본 번역 서비스"
   },
   "SETTINGS_TRANSLATION_CHROME_PREVIEW_DESCRIPTION": {
-    "message": "브라우저에서 제공하는 기본 번역 서비스입니다."
+    "message": "브라우저에서 제공하는 Chrome Translator API입니다."
   },
   "SETTINGS_TRANSLATION_CHROME_PREVIEW_HINT": {
-    "message": "Chrome 내장 번역은 API 키 없이 사용할 수 있습니다."
+    "message": "Chrome Translator API는 API 키 없이 사용할 수 있습니다."
   },
   "SETTINGS_TRANSLATION_DEEPL_NAME": {
     "message": "DeepL"
