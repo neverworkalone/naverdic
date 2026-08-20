@@ -148,5 +148,98 @@
   },
   "RESET": {
     "message": "초기화"
+  },
+  "SETTINGS_PRODUCT_TITLE": {
+    "message": "네이버 영어사전 · NaverDic 7.0"
+  },
+  "SETTINGS_SIDEBAR_HEADING": {
+    "message": "설정"
+  },
+  "SETTINGS_NAV_APPEARANCE": {
+    "message": "모양"
+  },
+  "SETTINGS_NAV_DOUBLE_CLICK": {
+    "message": "더블클릭"
+  },
+  "SETTINGS_NAV_BLOCKED_SITES": {
+    "message": "중지목록"
+  },
+  "SETTINGS_NAV_BEHAVIOR": {
+    "message": "동작"
+  },
+  "SETTINGS_NAV_TRANSLATION": {
+    "message": "번역 서비스"
+  },
+  "SETTINGS_NAV_HELP": {
+    "message": "도움말"
+  },
+  "SETTINGS_NAV_ADVANCED": {
+    "message": "고급 설정"
+  },
+  "SETTINGS_PAGE_APPEARANCE_TITLE": {
+    "message": "모양"
+  },
+  "SETTINGS_PAGE_APPEARANCE_DESCRIPTION": {
+    "message": "팝업 사전의 색상과 글자 모양을 설정합니다."
+  },
+  "SETTINGS_PAGE_DOUBLE_CLICK_TITLE": {
+    "message": "더블클릭"
+  },
+  "SETTINGS_PAGE_DOUBLE_CLICK_DESCRIPTION": {
+    "message": "페이지에서 단어를 더블클릭했을 때 사전을 표시하는 방법을 설정합니다."
+  },
+  "SETTINGS_PAGE_BLOCKED_SITES_TITLE": {
+    "message": "중지목록"
+  },
+  "SETTINGS_PAGE_BLOCKED_SITES_DESCRIPTION": {
+    "message": "팝업 사전을 표시하지 않을 웹사이트를 관리합니다."
+  },
+  "SETTINGS_PAGE_BEHAVIOR_TITLE": {
+    "message": "동작"
+  },
+  "SETTINGS_PAGE_BEHAVIOR_DESCRIPTION": {
+    "message": "드래그 검색과 페이지 상호작용 방식을 설정합니다."
+  },
+  "SETTINGS_PAGE_TRANSLATION_TITLE": {
+    "message": "번역 서비스"
+  },
+  "SETTINGS_PAGE_TRANSLATION_DESCRIPTION": {
+    "message": "번역 기능과 번역 제공자를 설정합니다."
+  },
+  "SETTINGS_PAGE_HELP_TITLE": {
+    "message": "도움말"
+  },
+  "SETTINGS_PAGE_HELP_DESCRIPTION": {
+    "message": "NaverDic 사용법과 최신 안내를 확인합니다."
+  },
+  "SETTINGS_PAGE_ADVANCED_TITLE": {
+    "message": "고급 설정"
+  },
+  "SETTINGS_PAGE_ADVANCED_DESCRIPTION": {
+    "message": "설정 데이터와 초기화 같은 고급 기능을 관리합니다."
+  },
+  "SETTINGS_SHELL_STATUS_SAVED": {
+    "message": "저장됨"
+  },
+  "SETTINGS_SHELL_SAVE": {
+    "message": "저장"
+  },
+  "SETTINGS_SHELL_VERSION": {
+    "message": "NaverDic 7.0"
+  },
+  "SETTINGS_SHELL_PLACEHOLDER_TITLE": {
+    "message": "설정 항목"
+  },
+  "SETTINGS_SHELL_PLACEHOLDER_DESCRIPTION": {
+    "message": "이 화면의 설정 항목은 다음 TASK에서 연결됩니다."
+  },
+  "SETTINGS_SHELL_DRAFT_NOTE": {
+    "message": "현재 입력값은 화면을 이동해도 유지되며, 이 단계에서는 저장되지 않습니다."
+  },
+  "SETTINGS_SHELL_PREVIEW_TITLE": {
+    "message": "미리보기"
+  },
+  "SETTINGS_SHELL_PREVIEW_DESCRIPTION": {
+    "message": "현재 화면의 변경 결과를 미리 볼 수 있습니다."
   }
 }

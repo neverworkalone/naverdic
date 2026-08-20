@@ -74,6 +74,86 @@ export const SETTINGS_MENU = Object.freeze([
   })
 ])
 
+// The settings data contract groups dictionary behavior under one page, while
+// the v7 shell exposes the two dictionary behaviors as separate screens. Keep
+// that UI detail explicit so the shell can match Figma without duplicating
+// persisted settings or changing the stable page IDs above.
+export const SETTINGS_NAVIGATION = Object.freeze([
+  Object.freeze({
+    id: 'appearance',
+    pageId: SETTINGS_PAGE_IDS.POPUP,
+    section: 'appearance',
+    kind: 'page',
+    order: 10,
+    labelKey: 'SETTINGS_NAV_APPEARANCE',
+    titleKey: 'SETTINGS_PAGE_APPEARANCE_TITLE',
+    descriptionKey: 'SETTINGS_PAGE_APPEARANCE_DESCRIPTION'
+  }),
+  Object.freeze({
+    id: 'double-click',
+    pageId: SETTINGS_PAGE_IDS.DICTIONARY,
+    section: 'doubleClick',
+    kind: 'page',
+    order: 20,
+    labelKey: 'SETTINGS_NAV_DOUBLE_CLICK',
+    titleKey: 'SETTINGS_PAGE_DOUBLE_CLICK_TITLE',
+    descriptionKey: 'SETTINGS_PAGE_DOUBLE_CLICK_DESCRIPTION'
+  }),
+  Object.freeze({
+    id: 'blocked-sites',
+    pageId: SETTINGS_PAGE_IDS.SITES,
+    section: 'sites',
+    kind: 'page',
+    order: 30,
+    labelKey: 'SETTINGS_NAV_BLOCKED_SITES',
+    titleKey: 'SETTINGS_PAGE_BLOCKED_SITES_TITLE',
+    descriptionKey: 'SETTINGS_PAGE_BLOCKED_SITES_DESCRIPTION'
+  }),
+  Object.freeze({
+    id: 'behavior',
+    pageId: SETTINGS_PAGE_IDS.DICTIONARY,
+    section: 'behavior',
+    kind: 'page',
+    order: 40,
+    labelKey: 'SETTINGS_NAV_BEHAVIOR',
+    titleKey: 'SETTINGS_PAGE_BEHAVIOR_TITLE',
+    descriptionKey: 'SETTINGS_PAGE_BEHAVIOR_DESCRIPTION'
+  }),
+  Object.freeze({
+    id: 'translation-service',
+    pageId: SETTINGS_PAGE_IDS.TRANSLATION,
+    section: 'translation',
+    kind: 'page',
+    order: 50,
+    labelKey: 'SETTINGS_NAV_TRANSLATION',
+    titleKey: 'SETTINGS_PAGE_TRANSLATION_TITLE',
+    descriptionKey: 'SETTINGS_PAGE_TRANSLATION_DESCRIPTION'
+  }),
+  Object.freeze({
+    id: 'help',
+    pageId: SETTINGS_PAGE_IDS.HELP,
+    section: 'help',
+    kind: 'external',
+    order: 60,
+    labelKey: 'SETTINGS_NAV_HELP',
+    titleKey: 'SETTINGS_PAGE_HELP_TITLE',
+    descriptionKey: 'SETTINGS_PAGE_HELP_DESCRIPTION',
+    url: SETTINGS_MENU.find(item => item.id === SETTINGS_PAGE_IDS.HELP).url,
+    external: true
+  }),
+  Object.freeze({
+    id: 'advanced',
+    pageId: SETTINGS_PAGE_IDS.ADVANCED,
+    section: 'advanced',
+    kind: 'page',
+    order: 70,
+    labelKey: 'SETTINGS_NAV_ADVANCED',
+    titleKey: 'SETTINGS_PAGE_ADVANCED_TITLE',
+    descriptionKey: 'SETTINGS_PAGE_ADVANCED_DESCRIPTION',
+    actions: Object.freeze(['reset'])
+  })
+])
+
 const TRIGGER_KEYS = Object.freeze(['none', 'ctrl', 'alt', 'ctrlalt'])
 const INTERFACE_LANGUAGES = Object.freeze(['auto', 'ko', 'en'])
 
