@@ -26,6 +26,10 @@ const props = defineProps({
     type: Number,
     default: 0
   },
+  draftResetRevision: {
+    type: Number,
+    default: 0
+  },
   isLoading: {
     type: Boolean,
     default: false
@@ -35,6 +39,10 @@ const props = defineProps({
     default: false
   },
   resetDraft: {
+    type: Function,
+    default: null
+  },
+  translationPendingChange: {
     type: Function,
     default: null
   }
@@ -166,7 +174,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
     </section>
 
     <section
-      v-else-if="pageId === 'double-click'"
+      v-if="pageId === 'double-click'"
       class="settings-card"
       data-testid="settings-double-click-form"
     >
@@ -233,7 +241,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
     </section>
 
     <section
-      v-else-if="pageId === 'behavior'"
+      v-if="pageId === 'behavior'"
       class="settings-card"
       data-testid="settings-behavior-form"
     >
@@ -280,7 +288,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
     </section>
 
     <section
-      v-else-if="pageId === 'blocked-sites'"
+      v-if="pageId === 'blocked-sites'"
       class="settings-card"
       data-testid="settings-blocked-sites-form"
     >
@@ -354,16 +362,23 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
       </div>
     </section>
 
-    <TranslationSettings
-      v-else-if="pageId === 'translation-service'"
-      :draft="draft"
-      :draft-secrets="draftSecrets"
-      :draft-revision="draftRevision"
-      :is-loading="isLoading"
-      :is-saving="isSaving"
-    />
+    <KeepAlive>
+      <TranslationSettings
+        v-if="pageId === 'translation-service'"
+        :draft="draft"
+        :draft-secrets="draftSecrets"
+        :draft-revision="draftRevision"
+        :draft-reset-revision="draftResetRevision"
+        :is-loading="isLoading"
+        :is-saving="isSaving"
+        :on-pending-change="translationPendingChange"
+      />
+    </KeepAlive>
 
-    <section v-else class="settings-card settings-card--placeholder">
+    <section
+      v-if="!['appearance', 'double-click', 'behavior', 'blocked-sites', 'translation-service'].includes(pageId)"
+      class="settings-card settings-card--placeholder"
+    >
       <h3>{{ text('SETTINGS_SHELL_PLACEHOLDER_TITLE') }}</h3>
       <p>{{ text('SETTINGS_SHELL_PLACEHOLDER_DESCRIPTION') }}</p>
       <div class="settings-placeholder-card__note">

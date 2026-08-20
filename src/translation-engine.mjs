@@ -26,6 +26,8 @@ export const PROVIDER_ERROR_CODES = Object.freeze({
   TIMEOUT: 'TIMEOUT'
 })
 
+const TRANSLATOR_ERROR_CODE_PATTERN = /^TRANSLATOR_[A-Z0-9_]+$/
+
 const TEMPLATE_PATTERN = /\{\{([a-zA-Z][a-zA-Z0-9_.-]*)\}\}/g
 const PATH_PATTERN = /(?:^|\.)([^.[\]]+)|\[(\d+)\]/g
 const DEFAULT_TIMEOUT_MS = 10000
@@ -479,6 +481,18 @@ export function normalizeProviderError(error, {secrets = {}, extraSecrets = []} 
     return error
   }
 
+  if (TRANSLATOR_ERROR_CODE_PATTERN.test(String(error?.code || ''))) {
+    return providerError(
+      error.code,
+      redactSecrets(
+        error?.message || 'The Chrome Translator request could not be completed.',
+        secrets,
+        extraSecrets
+      ),
+      {errorName: error?.errorName || error?.name}
+    )
+  }
+
   const code = error?.name === 'AbortError'
     ? PROVIDER_ERROR_CODES.TIMEOUT
     : PROVIDER_ERROR_CODES.NETWORK_ERROR
@@ -489,6 +503,79 @@ export function normalizeProviderError(error, {secrets = {}, extraSecrets = []} 
   return providerError(code, message || fallback)
 }
 
+/**
+ * Run a built-in provider in the document/content-page that owns the
+ * Translator API. This path intentionally has no permission or fetch step;
+ * background callers must continue to receive UNSUPPORTED_CONTEXT.
+ */
+export async function executeContentProviderTranslation(providerInput, {
+  text,
+  targetLanguage = 'ko',
+  sourceLanguage = '',
+  translatorRuntime
+} = {}) {
+  const provider = providerDefinition(providerInput)
+  if (!provider) {
+    throw providerError(
+      PROVIDER_ERROR_CODES.INVALID_PROVIDER,
+      'The translation provider configuration is invalid.'
+    )
+  }
+
+  if (provider.kind !== PROVIDER_KINDS.BUILT_IN ||
+      provider.id !== CHROME_TRANSLATOR_PROVIDER_ID ||
+      provider.execution.context !== PROVIDER_EXECUTION_CONTEXTS.CONTENT_PAGE) {
+    throw providerError(
+      PROVIDER_ERROR_CODES.UNSUPPORTED_CONTEXT,
+      'This translation provider is not a content-page provider.',
+      {context: PROVIDER_EXECUTION_CONTEXTS.CONTENT_PAGE}
+    )
+  }
+
+  if (!translatorRuntime || typeof translatorRuntime.translate !== 'function') {
+    throw providerError(
+      PROVIDER_ERROR_CODES.UNSUPPORTED_CONTEXT,
+      'The Chrome Translator provider must run in the content page.',
+      {context: PROVIDER_EXECUTION_CONTEXTS.CONTENT_PAGE}
+    )
+  }
+
+  const textValues = normalizeTextInput(text)
+  const normalizedSourceLanguage = String(sourceLanguage || '').trim().toLowerCase()
+  if (!textValues.length ||
+      (normalizedSourceLanguage && normalizedSourceLanguage !== 'en') ||
+      String(targetLanguage || '').trim().toLowerCase() !== 'ko') {
+    throw providerError(
+      PROVIDER_ERROR_CODES.INVALID_PROVIDER,
+      'The Chrome Translator provider only supports English to Korean.'
+    )
+  }
+
+  // Keep the fixed source/target pair explicit at this execution boundary.
+  // `sourceLanguage` is accepted for the shared engine signature but cannot
+  // override the Chrome provider contract.
+  void sourceLanguage
+  const translated = []
+  for (const value of textValues) {
+    translated.push(await translatorRuntime.translate(value))
+  }
+
+  if (translated.some(value => typeof value !== 'string' || !value.trim())) {
+    throw providerError(
+      PROVIDER_ERROR_CODES.INVALID_RESPONSE,
+      'The Chrome Translator response did not include translated text.'
+    )
+  }
+
+  return {
+    providerId: provider.id,
+    text: translated.join('\n'),
+    raw: {
+      translations: translated.map(value => ({text: value}))
+    }
+  }
+}
+
 export async function executeProviderTranslation(providerInput, {
   text,
   targetLanguage,
@@ -497,7 +584,8 @@ export async function executeProviderTranslation(providerInput, {
   allowedOrigins = [],
   permissionChecker,
   fetchFn = globalThis.fetch,
-  timeoutMs = DEFAULT_TIMEOUT_MS
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  translatorRuntime
 } = {}) {
   const provider = providerDefinition(providerInput)
   if (!provider) {
@@ -516,6 +604,15 @@ export async function executeProviderTranslation(providerInput, {
   }
 
   try {
+    if (provider.kind === PROVIDER_KINDS.BUILT_IN) {
+      return await executeContentProviderTranslation(provider, {
+        text,
+        targetLanguage,
+        sourceLanguage,
+        translatorRuntime
+      })
+    }
+
     await hasPermission(provider, {allowedOrigins, permissionChecker})
     const request = adapter.buildRequest(provider, {
       text,

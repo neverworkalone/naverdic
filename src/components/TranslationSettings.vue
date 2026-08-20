@@ -1,6 +1,11 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
-import { getText } from '/src/text.js'
+import {computed, onBeforeUnmount, reactive, ref, watch} from 'vue'
+import {getText} from '/src/text.js'
+import {
+  CHROME_TRANSLATOR_ERROR_CODES,
+  CHROME_TRANSLATOR_PHASES,
+  createChromeTranslatorRuntime
+} from '/src/chrome-translator.mjs'
 import {
   PROVIDER_AUTH_MODES,
   PROVIDER_SOURCES,
@@ -13,102 +18,170 @@ import {
   validateCustomProviderForm
 } from '/src/translation-settings.mjs'
 import {
+  canActivateTranslationProvider,
+  getTranslationSettingsPanel,
+  isTranslationConnectionLocked,
+  TRANSLATION_SETTINGS_PANELS
+} from '/src/translation-settings-state.mjs'
+import {
+  hasTranslationProviderPermission,
   requestTranslationProviderPermission,
   testTranslationProvider
 } from '/src/translation-testing.mjs'
+import {getProviderOriginPattern} from '/src/provider-permissions.mjs'
 
 const props = defineProps({
-  draft: {
-    type: Object,
-    required: true
-  },
-  draftSecrets: {
-    type: Object,
-    required: true
-  },
-  draftRevision: {
-    type: Number,
-    default: 0
-  },
-  isLoading: {
-    type: Boolean,
-    default: false
-  },
-  isSaving: {
-    type: Boolean,
-    default: false
-  }
+  draft: {type: Object, required: true},
+  draftSecrets: {type: Object, required: true},
+  draftRevision: {type: Number, default: 0},
+  draftResetRevision: {type: Number, default: 0},
+  isLoading: {type: Boolean, default: false},
+  isSaving: {type: Boolean, default: false},
+  onPendingChange: {type: Function, default: null},
+  // Tests can inject a fake runtime without changing the production
+  // document-bound Translator lifecycle.
+  translatorRuntime: {type: Object, default: null}
 })
 
-const presetCards = Object.freeze([
+const CHROME_ID = 'chrome-translator'
+const CUSTOM_NEW_ID = '__new-custom-api__'
+const PRESET_IDS = new Set(['deepl-free', 'deepl-pro', 'gemini'])
+const serviceDefinitions = Object.freeze([
+  Object.freeze({
+    id: CHROME_ID,
+    providerIds: Object.freeze([CHROME_ID]),
+    nameKey: 'SETTINGS_TRANSLATION_CHROME_NAME',
+    descriptionKey: 'SETTINGS_TRANSLATION_CHROME_DESCRIPTION',
+    icon: 'C'
+  }),
   Object.freeze({
     id: 'deepl',
     providerIds: Object.freeze(['deepl-free', 'deepl-pro']),
     nameKey: 'SETTINGS_TRANSLATION_DEEPL_NAME',
-    descriptionKey: 'SETTINGS_TRANSLATION_DEEPL_DESCRIPTION'
+    descriptionKey: 'SETTINGS_TRANSLATION_DEEPL_DESCRIPTION',
+    icon: 'D'
   }),
   Object.freeze({
     id: 'gemini',
     providerIds: Object.freeze(['gemini']),
     nameKey: 'SETTINGS_TRANSLATION_GEMINI_NAME',
-    descriptionKey: 'SETTINGS_TRANSLATION_GEMINI_DESCRIPTION'
+    descriptionKey: 'SETTINGS_TRANSLATION_GEMINI_DESCRIPTION',
+    icon: 'G'
   })
 ])
 
-const editorMode = ref('')
-const editorProviderId = ref('')
-const editorForm = reactive(createCustomProviderForm())
-const formErrors = ref([])
-const showApiKey = ref(false)
-const connectionState = ref('idle')
-const connectionMessageKey = ref('')
-const providerSelectionState = ref('idle')
-const providerSelectionMessageKey = ref('')
-let connectionRequestId = 0
-let providerSelectionRequestId = 0
-
-const controlsDisabled = computed(() => props.isLoading || props.isSaving)
-const connectionTesting = computed(() => connectionState.value === 'testing')
-const interactionDisabled = computed(() => (
-  controlsDisabled.value ||
-  connectionTesting.value ||
-  providerSelectionState.value === 'requesting'
-))
-const editorControlsDisabled = computed(() => (
-  controlsDisabled.value ||
-  connectionTesting.value ||
-  providerSelectionState.value === 'requesting'
-))
 const translation = computed(() => props.draft.translation || {})
 const customProviders = computed(() => props.draft.customProviders || {})
 const activeProviderId = computed(() => translation.value.providerId || 'deepl-free')
-const editorProvider = computed(() => {
-  if (!editorProviderId.value) {
+const selectedProviderId = ref(activeProviderId.value)
+const selectedPanel = computed(() => getTranslationSettingsPanel(
+  selectedProviderId.value,
+  customProviders.value
+))
+const selectedPresetId = computed(() => (
+  PRESET_IDS.has(selectedProviderId.value) ? selectedProviderId.value : ''
+))
+const selectedProvider = computed(() => {
+  if (selectedProviderId.value === CUSTOM_NEW_ID) {
     return null
   }
-
-  return getProviderPreset(editorProviderId.value) ||
-    customProviders.value[editorProviderId.value] ||
+  return getProviderPreset(selectedProviderId.value) ||
+    customProviders.value[selectedProviderId.value] ||
     null
 })
-const isEditingCustom = computed(() => editorMode.value === 'custom')
-const editorHasCredential = computed(() => Boolean(
-  editorProvider.value && getProviderCredential(editorProvider.value, props.draftSecrets)
-))
-const customProviderIds = computed(() => Object.keys(customProviders.value))
-const providerCards = computed(() => [
-  ...presetCards,
-  ...customProviderIds.value.map(id => ({
-    id,
-    providerIds: [id],
-    name: customProviders.value[id]?.name || id,
-    descriptionKey: 'SETTINGS_TRANSLATION_CUSTOM_DESCRIPTION',
-    custom: true
-  }))
-])
+const selectedIsChrome = computed(() => selectedPanel.value === TRANSLATION_SETTINGS_PANELS.CHROME)
+const selectedIsCustom = computed(() => selectedPanel.value === TRANSLATION_SETTINGS_PANELS.CUSTOM)
+const customPermissionPattern = computed(() => getProviderOriginPattern(editorForm.url))
+const isDeepL = computed(() => selectedProviderId.value === 'deepl-free' || selectedProviderId.value === 'deepl-pro')
+const controlsDisabled = computed(() => props.isLoading || props.isSaving)
+
+const connectionStates = reactive({})
+const permissionStates = reactive({})
+const customDrafts = reactive({})
+const customDraftDirty = reactive({})
+const editorForm = reactive(createCustomProviderForm())
+const editorProviderId = ref('')
+const editorBaseline = ref('')
+const editorDirty = ref(false)
+const formErrors = ref([])
+const showApiKey = ref(false)
+const permissionRequestState = ref('idle')
+let connectionRequestId = 0
+let permissionRequestId = 0
+
+const chromeState = ref({
+  supported: false,
+  availability: null,
+  phase: CHROME_TRANSLATOR_PHASES.CHECKING,
+  progress: null,
+  indeterminate: false,
+  errorCode: null,
+  errorName: '',
+  errorMessage: ''
+})
+const chromeRuntime = props.translatorRuntime || createChromeTranslatorRuntime({
+  scope: globalThis,
+  onStateChange: state => {
+    chromeState.value = state
+  }
+})
+const ownsChromeRuntime = !props.translatorRuntime
 
 function text(key, placeholders = undefined) {
   return getText(key, placeholders)
+}
+
+function hasCachedCustomEdits() {
+  return Object.values(customDraftDirty).some(Boolean)
+}
+
+function notifyPendingChange() {
+  props.onPendingChange?.(editorDirty.value || hasCachedCustomEdits())
+}
+
+function setEditorDirty(value) {
+  const next = Boolean(value)
+  editorDirty.value = next
+  notifyPendingChange()
+}
+
+function providerForId(providerId) {
+  return getProviderPreset(providerId) || customProviders.value[providerId] || null
+}
+
+function stateFor(providerId) {
+  return connectionStates[providerId] || {status: 'idle', messageKey: '', signature: ''}
+}
+
+function providerCredential(provider) {
+  return getProviderCredential(provider, props.draftSecrets)
+}
+
+function providerSignature(provider, providerId = provider?.id || '') {
+  if (!provider) {
+    return `${providerId}:empty`
+  }
+  return JSON.stringify({provider, credential: providerCredential(provider)})
+}
+
+function formSignature(provider, credential = '') {
+  return JSON.stringify({provider, credential})
+}
+
+function isConnectionSuccess(providerId) {
+  const state = stateFor(providerId)
+  return state.status === 'success' && state.signature === providerSignature(providerForId(providerId), providerId)
+}
+
+function selectedConnectionState() {
+  return stateFor(selectedProviderId.value)
+}
+
+function connectionControlsDisabled(providerId = selectedProviderId.value) {
+  return isTranslationConnectionLocked({
+    globallyDisabled: controlsDisabled.value,
+    connectionStatus: stateFor(providerId).status
+  })
 }
 
 function ensureDraftProviders() {
@@ -125,170 +198,122 @@ function ensureDraftSecrets() {
   return props.draftSecrets.providers
 }
 
-function providerForId(providerId) {
-  return getProviderPreset(providerId) || customProviders.value[providerId] || null
+function setConnectionState(providerId, patch) {
+  connectionStates[providerId] = {...stateFor(providerId), ...patch}
 }
 
-function isCardActive(card) {
-  return card.providerIds.includes(activeProviderId.value)
+function invalidateConnectionState(providerId = selectedProviderId.value) {
+  connectionRequestId += 1
+  setConnectionState(providerId, {status: 'idle', messageKey: '', signature: ''})
+}
+
+function serviceCards() {
+  return [
+    ...serviceDefinitions,
+    ...Object.keys(customProviders.value).map(id => ({
+      id,
+      providerIds: [id],
+      name: customProviders.value[id]?.name || id,
+      descriptionKey: 'SETTINGS_TRANSLATION_CUSTOM_DESCRIPTION',
+      icon: 'A',
+      custom: true
+    }))
+  ]
 }
 
 function cardProviderId(card) {
   if (card.id === 'deepl' && card.providerIds.includes(activeProviderId.value)) {
     return activeProviderId.value
   }
-
   return card.providerIds[0]
 }
 
-function providerName(card) {
+function cardName(card) {
   return card.name || text(card.nameKey)
 }
 
-async function requestCustomProviderAccess(provider) {
-  if (provider?.source !== PROVIDER_SOURCES.CUSTOM) {
-    return true
-  }
-
-  const requestId = ++providerSelectionRequestId
-  providerSelectionState.value = 'requesting'
-  providerSelectionMessageKey.value = 'SETTINGS_TRANSLATION_PERMISSION_REQUESTING'
-  const granted = await requestTranslationProviderPermission(provider)
-
-  if (requestId !== providerSelectionRequestId) {
-    return false
-  }
-
-  if (!granted) {
-    providerSelectionState.value = 'error'
-    providerSelectionMessageKey.value = 'SETTINGS_TRANSLATION_PERMISSION_REQUIRED'
-    return false
-  }
-
-  providerSelectionState.value = 'idle'
-  providerSelectionMessageKey.value = ''
-  return true
+function cardIsSelected(card) {
+  return card.providerIds.includes(selectedProviderId.value)
 }
 
-async function selectProvider(providerId) {
-  if (interactionDisabled.value || !providerForId(providerId)) {
-    return false
-  }
-
-  const provider = providerForId(providerId)
-  providerSelectionState.value = 'idle'
-  providerSelectionMessageKey.value = ''
-
-  if (!await requestCustomProviderAccess(provider)) {
-    return false
-  }
-
-  props.draft.translation.providerId = providerId
-  providerSelectionState.value = 'idle'
-  providerSelectionMessageKey.value = ''
-  invalidateConnectionState()
-  return true
+function cardIsActive(card) {
+  return card.providerIds.includes(activeProviderId.value)
 }
 
-function selectProviderFromControl(event) {
-  selectProvider(event.target.value)
+function cardStatusKey(card) {
+  const providerId = cardProviderId(card)
+  if (providerId === CHROME_ID) {
+    if (chromeState.value.phase === CHROME_TRANSLATOR_PHASES.AVAILABLE) {
+      return 'SETTINGS_TRANSLATION_STATUS_READY'
+    }
+    if (chromeState.value.phase === CHROME_TRANSLATOR_PHASES.DOWNLOADING) {
+      return 'SETTINGS_TRANSLATION_STATUS_DOWNLOADING'
+    }
+    if (chromeState.value.phase === CHROME_TRANSLATOR_PHASES.UNSUPPORTED ||
+        chromeState.value.phase === CHROME_TRANSLATOR_PHASES.UNAVAILABLE) {
+      return 'SETTINGS_TRANSLATION_STATUS_UNAVAILABLE'
+    }
+    if (chromeState.value.phase === CHROME_TRANSLATOR_PHASES.FAILED) {
+      return 'SETTINGS_TRANSLATION_STATUS_ERROR'
+    }
+    return 'SETTINGS_TRANSLATION_STATUS_SETUP'
+  }
+
+  const state = stateFor(providerId)
+  if (state.status === 'success' && isConnectionSuccess(providerId)) {
+    return 'SETTINGS_TRANSLATION_STATUS_CONNECTED'
+  }
+  if (state.status === 'error') {
+    return 'SETTINGS_TRANSLATION_STATUS_ERROR'
+  }
+  if (card.custom && permissionStates[providerId] !== 'allowed') {
+    return 'SETTINGS_TRANSLATION_STATUS_PERMISSION'
+  }
+  if (providerCredential(providerForId(providerId))) {
+    return 'SETTINGS_TRANSLATION_STATUS_SETUP'
+  }
+  return 'SETTINGS_TRANSLATION_STATUS_SETUP'
+}
+
+function cardStatusClass(card) {
+  const key = cardStatusKey(card)
+  return key.endsWith('CONNECTED') || key.endsWith('READY')
+    ? 'connected'
+    : key.endsWith('ERROR') || key.endsWith('UNAVAILABLE') ? 'error' : 'setup'
+}
+
+function selectService(providerId) {
+  if (controlsDisabled.value) {
+    return
+  }
+  if (providerId !== CUSTOM_NEW_ID && !providerForId(providerId)) {
+    return
+  }
+  selectedProviderId.value = providerId
 }
 
 function selectCard(card) {
-  selectProvider(cardProviderId(card))
+  selectService(cardProviderId(card))
 }
 
 function toggleTranslation(event) {
-  if (!interactionDisabled.value) {
+  if (!controlsDisabled.value) {
     props.draft.translation.enabled = event.target.checked
   }
 }
 
-function openPresetEditor(providerId) {
-  if (interactionDisabled.value) {
-    return
-  }
-
-  editorMode.value = 'preset'
-  editorProviderId.value = providerId
-  formErrors.value = []
-  showApiKey.value = false
-  connectionState.value = 'idle'
-  connectionMessageKey.value = ''
-}
-
-function openCustomEditor(providerId) {
-  if (interactionDisabled.value) {
-    return
-  }
-
-  const provider = customProviders.value[providerId]
-  if (!provider) {
-    return
-  }
-
-  Object.assign(editorForm, createCustomProviderForm(provider, props.draftSecrets))
-  editorMode.value = 'custom'
-  editorProviderId.value = providerId
-  formErrors.value = []
-  showApiKey.value = false
-  connectionState.value = 'idle'
-  connectionMessageKey.value = ''
-}
-
-function openProviderSettings(card) {
-  if (card.custom) {
-    openCustomEditor(card.id)
-    return
-  }
-
-  openPresetEditor(cardProviderId(card))
-}
-
-function startCustomProvider() {
-  if (interactionDisabled.value) {
-    return
-  }
-
-  Object.assign(editorForm, createCustomProviderForm())
-  editorMode.value = 'custom'
-  editorProviderId.value = ''
-  formErrors.value = []
-  showApiKey.value = false
-  connectionState.value = 'idle'
-  connectionMessageKey.value = ''
-}
-
-function closeEditor() {
-  connectionRequestId += 1
-  providerSelectionRequestId += 1
-  editorMode.value = ''
-  editorProviderId.value = ''
-  formErrors.value = []
-  showApiKey.value = false
-  connectionState.value = 'idle'
-  connectionMessageKey.value = ''
-  providerSelectionState.value = 'idle'
-  providerSelectionMessageKey.value = ''
-}
-
 function setProviderSecret(provider, value) {
+  if (!provider?.id) {
+    return
+  }
   const providers = ensureDraftSecrets()
-  const secretField = provider?.auth?.secretRef?.split('.').pop() || 'apiKey'
+  const secretField = provider.auth?.secretRef?.split('.').pop() || 'apiKey'
   const current = providers[provider.id] || {}
-
-  if (value.trim()) {
-    providers[provider.id] = {
-      ...current,
-      [secretField]: value.trim()
-    }
+  const normalized = String(value || '').trim()
+  if (normalized) {
+    providers[provider.id] = {...current, [secretField]: normalized}
     return
   }
-
-  if (!current[secretField]) {
-    return
-  }
-
   const next = {...current}
   delete next[secretField]
   if (Object.keys(next).length) {
@@ -298,19 +323,100 @@ function setProviderSecret(provider, value) {
   }
 }
 
-function presetCredentialValue(provider) {
-  return provider ? getProviderCredential(provider, props.draftSecrets) : ''
-}
-
 function updatePresetCredential(event) {
-  setProviderSecret(editorProvider.value, event.target.value)
-  invalidateConnectionState()
+  setProviderSecret(selectedProvider.value, event.target.value)
+  invalidateConnectionState(selectedProviderId.value)
 }
 
-function switchDeepLVariant(event) {
-  const providerId = event.target.value
-  selectProvider(providerId)
-  editorProviderId.value = providerId
+function deletePresetCredential() {
+  setProviderSecret(selectedProvider.value, '')
+  invalidateConnectionState(selectedProviderId.value)
+  showApiKey.value = false
+}
+
+function switchDeepLVariant(providerId) {
+  selectService(providerId)
+}
+
+function customDraftKey() {
+  return editorProviderId.value || CUSTOM_NEW_ID
+}
+
+function cacheEditorDraft(providerId = selectedProviderId.value) {
+  if (!editorDirty.value || (
+    providerId !== CUSTOM_NEW_ID &&
+    customProviders.value[providerId]?.source !== PROVIDER_SOURCES.CUSTOM
+  )) {
+    return
+  }
+  customDrafts[providerId] = cloneProvider(editorForm)
+  customDraftDirty[providerId] = true
+  notifyPendingChange()
+}
+
+function loadEditorDraft(providerId) {
+  const provider = providerId === CUSTOM_NEW_ID ? null : customProviders.value[providerId]
+  const persistedForm = createCustomProviderForm(provider, props.draftSecrets)
+  const hasCachedEdits = Boolean(customDrafts[providerId] && customDraftDirty[providerId])
+  const form = hasCachedEdits ? customDrafts[providerId] : persistedForm
+  Object.assign(editorForm, form)
+  editorProviderId.value = providerId === CUSTOM_NEW_ID ? '' : providerId
+  editorBaseline.value = JSON.stringify(hasCachedEdits ? persistedForm : form)
+  setEditorDirty(hasCachedEdits)
+  formErrors.value = []
+  showApiKey.value = false
+}
+
+function startCustomProvider() {
+  cacheEditorDraft()
+  selectService(CUSTOM_NEW_ID)
+}
+
+function cancelCustomDraft() {
+  delete customDrafts[customDraftKey()]
+  delete customDraftDirty[customDraftKey()]
+  if (editorProviderId.value) {
+    loadEditorDraft(editorProviderId.value)
+    return
+  }
+  setEditorDirty(false)
+  selectService(activeProviderId.value)
+}
+
+function clearCustomEditorState() {
+  Object.keys(customDrafts).forEach(providerId => {
+    delete customDrafts[providerId]
+  })
+  Object.keys(customDraftDirty).forEach(providerId => {
+    delete customDraftDirty[providerId]
+  })
+  Object.assign(editorForm, createCustomProviderForm())
+  editorProviderId.value = ''
+  editorBaseline.value = JSON.stringify(editorForm)
+  formErrors.value = []
+  showApiKey.value = false
+  permissionRequestState.value = 'idle'
+  setEditorDirty(false)
+}
+
+function resetCustomEditorFromDraft() {
+  clearCustomEditorState()
+  selectedProviderId.value = activeProviderId.value
+  if (selectedIsCustom.value) {
+    loadEditorDraft(selectedProviderId.value)
+  }
+}
+
+function syncAuthDefaults() {
+  if (editorForm.authMode === PROVIDER_AUTH_MODES.BEARER &&
+      (!editorForm.authHeaderName || editorForm.authHeaderName === 'X-API-Key')) {
+    editorForm.authHeaderName = 'Authorization'
+    editorForm.authPrefix = 'Bearer '
+  } else if (editorForm.authMode === PROVIDER_AUTH_MODES.API_KEY &&
+      editorForm.authHeaderName === 'Authorization') {
+    editorForm.authHeaderName = 'X-API-Key'
+    editorForm.authPrefix = ''
+  }
 }
 
 function errorTextKey(error) {
@@ -327,968 +433,716 @@ function errorTextKey(error) {
     'invalid-auth-location': 'SETTINGS_TRANSLATION_VALIDATION_AUTH',
     'invalid-auth-header': 'SETTINGS_TRANSLATION_VALIDATION_AUTH',
     'required-response-path': 'SETTINGS_TRANSLATION_VALIDATION_RESPONSE',
-    'invalid-provider': 'SETTINGS_TRANSLATION_VALIDATION_INVALID'
+    'invalid-provider': 'SETTINGS_TRANSLATION_VALIDATION_INVALID',
+    'permission-or-test-required': 'SETTINGS_TRANSLATION_CUSTOM_TEST_REQUIRED'
   }
   return keys[error?.code] || 'SETTINGS_TRANSLATION_VALIDATION_INVALID'
 }
 
-function applyCustomCredential(provider, result, previousProvider = null) {
-  const providers = ensureDraftSecrets()
-  const previousValue = previousProvider
-    ? getProviderCredential(previousProvider, props.draftSecrets)
-    : ''
-  const value = result.credentialValue || previousValue
-
-  if (previousProvider && previousProvider.id !== result.provider.id) {
-    delete providers[previousProvider.id]
-  }
-
-  if (result.provider.auth.mode === PROVIDER_AUTH_MODES.NONE || result.clearCredential) {
-    delete providers[result.provider.id]
-    return
-  }
-
-  if (value) {
-    providers[result.provider.id] = {
-      [result.credentialField]: value
-    }
-  }
-}
-
-async function saveCustomProvider() {
-  if (editorControlsDisabled.value) {
-    return
-  }
-
-  const existingIds = customProviderIds.value
-  const result = validateCustomProviderForm(editorForm, {
-    existingIds,
+function currentCustomFormResult() {
+  return validateCustomProviderForm(editorForm, {
+    existingIds: Object.keys(customProviders.value),
     editingId: editorProviderId.value
   })
-  if (!result.valid) {
-    formErrors.value = result.errors
-    return
-  }
-
-  const providers = ensureDraftProviders()
-  const previousProvider = editorProviderId.value
-    ? providers[editorProviderId.value]
-    : null
-  const wasActive = activeProviderId.value === previousProvider?.id
-  if (wasActive && !await requestCustomProviderAccess(result.provider)) {
-    return
-  }
-
-  if (previousProvider && previousProvider.id !== result.provider.id) {
-    delete providers[previousProvider.id]
-  }
-  providers[result.provider.id] = result.provider
-  if (wasActive) {
-    props.draft.translation.providerId = result.provider.id
-  }
-  applyCustomCredential(result.provider, result, previousProvider)
-  closeEditor()
 }
 
-function deleteCustomProvider(providerId) {
-  if (interactionDisabled.value) {
-    return
-  }
-
-  const confirmFn = globalThis.confirm
-  const confirmed = typeof confirmFn !== 'function' || confirmFn(
-    text('SETTINGS_TRANSLATION_CUSTOM_DELETE_CONFIRM')
-  )
-  if (!confirmed) {
-    return
-  }
-
-  const providers = ensureDraftProviders()
-  delete providers[providerId]
-  const secrets = ensureDraftSecrets()
-  delete secrets[providerId]
-  if (props.draft.translation.providerId === providerId) {
-    props.draft.translation.providerId = 'deepl-free'
-  }
-  if (editorProviderId.value === providerId) {
-    closeEditor()
-  }
-}
-
-function customTestSecrets(result) {
+function customSecretsFor(result) {
   const secrets = cloneProvider(props.draftSecrets)
   if (!secrets.providers) {
     secrets.providers = {}
   }
-
-  const previousProvider = editorProviderId.value
-    ? customProviders.value[editorProviderId.value]
-    : null
-  const previousValue = previousProvider
-    ? getProviderCredential(previousProvider, props.draftSecrets)
-    : ''
+  const previousProvider = editorProviderId.value ? customProviders.value[editorProviderId.value] : null
+  const previousValue = previousProvider ? getProviderCredential(previousProvider, props.draftSecrets) : ''
   const value = result.credentialValue || previousValue
   if (previousProvider && previousProvider.id !== result.provider.id) {
     delete secrets.providers[previousProvider.id]
   }
-  if (result.provider.auth.mode !== PROVIDER_AUTH_MODES.NONE && value && !result.clearCredential) {
-    secrets.providers[result.provider.id] = {
-      [result.credentialField]: value
-    }
-  } else if (result.clearCredential || result.provider.auth.mode === PROVIDER_AUTH_MODES.NONE) {
+  if (result.provider.auth.mode === PROVIDER_AUTH_MODES.NONE || result.clearCredential) {
     delete secrets.providers[result.provider.id]
+  } else if (value) {
+    secrets.providers[result.provider.id] = {[result.credentialField]: value}
   }
   return secrets
 }
 
-async function runConnectionTest(provider, secrets = props.draftSecrets) {
-  if (!provider || controlsDisabled.value || connectionState.value === 'testing') {
+function applyCustomCredential(result, previousProvider = null) {
+  const providers = ensureDraftSecrets()
+  const previousValue = previousProvider ? getProviderCredential(previousProvider, props.draftSecrets) : ''
+  const value = result.credentialValue || previousValue
+  if (previousProvider && previousProvider.id !== result.provider.id) {
+    delete providers[previousProvider.id]
+  }
+  if (result.provider.auth.mode === PROVIDER_AUTH_MODES.NONE || result.clearCredential) {
+    delete providers[result.provider.id]
     return
   }
+  if (value) {
+    providers[result.provider.id] = {[result.credentialField]: value}
+  }
+}
 
-  if (provider.auth.mode !== PROVIDER_AUTH_MODES.NONE &&
-      !getProviderCredential(provider, secrets)) {
-    connectionState.value = 'error'
-    connectionMessageKey.value = 'SETTINGS_TRANSLATION_API_KEY_MISSING'
+function customProviderForTest(result) {
+  const existing = editorProviderId.value ? customProviders.value[editorProviderId.value] : null
+  return {
+    provider: result.provider,
+    credential: result.credentialValue || getProviderCredential(existing, props.draftSecrets)
+  }
+}
+
+async function refreshCustomPermission(provider, providerId = selectedProviderId.value) {
+  if (!provider || provider.source !== PROVIDER_SOURCES.CUSTOM) {
+    return true
+  }
+  const allowed = await hasTranslationProviderPermission(provider)
+  permissionStates[providerId] = allowed ? 'allowed' : 'required'
+  return allowed
+}
+
+async function requestCustomAccess(provider, providerId = selectedProviderId.value) {
+  if (!provider || provider.source !== PROVIDER_SOURCES.CUSTOM || controlsDisabled.value) {
+    return false
+  }
+  const requestId = ++permissionRequestId
+  permissionRequestState.value = 'requesting'
+  permissionStates[providerId] = 'requesting'
+  try {
+    const granted = await requestTranslationProviderPermission(provider)
+    if (requestId !== permissionRequestId) {
+      return false
+    }
+    permissionStates[providerId] = granted ? 'allowed' : 'required'
+    permissionRequestState.value = granted ? 'idle' : 'error'
+    return granted
+  } catch (_error) {
+    if (requestId === permissionRequestId) {
+      permissionStates[providerId] = 'required'
+      permissionRequestState.value = 'error'
+    }
+    return false
+  }
+}
+
+async function requestCustomPermissionFromForm() {
+  const result = currentCustomFormResult()
+  if (result.valid) {
+    await requestCustomAccess(result.provider, selectedProviderId.value)
+  } else {
+    formErrors.value = result.errors
+  }
+}
+
+async function runConnectionTest(provider, {
+  providerId = provider?.id || selectedProviderId.value,
+  secrets = props.draftSecrets,
+  signature = providerSignature(provider, providerId)
+} = {}) {
+  if (!provider || connectionControlsDisabled(providerId)) {
     return
   }
-
+  const credential = getProviderCredential(provider, secrets)
+  if (provider.auth.mode !== PROVIDER_AUTH_MODES.NONE && !credential) {
+    setConnectionState(providerId, {
+      status: 'error',
+      messageKey: 'SETTINGS_TRANSLATION_API_KEY_MISSING',
+      signature: ''
+    })
+    return
+  }
   const requestId = ++connectionRequestId
-  connectionState.value = 'testing'
-  connectionMessageKey.value = ''
+  setConnectionState(providerId, {status: 'testing', messageKey: '', signature})
   try {
     await testTranslationProvider(provider, {
       secrets,
       targetLanguage: translation.value.targetLanguage
     })
-    if (requestId !== connectionRequestId) {
+    if (requestId !== connectionRequestId || signature !== providerSignature(provider, providerId)) {
       return
     }
-    connectionState.value = 'success'
-    connectionMessageKey.value = 'SETTINGS_TRANSLATION_TEST_SUCCESS'
+    setConnectionState(providerId, {
+      status: 'success',
+      messageKey: 'SETTINGS_TRANSLATION_TEST_SUCCESS',
+      signature
+    })
   } catch (error) {
     if (requestId !== connectionRequestId) {
       return
     }
-    connectionState.value = 'error'
-    connectionMessageKey.value = error?.code === 'UNSUPPORTED_CONTEXT'
-      ? 'SETTINGS_TRANSLATION_TEST_UNSUPPORTED'
-      : 'SETTINGS_TRANSLATION_TEST_FAILURE'
+    setConnectionState(providerId, {
+      status: 'error',
+      messageKey: error?.code === 'PERMISSION_REQUIRED'
+        ? 'SETTINGS_TRANSLATION_PERMISSION_REQUIRED'
+        : 'SETTINGS_TRANSLATION_TEST_FAILURE',
+      signature: ''
+    })
   }
 }
 
 function testPresetConnection() {
-  runConnectionTest(editorProvider.value)
+  runConnectionTest(selectedProvider.value, {
+    providerId: selectedProviderId.value,
+    signature: providerSignature(selectedProvider.value, selectedProviderId.value)
+  })
 }
 
-function testCustomConnection() {
-  if (editorControlsDisabled.value) {
+async function testCustomConnection() {
+  if (connectionControlsDisabled()) {
     return
   }
-
-  const result = validateCustomProviderForm(editorForm, {
-    existingIds: customProviderIds.value,
-    editingId: editorProviderId.value
-  })
+  const result = currentCustomFormResult()
   if (!result.valid) {
     formErrors.value = result.errors
     return
   }
-
   formErrors.value = []
-  runConnectionTest(result.provider, customTestSecrets(result))
+  const testTarget = customProviderForTest(result)
+  const providerId = selectedProviderId.value
+  if (!await refreshCustomPermission(testTarget.provider, providerId)) {
+    setConnectionState(providerId, {
+      status: 'error',
+      messageKey: 'SETTINGS_TRANSLATION_PERMISSION_REQUIRED',
+      signature: ''
+    })
+    return
+  }
+  await runConnectionTest(testTarget.provider, {
+    providerId,
+    secrets: customSecretsFor(result),
+    signature: formSignature(testTarget.provider, testTarget.credential)
+  })
 }
 
-function invalidateConnectionState() {
-  if (connectionState.value === 'testing') {
+async function saveCustomProvider() {
+  if (connectionControlsDisabled()) {
+    return
+  }
+  const result = currentCustomFormResult()
+  if (!result.valid) {
+    formErrors.value = result.errors
+    return
+  }
+  const existingProvider = editorProviderId.value ? customProviders.value[editorProviderId.value] : null
+  const wasActive = activeProviderId.value === existingProvider?.id
+  const currentState = stateFor(selectedProviderId.value)
+  const testedSignature = formSignature(
+    result.provider,
+    result.credentialValue || getProviderCredential(existingProvider, props.draftSecrets)
+  )
+  if (wasActive && (currentState.status !== 'success' || currentState.signature !== testedSignature)) {
+    formErrors.value = [{code: 'permission-or-test-required'}]
     return
   }
 
-  connectionRequestId += 1
-  connectionState.value = 'idle'
-  connectionMessageKey.value = ''
+  const providers = ensureDraftProviders()
+  if (existingProvider && existingProvider.id !== result.provider.id) {
+    delete providers[existingProvider.id]
+  }
+  providers[result.provider.id] = result.provider
+  applyCustomCredential(result, existingProvider)
+  delete customDrafts[customDraftKey()]
+  delete customDraftDirty[customDraftKey()]
+  delete customDrafts[result.provider.id]
+  delete customDraftDirty[result.provider.id]
+  selectedProviderId.value = result.provider.id
+  loadEditorDraft(result.provider.id)
+  if (currentState.status === 'success' && currentState.signature === testedSignature) {
+    connectionStates[result.provider.id] = {
+      ...currentState,
+      signature: providerSignature(result.provider, result.provider.id)
+    }
+  } else {
+    invalidateConnectionState(result.provider.id)
+  }
+  await refreshCustomPermission(result.provider, result.provider.id)
 }
 
-function syncAuthDefaults() {
-  if (editorForm.authMode === PROVIDER_AUTH_MODES.BEARER &&
-      (!editorForm.authHeaderName || editorForm.authHeaderName === 'X-API-Key')) {
-    editorForm.authHeaderName = 'Authorization'
-    editorForm.authPrefix = 'Bearer '
-  } else if (editorForm.authMode === PROVIDER_AUTH_MODES.API_KEY &&
-      editorForm.authHeaderName === 'Authorization') {
-    editorForm.authHeaderName = 'X-API-Key'
-    editorForm.authPrefix = ''
+function deleteCustomProvider(providerId) {
+  if (controlsDisabled.value) {
+    return
+  }
+  const confirmFn = globalThis.confirm
+  const confirmed = typeof confirmFn !== 'function' || confirmFn(text('SETTINGS_TRANSLATION_CUSTOM_DELETE_CONFIRM'))
+  if (!confirmed) {
+    return
+  }
+  delete ensureDraftProviders()[providerId]
+  delete ensureDraftSecrets()[providerId]
+  delete customDrafts[providerId]
+  delete customDraftDirty[providerId]
+  delete connectionStates[providerId]
+  delete permissionStates[providerId]
+  notifyPendingChange()
+  if (editorProviderId.value === providerId || selectedProviderId.value === providerId) {
+    setEditorDirty(false)
+  }
+  if (activeProviderId.value === providerId) {
+    props.draft.translation.providerId = 'deepl-free'
+  }
+  if (selectedProviderId.value === providerId) {
+    selectedProviderId.value = activeProviderId.value === providerId ? 'deepl-free' : activeProviderId.value
   }
 }
 
-watch(() => props.draftRevision, () => {
-  if (editorMode.value !== 'custom' || !editorProviderId.value) {
+function canActivateSelected() {
+  const state = stateFor(selectedProviderId.value)
+  return Boolean(
+    selectedProvider.value &&
+    canActivateTranslationProvider({
+      panel: selectedPanel.value,
+      chromeReady: chromeState.value.phase === CHROME_TRANSLATOR_PHASES.AVAILABLE,
+      permissionAllowed: permissionStates[selectedProviderId.value] === 'allowed',
+      connectionStatus: state.status,
+      connectionMatches: isConnectionSuccess(selectedProviderId.value),
+      hasCredential: Boolean(providerCredential(selectedProvider.value))
+    })
+  )
+}
+
+function activateSelectedProvider() {
+  if (controlsDisabled.value || !canActivateSelected()) {
     return
   }
+  props.draft.translation.providerId = selectedProviderId.value
+  if (selectedIsChrome.value) {
+    props.draft.translation.targetLanguage = 'ko'
+  }
+}
 
-  const provider = customProviders.value[editorProviderId.value]
-  if (!provider) {
-    closeEditor()
+function chromeStatusTextKey() {
+  switch (chromeState.value.phase) {
+    case CHROME_TRANSLATOR_PHASES.UNSUPPORTED:
+      return 'SETTINGS_TRANSLATION_CHROME_UNSUPPORTED'
+    case CHROME_TRANSLATOR_PHASES.UNAVAILABLE:
+      return 'SETTINGS_TRANSLATION_CHROME_MODEL_UNAVAILABLE'
+    case CHROME_TRANSLATOR_PHASES.DOWNLOADING:
+      return 'SETTINGS_TRANSLATION_CHROME_MODEL_DOWNLOADING'
+    case CHROME_TRANSLATOR_PHASES.AVAILABLE:
+      return 'SETTINGS_TRANSLATION_CHROME_MODEL_READY'
+    case CHROME_TRANSLATOR_PHASES.FAILED:
+      return 'SETTINGS_TRANSLATION_CHROME_DOWNLOAD_FAILED'
+    default:
+      return 'SETTINGS_TRANSLATION_CHROME_MODEL_NEEDED'
+  }
+}
+
+function chromeErrorTextKey() {
+  if (chromeState.value.errorCode === CHROME_TRANSLATOR_ERROR_CODES.NETWORK) {
+    return 'SETTINGS_TRANSLATION_CHROME_NETWORK_ERROR'
+  }
+  if (chromeState.value.errorCode === CHROME_TRANSLATOR_ERROR_CODES.NOT_ALLOWED) {
+    return 'SETTINGS_TRANSLATION_CHROME_PERMISSION_ERROR'
+  }
+  if (chromeState.value.errorCode === CHROME_TRANSLATOR_ERROR_CODES.NOT_SUPPORTED) {
+    return 'SETTINGS_TRANSLATION_CHROME_UNSUPPORTED'
+  }
+  return 'SETTINGS_TRANSLATION_CHROME_DOWNLOAD_FAILED_HINT'
+}
+
+function refreshChromeAvailability() {
+  if (!selectedIsChrome.value || typeof chromeRuntime.refreshAvailability !== 'function') {
     return
   }
+  chromeRuntime.refreshAvailability().catch(() => {})
+}
 
-  const persistedForm = createCustomProviderForm(provider, props.draftSecrets)
-  if (JSON.stringify(editorForm) === JSON.stringify(persistedForm)) {
-    Object.assign(editorForm, persistedForm)
+// Keep this click handler synchronous through runtime.download(): Chrome ties
+// Translator.create() to the current user activation when downloading.
+function downloadChromeModel() {
+  if (controlsDisabled.value || chromeState.value.phase === CHROME_TRANSLATOR_PHASES.DOWNLOADING) {
+    return
   }
-})
+  if (![CHROME_TRANSLATOR_PHASES.DOWNLOADABLE, CHROME_TRANSLATOR_PHASES.FAILED].includes(chromeState.value.phase)) {
+    return
+  }
+  try {
+    const promise = chromeRuntime.download()
+    promise?.catch?.(() => {})
+  } catch (_error) {
+    // The runtime publishes a retryable failure state.
+  }
+}
+
+function progressPercent() {
+  return chromeState.value.progress === null ? 0 : Math.round(chromeState.value.progress * 100)
+}
+
+watch(selectedProviderId, (providerId, previousProviderId) => {
+  if (previousProviderId !== undefined && (
+    previousProviderId === CUSTOM_NEW_ID ||
+    customProviders.value[previousProviderId]?.source === PROVIDER_SOURCES.CUSTOM
+  )) {
+    cacheEditorDraft(previousProviderId)
+  }
+  if (providerId === CUSTOM_NEW_ID || customProviders.value[providerId]) {
+    loadEditorDraft(providerId)
+    refreshCustomPermission(providerId === CUSTOM_NEW_ID ? null : customProviders.value[providerId], providerId)
+  } else if (providerId === CHROME_ID) {
+    setEditorDirty(false)
+    refreshChromeAvailability()
+  } else {
+    setEditorDirty(false)
+  }
+}, {immediate: true})
 
 watch(editorForm, () => {
-  invalidateConnectionState()
+  const next = JSON.stringify(editorForm)
+  const nextDirty = next !== editorBaseline.value
+  setEditorDirty(nextDirty)
+  if (nextDirty) {
+    invalidateConnectionState(selectedProviderId.value)
+  }
 }, {deep: true})
+
+const lastResetRevision = ref(props.draftResetRevision)
+
+watch(() => props.draftResetRevision, revision => {
+  lastResetRevision.value = revision
+  resetCustomEditorFromDraft()
+})
+
+watch(() => props.draftRevision, () => {
+  if (props.draftResetRevision !== lastResetRevision.value) {
+    lastResetRevision.value = props.draftResetRevision
+    resetCustomEditorFromDraft()
+    return
+  }
+  if (!selectedIsCustom.value || editorDirty.value) {
+    return
+  }
+  loadEditorDraft(selectedProviderId.value)
+})
+
+if (typeof chromeRuntime.subscribe === 'function') {
+  chromeRuntime.subscribe(state => {
+    chromeState.value = state
+  })
+}
+
+onBeforeUnmount(() => {
+  permissionRequestId += 1
+  connectionRequestId += 1
+  if (ownsChromeRuntime) {
+    chromeRuntime.destroy?.()
+  }
+})
 </script>
 
 <template>
-  <section class="settings-card translation-settings" data-testid="settings-translation-form">
-    <div class="settings-card__heading">
-      <h3>{{ text('SETTINGS_TRANSLATION_CARD_TITLE') }}</h3>
-      <p>{{ text('SETTINGS_TRANSLATION_CARD_DESCRIPTION') }}</p>
-    </div>
-
-    <label class="settings-switch" for="settings-translation-enabled">
-      <input
-        id="settings-translation-enabled"
-        type="checkbox"
-        :checked="translation.enabled"
-        :disabled="interactionDisabled"
-        data-testid="settings-translation-enabled"
-        @change="toggleTranslation"
-      >
-      <span class="settings-switch__track" aria-hidden="true">
-        <span class="settings-switch__thumb" />
-      </span>
-      <span class="settings-switch__label">
-        {{ text('SETTINGS_TRANSLATION_ENABLED') }}
-      </span>
-    </label>
-
-    <div class="translation-settings__general">
-      <div class="translation-settings__field">
-        <label for="settings-translation-target-language">
-          {{ text('SETTINGS_TRANSLATION_TARGET_LANGUAGE') }}
-        </label>
-        <span>{{ text('SETTINGS_TRANSLATION_TARGET_LANGUAGE_HINT') }}</span>
-        <input
-          id="settings-translation-target-language"
-          v-model="draft.translation.targetLanguage"
-          type="text"
-          inputmode="text"
-          autocomplete="off"
-          spellcheck="false"
-          maxlength="12"
-          :disabled="interactionDisabled"
-          data-testid="settings-translation-target-language"
-        >
-      </div>
-      <div class="translation-settings__field">
-        <label for="settings-translation-provider">
-          {{ text('SETTINGS_TRANSLATION_PROVIDER') }}
-        </label>
-        <span>{{ text('SETTINGS_TRANSLATION_PROVIDER_HINT') }}</span>
-        <select
-          id="settings-translation-provider"
-          :value="activeProviderId"
-          :disabled="interactionDisabled"
-          @change="selectProviderFromControl"
-          data-testid="settings-translation-provider"
-        >
-          <option value="deepl-free">DeepL Free</option>
-          <option value="deepl-pro">DeepL Pro</option>
-          <option value="gemini">Gemini</option>
-          <option
-            v-for="(provider, providerId) in customProviders"
-            :key="providerId"
-            :value="providerId"
-          >
-            {{ provider.name || providerId }}
-          </option>
-        </select>
-      </div>
-    </div>
-
-    <p
-      v-if="providerSelectionMessageKey"
-      class="translation-settings__selection-status"
-      :class="`translation-settings__selection-status--${providerSelectionState}`"
-      role="status"
-      data-testid="settings-translation-permission-status"
-    >
-      {{ text(providerSelectionMessageKey) }}
-    </p>
-
-    <div class="translation-settings__services">
-      <div class="translation-settings__services-heading">
-        <h4>{{ text('SETTINGS_TRANSLATION_AVAILABLE_SERVICES') }}</h4>
-        <p>{{ text('SETTINGS_TRANSLATION_AVAILABLE_SERVICES_HINT') }}</p>
-      </div>
-
-      <article
-        v-for="card in providerCards"
-        :key="card.id"
-        class="translation-provider-card"
-        :class="{
-          'translation-provider-card--active': isCardActive(card),
-          'translation-provider-card--custom': card.custom
-        }"
-        :data-provider-id="card.id"
-      >
-        <div class="translation-provider-card__copy">
-          <h5>{{ providerName(card) }}</h5>
-          <p>{{ text(card.descriptionKey) }}</p>
+  <section class="translation-settings" data-testid="settings-translation-form">
+    <div class="translation-settings__layout">
+      <aside class="translation-settings__selector" aria-labelledby="translation-selector-title">
+        <div class="translation-settings__heading">
+          <h2 id="translation-selector-title">{{ text('SETTINGS_TRANSLATION_SELECTOR_TITLE') }}</h2>
+          <p>{{ text('SETTINGS_TRANSLATION_SELECTOR_HINT') }}</p>
         </div>
-        <span v-if="card.badgeKey" class="translation-provider-card__badge">
-          {{ text(card.badgeKey) }}
-        </span>
-        <div class="translation-provider-card__actions">
-          <span
-            v-if="isCardActive(card)"
-            class="translation-provider-card__active"
-          >
-            {{ text('SETTINGS_TRANSLATION_ACTIVE') }}
-          </span>
-          <button
-            type="button"
-            class="translation-provider-card__action"
-            :disabled="interactionDisabled"
-            @click="openProviderSettings(card)"
-          >
-            {{ text('SETTINGS_TRANSLATION_CONFIGURE') }}
-          </button>
-          <button
-            v-if="!isCardActive(card)"
-            type="button"
-            class="translation-provider-card__use"
-            :disabled="interactionDisabled"
-            @click="selectCard(card)"
-          >
-            {{ text('SETTINGS_TRANSLATION_USE') }}
-          </button>
-          <button
-            v-if="card.custom"
-            type="button"
-            class="translation-provider-card__delete"
-            :disabled="interactionDisabled"
-            :aria-label="text('SETTINGS_TRANSLATION_CUSTOM_DELETE')"
-            @click="deleteCustomProvider(card.id)"
-          >
-            {{ text('SETTINGS_TRANSLATION_CUSTOM_DELETE') }}
-          </button>
-        </div>
-      </article>
 
-      <button
-        type="button"
-        class="translation-settings__add"
-        :disabled="interactionDisabled"
-        data-testid="settings-translation-add-custom"
-        @click="startCustomProvider"
-      >
-        + {{ text('SETTINGS_TRANSLATION_CUSTOM_ADD') }}
-      </button>
-
-      <p class="translation-settings__note">
-        {{ text('SETTINGS_TRANSLATION_EXTERNAL_NOTE') }}
-      </p>
-    </div>
-
-    <section
-      v-if="editorMode === 'preset' && editorProvider"
-      class="translation-provider-editor"
-      data-testid="settings-translation-preset-editor"
-    >
-      <div class="translation-provider-editor__heading">
-        <div>
-          <h4>{{ editorProvider.name }}</h4>
-          <p>{{ text('SETTINGS_TRANSLATION_PRESET_DESCRIPTION') }}</p>
-        </div>
-        <button type="button" class="translation-provider-editor__close" :disabled="interactionDisabled" @click="closeEditor">
-          ×
-        </button>
-      </div>
-
-      <div v-if="editorProviderId === 'deepl-free' || editorProviderId === 'deepl-pro'" class="translation-provider-editor__field">
-        <label for="settings-translation-deepl-variant">
-          {{ text('SETTINGS_TRANSLATION_DEEPL_VARIANT') }}
-        </label>
-        <select
-          id="settings-translation-deepl-variant"
-          :value="editorProviderId"
-          :disabled="editorControlsDisabled"
-          data-testid="settings-translation-deepl-variant"
-          @change="switchDeepLVariant"
-        >
-          <option value="deepl-free">{{ text('SETTINGS_TRANSLATION_DEEPL_FREE') }}</option>
-          <option value="deepl-pro">{{ text('SETTINGS_TRANSLATION_DEEPL_PRO') }}</option>
-        </select>
-      </div>
-
-      <div v-if="editorProvider.auth.mode !== PROVIDER_AUTH_MODES.NONE" class="translation-provider-editor__field">
-        <label for="settings-translation-preset-api-key">
-          {{ text('SETTINGS_TRANSLATION_API_KEY') }}
-        </label>
-        <div class="translation-provider-editor__secret">
-          <input
-            id="settings-translation-preset-api-key"
-            :type="showApiKey ? 'text' : 'password'"
-            :value="presetCredentialValue(editorProvider)"
-            autocomplete="new-password"
-            :disabled="editorControlsDisabled"
-            :placeholder="editorHasCredential ? '••••••••••••••••' : text('SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER')"
-            data-testid="settings-translation-preset-api-key"
-            @input="updatePresetCredential"
-          >
-          <button
-            type="button"
-            class="translation-provider-editor__show-secret"
-            :disabled="editorControlsDisabled"
-            :aria-label="text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY')"
-            @click="showApiKey = !showApiKey"
-          >
-            {{ text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY') }}
-          </button>
-        </div>
-        <span>{{ text('SETTINGS_TRANSLATION_API_KEY_HINT') }}</span>
-        <p v-if="!presetCredentialValue(editorProvider)" class="translation-provider-editor__warning" role="alert">
-          {{ text('SETTINGS_TRANSLATION_API_KEY_MISSING') }}
-        </p>
-      </div>
-
-      <div class="translation-provider-editor__actions">
-        <button
-          type="button"
-          class="translation-provider-editor__test"
-          :disabled="editorControlsDisabled"
-          data-testid="settings-translation-test"
-          @click="testPresetConnection"
-        >
-          {{ text(connectionState === 'testing' ? 'SETTINGS_TRANSLATION_TESTING' : 'SETTINGS_TRANSLATION_TEST') }}
-        </button>
-        <button type="button" class="translation-provider-editor__cancel" :disabled="interactionDisabled" @click="closeEditor">
-          {{ text('SETTINGS_TRANSLATION_CUSTOM_CANCEL') }}
-        </button>
-      </div>
-      <p
-        v-if="connectionMessageKey"
-        class="translation-provider-editor__result"
-        :class="`translation-provider-editor__result--${connectionState}`"
-        role="status"
-        data-testid="settings-translation-test-result"
-      >
-        {{ text(connectionMessageKey) }}
-      </p>
-    </section>
-
-    <form
-      v-if="isEditingCustom"
-      class="translation-provider-editor translation-provider-editor--custom"
-      data-testid="settings-translation-custom-editor"
-      @submit.prevent="saveCustomProvider"
-    >
-      <div class="translation-provider-editor__heading">
-        <div>
-          <h4>{{ text(editorProviderId ? 'SETTINGS_TRANSLATION_CUSTOM_EDIT' : 'SETTINGS_TRANSLATION_CUSTOM_TITLE') }}</h4>
-          <p>{{ text('SETTINGS_TRANSLATION_CUSTOM_DESCRIPTION') }}</p>
-        </div>
-        <button type="button" class="translation-provider-editor__close" :disabled="interactionDisabled" @click="closeEditor">
-          ×
-        </button>
-      </div>
-
-      <div class="translation-provider-editor__grid">
-        <label class="translation-provider-editor__field">
-          {{ text('SETTINGS_TRANSLATION_CUSTOM_NAME_LABEL') }}
-          <input v-model="editorForm.name" type="text" autocomplete="off" :disabled="editorControlsDisabled" data-testid="settings-custom-name">
-          <span>{{ text('SETTINGS_TRANSLATION_CUSTOM_NAME_HINT') }}</span>
-        </label>
-
-        <label class="translation-provider-editor__field">
-          {{ text('SETTINGS_TRANSLATION_CUSTOM_URL') }}
-          <input v-model="editorForm.url" type="url" autocomplete="off" placeholder="https://api.example.com/translate" :disabled="editorControlsDisabled" data-testid="settings-custom-url">
-          <span>{{ text('SETTINGS_TRANSLATION_CUSTOM_URL_HINT') }}</span>
-        </label>
-
-        <label class="translation-provider-editor__field">
-          {{ text('SETTINGS_TRANSLATION_CUSTOM_METHOD') }}
-          <select v-model="editorForm.method" :disabled="editorControlsDisabled" data-testid="settings-custom-method">
-            <option value="POST">POST</option>
-            <option value="PUT">PUT</option>
-            <option value="PATCH">PATCH</option>
-          </select>
-        </label>
-
-        <label class="translation-provider-editor__field">
-          {{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_MODE') }}
-          <select v-model="editorForm.authMode" :disabled="editorControlsDisabled" data-testid="settings-custom-auth-mode" @change="syncAuthDefaults">
-            <option value="none">{{ text('SETTINGS_TRANSLATION_AUTH_NONE') }}</option>
-            <option value="api-key">{{ text('SETTINGS_TRANSLATION_AUTH_API_KEY') }}</option>
-            <option value="bearer">{{ text('SETTINGS_TRANSLATION_AUTH_BEARER') }}</option>
-            <option value="custom">{{ text('SETTINGS_TRANSLATION_AUTH_CUSTOM') }}</option>
-          </select>
-        </label>
-      </div>
-
-      <div v-if="editorForm.authMode !== 'none'" class="translation-provider-editor__grid">
-        <label class="translation-provider-editor__field">
-          {{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_LOCATION') }}
-          <select v-model="editorForm.authLocation" :disabled="editorControlsDisabled" data-testid="settings-custom-auth-location">
-            <option value="header">{{ text('SETTINGS_TRANSLATION_AUTH_HEADER') }}</option>
-            <option value="query">{{ text('SETTINGS_TRANSLATION_AUTH_QUERY') }}</option>
-          </select>
-        </label>
-
-        <label class="translation-provider-editor__field">
-          {{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_HEADER') }}
-          <input v-model="editorForm.authHeaderName" type="text" autocomplete="off" :disabled="editorControlsDisabled" data-testid="settings-custom-auth-header">
-        </label>
-
-        <label class="translation-provider-editor__field">
-          {{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_PREFIX') }}
-          <input v-model="editorForm.authPrefix" type="text" autocomplete="off" :disabled="editorControlsDisabled" data-testid="settings-custom-auth-prefix">
-        </label>
-
-        <label class="translation-provider-editor__field">
-          {{ text('SETTINGS_TRANSLATION_API_KEY') }}
-          <div class="translation-provider-editor__secret">
-            <input
-              v-model="editorForm.apiKey"
-              :type="showApiKey ? 'text' : 'password'"
-              autocomplete="new-password"
-              :disabled="editorControlsDisabled"
-              :placeholder="editorForm.hasCredential ? '••••••••••••••••' : text('SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER')"
-              data-testid="settings-custom-api-key"
-            >
+        <div class="translation-settings__selector-card">
+          <div class="translation-settings__selector-card-heading">
+            <h3>{{ text('SETTINGS_TRANSLATION_AVAILABLE_SERVICES') }}</h3>
+            <label class="settings-switch settings-switch--compact" for="settings-translation-enabled">
+              <input
+                id="settings-translation-enabled"
+                type="checkbox"
+                :checked="translation.enabled"
+                :disabled="controlsDisabled"
+                data-testid="settings-translation-enabled"
+                @change="toggleTranslation"
+              >
+              <span class="settings-switch__track" aria-hidden="true"><span class="settings-switch__thumb" /></span>
+              <span class="settings-switch__label">{{ text('SETTINGS_TRANSLATION_ENABLED') }}</span>
+            </label>
+          </div>
+          <div class="translation-settings__service-list">
             <button
+              v-for="card in serviceCards()"
+              :key="card.id"
               type="button"
-              class="translation-provider-editor__show-secret"
-              :disabled="editorControlsDisabled"
-              @click="showApiKey = !showApiKey"
+              class="translation-service-row"
+              :class="{
+                'translation-service-row--selected': cardIsSelected(card),
+                'translation-service-row--active': cardIsActive(card)
+              }"
+              :disabled="controlsDisabled"
+              :data-provider-id="card.id"
+              @click="selectCard(card)"
             >
-              {{ text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY') }}
+              <span class="translation-service-row__icon" aria-hidden="true">{{ card.icon }}</span>
+              <span class="translation-service-row__copy">
+                <strong>{{ cardName(card) }}</strong>
+                <small>{{ text(card.descriptionKey) }}</small>
+              </span>
+              <span
+                class="translation-service-row__status"
+                :class="`translation-service-row__status--${cardStatusClass(card)}`"
+              >{{ text(cardStatusKey(card)) }}</span>
+              <span v-if="cardIsActive(card)" class="translation-service-row__active" aria-label="active">●</span>
             </button>
           </div>
-          <span>{{ text('SETTINGS_TRANSLATION_API_KEY_HINT') }}</span>
-          <label v-if="editorForm.hasCredential" class="translation-provider-editor__clear-secret">
-            <input v-model="editorForm.clearCredential" type="checkbox" :disabled="editorControlsDisabled">
-            {{ text('SETTINGS_TRANSLATION_CUSTOM_CLEAR_KEY') }}
+          <button
+            type="button"
+            class="translation-settings__add"
+            :disabled="controlsDisabled"
+            data-testid="settings-translation-add-custom"
+            @click="startCustomProvider"
+          >+ {{ text('SETTINGS_TRANSLATION_CUSTOM_ADD') }}</button>
+        </div>
+
+        <div v-if="!selectedIsChrome" class="translation-settings__general">
+          <label class="translation-settings__field" for="settings-translation-target-language">
+            <span>{{ text('SETTINGS_TRANSLATION_TARGET_LANGUAGE') }}</span>
+            <input
+              id="settings-translation-target-language"
+              v-model="draft.translation.targetLanguage"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              spellcheck="false"
+              maxlength="12"
+              :disabled="controlsDisabled"
+              data-testid="settings-translation-target-language"
+            >
+            <small>{{ text('SETTINGS_TRANSLATION_TARGET_LANGUAGE_HINT') }}</small>
           </label>
-        </label>
-      </div>
+        </div>
+      </aside>
 
-      <label class="translation-provider-editor__field">
-        {{ text('SETTINGS_TRANSLATION_CUSTOM_HEADERS') }}
-        <textarea v-model="editorForm.headersText" rows="3" spellcheck="false" :disabled="editorControlsDisabled" data-testid="settings-custom-headers" />
-        <span>{{ text('SETTINGS_TRANSLATION_CUSTOM_HEADERS_HINT') }}</span>
-      </label>
+      <section class="translation-settings__detail" aria-labelledby="translation-detail-title">
+        <div class="translation-settings__heading translation-settings__heading--detail">
+          <h2 id="translation-detail-title">{{ text('SETTINGS_TRANSLATION_DETAIL_TITLE') }}</h2>
+          <p>{{ text('SETTINGS_TRANSLATION_DETAIL_HINT') }}</p>
+        </div>
 
-      <label class="translation-provider-editor__field">
-        {{ text('SETTINGS_TRANSLATION_CUSTOM_BODY') }}
-        <textarea v-model="editorForm.bodyTemplateText" rows="6" spellcheck="false" :disabled="editorControlsDisabled" data-testid="settings-custom-body" />
-        <span>{{ text('SETTINGS_TRANSLATION_CUSTOM_BODY_HINT') }}</span>
-      </label>
+        <div class="translation-settings__detail-card">
+          <template v-if="selectedIsChrome">
+            <div class="translation-detail-header">
+              <div>
+                <h3>{{ text('SETTINGS_TRANSLATION_CHROME_NAME') }}</h3>
+                <p>{{ text('SETTINGS_TRANSLATION_CHROME_DETAIL_DESCRIPTION') }}</p>
+              </div>
+              <span class="translation-detail-badge translation-detail-badge--local">{{ text('SETTINGS_TRANSLATION_CHROME_LOCAL_BADGE') }}</span>
+            </div>
+            <div class="translation-fixed-pair">
+              <span>{{ text('SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR') }}</span>
+              <strong><code>en</code> → <code>ko</code></strong>
+            </div>
+            <dl class="translation-status-list">
+              <div>
+                <dt>{{ text('SETTINGS_TRANSLATION_CHROME_BROWSER') }}</dt>
+                <dd :class="chromeState.supported ? 'is-ready' : 'is-error'">{{ chromeState.supported ? text('SETTINGS_TRANSLATION_CHROME_SUPPORTED') : text('SETTINGS_TRANSLATION_CHROME_UNSUPPORTED') }}</dd>
+              </div>
+              <div>
+                <dt>{{ text('SETTINGS_TRANSLATION_CHROME_MODEL') }}</dt>
+                <dd :class="chromeState.phase === 'available' ? 'is-ready' : 'is-error'">{{ text(chromeStatusTextKey()) }}</dd>
+              </div>
+            </dl>
+            <div v-if="chromeState.phase === 'downloading'" class="translation-download-progress" role="status">
+              <div class="translation-download-progress__labels">
+                <span>{{ text('SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS') }}</span>
+                <strong v-if="!chromeState.indeterminate">{{ progressPercent() }}%</strong><strong v-else>…</strong>
+              </div>
+              <div class="translation-download-progress__track">
+                <span
+                  class="translation-download-progress__bar"
+                  :class="{'translation-download-progress__bar--indeterminate': chromeState.indeterminate}"
+                  :style="chromeState.indeterminate ? undefined : {width: `${progressPercent()}%` }"
+                />
+              </div>
+              <p>{{ text('SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_HINT') }}</p>
+            </div>
+            <p v-if="chromeState.phase === 'unsupported' || chromeState.phase === 'unavailable'" class="translation-detail-callout translation-detail-callout--warning" role="status">{{ text(chromeState.phase === 'unsupported' ? 'SETTINGS_TRANSLATION_CHROME_UNSUPPORTED_GUIDANCE' : 'SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_GUIDANCE') }}</p>
+            <p v-if="chromeState.phase === 'failed'" class="translation-detail-callout translation-detail-callout--error" role="alert">{{ text(chromeErrorTextKey()) }}<span v-if="chromeState.errorMessage"> {{ chromeState.errorMessage }}</span></p>
+            <button
+              v-if="chromeState.phase === 'downloadable' || chromeState.phase === 'failed'"
+              type="button"
+              class="translation-primary-button"
+              :disabled="controlsDisabled"
+              data-testid="settings-translation-chrome-download"
+              @click="downloadChromeModel"
+            >{{ text(chromeState.phase === 'failed' ? 'SETTINGS_TRANSLATION_CHROME_RETRY' : 'SETTINGS_TRANSLATION_CHROME_DOWNLOAD_BUTTON') }}</button>
+            <p class="translation-detail-note">{{ text('SETTINGS_TRANSLATION_CHROME_NOTE') }}</p>
+            <button
+              v-if="activeProviderId !== CHROME_ID"
+              type="button"
+              class="translation-secondary-button"
+              :disabled="controlsDisabled || !canActivateSelected()"
+              data-testid="settings-translation-activate"
+              @click="activateSelectedProvider"
+            >{{ text('SETTINGS_TRANSLATION_ACTIVATE') }}</button>
+            <span v-else class="translation-active-label">{{ text('SETTINGS_TRANSLATION_ACTIVE') }}</span>
+          </template>
 
-      <label class="translation-provider-editor__field">
-        {{ text('SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH') }}
-        <input v-model="editorForm.responsePath" type="text" autocomplete="off" :disabled="editorControlsDisabled" data-testid="settings-custom-response-path">
-        <span>{{ text('SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH_HINT') }}</span>
-      </label>
+          <template v-else-if="selectedPresetId">
+            <div class="translation-detail-header">
+              <div>
+                <h3>{{ isDeepL ? text('SETTINGS_TRANSLATION_DEEPL_NAME') : text('SETTINGS_TRANSLATION_GEMINI_NAME') }}</h3>
+                <p>{{ text(isDeepL ? 'SETTINGS_TRANSLATION_DEEPL_DESCRIPTION' : 'SETTINGS_TRANSLATION_GEMINI_DESCRIPTION') }}</p>
+              </div>
+              <span class="translation-detail-badge" :class="stateFor(selectedProviderId).status === 'success' ? 'translation-detail-badge--connected' : stateFor(selectedProviderId).status === 'error' ? 'translation-detail-badge--error' : 'translation-detail-badge--required'">{{ text(stateFor(selectedProviderId).status === 'success' ? 'SETTINGS_TRANSLATION_CONNECTED_BADGE' : stateFor(selectedProviderId).status === 'error' ? 'SETTINGS_TRANSLATION_ERROR_BADGE' : 'SETTINGS_TRANSLATION_REQUIRED_BADGE') }}</span>
+            </div>
+            <div v-if="isDeepL" class="translation-plan-switch" aria-label="DeepL plan">
+              <button type="button" :class="{'is-selected': selectedProviderId === 'deepl-free'}" :disabled="controlsDisabled" @click="switchDeepLVariant('deepl-free')">{{ text('SETTINGS_TRANSLATION_DEEPL_FREE') }}</button>
+              <button type="button" :class="{'is-selected': selectedProviderId === 'deepl-pro'}" :disabled="controlsDisabled" @click="switchDeepLVariant('deepl-pro')">{{ text('SETTINGS_TRANSLATION_DEEPL_PRO') }}</button>
+            </div>
+            <label class="translation-detail-field" for="settings-translation-preset-api-key">
+              <span>{{ text('SETTINGS_TRANSLATION_API_KEY') }}</span>
+              <div class="translation-secret-field">
+                <input
+                  id="settings-translation-preset-api-key"
+                  :type="showApiKey ? 'text' : 'password'"
+                  :value="providerCredential(selectedProvider)"
+                  autocomplete="new-password"
+                  :disabled="connectionControlsDisabled(selectedProviderId)"
+                  :placeholder="providerCredential(selectedProvider) ? '••••••••••••••••' : text('SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER')"
+                  data-testid="settings-translation-preset-api-key"
+                  @input="updatePresetCredential"
+                >
+                <button type="button" :disabled="connectionControlsDisabled(selectedProviderId)" @click="showApiKey = !showApiKey">{{ text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY') }}</button>
+              </div>
+              <small>{{ text('SETTINGS_TRANSLATION_API_KEY_HINT') }}</small>
+              <button v-if="providerCredential(selectedProvider)" type="button" class="translation-text-button" :disabled="connectionControlsDisabled(selectedProviderId)" @click="deletePresetCredential">{{ text('SETTINGS_TRANSLATION_DELETE_KEY') }}</button>
+            </label>
+            <p v-if="stateFor(selectedProviderId).messageKey" class="translation-detail-result" :class="`translation-detail-result--${stateFor(selectedProviderId).status}`" role="status">{{ text(stateFor(selectedProviderId).messageKey) }}</p>
+            <div class="translation-detail-actions">
+              <button type="button" class="translation-secondary-button" :disabled="connectionControlsDisabled(selectedProviderId)" data-testid="settings-translation-test" @click="testPresetConnection">{{ text(stateFor(selectedProviderId).status === 'testing' ? 'SETTINGS_TRANSLATION_TESTING' : 'SETTINGS_TRANSLATION_TEST') }}</button>
+              <button v-if="activeProviderId !== selectedProviderId" type="button" class="translation-primary-button" :disabled="controlsDisabled || !canActivateSelected()" data-testid="settings-translation-activate" @click="activateSelectedProvider">{{ text('SETTINGS_TRANSLATION_ACTIVATE') }}</button>
+              <span v-else class="translation-active-label">{{ text('SETTINGS_TRANSLATION_ACTIVE') }}</span>
+            </div>
+          </template>
 
-      <ul v-if="formErrors.length" class="translation-provider-editor__errors" role="alert" data-testid="settings-custom-errors">
-        <li v-for="(error, index) in formErrors" :key="`${error.code}-${index}`">
-          {{ text(errorTextKey(error)) }}
-        </li>
-      </ul>
-
-      <div class="translation-provider-editor__actions">
-        <button type="submit" class="translation-provider-editor__save" :disabled="editorControlsDisabled" data-testid="settings-custom-save">
-          {{ text('SETTINGS_TRANSLATION_CUSTOM_SAVE') }}
-        </button>
-        <button type="button" class="translation-provider-editor__test" :disabled="editorControlsDisabled" data-testid="settings-custom-test" @click="testCustomConnection">
-          {{ text(connectionState === 'testing' ? 'SETTINGS_TRANSLATION_TESTING' : 'SETTINGS_TRANSLATION_TEST') }}
-        </button>
-        <button type="button" class="translation-provider-editor__cancel" :disabled="interactionDisabled" @click="closeEditor">
-          {{ text('SETTINGS_TRANSLATION_CUSTOM_CANCEL') }}
-        </button>
-      </div>
-      <p
-        v-if="connectionMessageKey"
-        class="translation-provider-editor__result"
-        :class="`translation-provider-editor__result--${connectionState}`"
-        role="status"
-        data-testid="settings-translation-test-result"
-      >
-        {{ text(connectionMessageKey) }}
-      </p>
-    </form>
+          <form v-else class="translation-custom-editor" data-testid="settings-translation-custom-editor" @submit.prevent="saveCustomProvider">
+            <div class="translation-detail-header">
+              <div>
+                <h3>{{ text(editorProviderId ? 'SETTINGS_TRANSLATION_CUSTOM_EDIT' : 'SETTINGS_TRANSLATION_CUSTOM_TITLE') }}</h3>
+                <p>{{ text('SETTINGS_TRANSLATION_CUSTOM_DESCRIPTION') }}</p>
+              </div>
+              <span class="translation-detail-badge" :class="permissionStates[selectedProviderId] === 'allowed' ? 'translation-detail-badge--connected' : 'translation-detail-badge--required'">{{ text(permissionStates[selectedProviderId] === 'allowed' ? 'SETTINGS_TRANSLATION_PERMISSION_ALLOWED_BADGE' : 'SETTINGS_TRANSLATION_PERMISSION_BADGE') }}</span>
+            </div>
+            <div class="translation-custom-grid">
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_NAME') }}</span><input v-model="editorForm.name" type="text" autocomplete="off" :disabled="connectionControlsDisabled()" data-testid="settings-custom-name"></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_URL') }}</span><input v-model="editorForm.url" type="url" autocomplete="off" placeholder="https://api.example.com/translate" :disabled="connectionControlsDisabled()" data-testid="settings-custom-url"></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_METHOD') }}</span><select v-model="editorForm.method" :disabled="connectionControlsDisabled()" data-testid="settings-custom-method"><option value="POST">POST</option><option value="PUT">PUT</option><option value="PATCH">PATCH</option></select></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_MODE') }}</span><select v-model="editorForm.authMode" :disabled="connectionControlsDisabled()" data-testid="settings-custom-auth-mode" @change="syncAuthDefaults"><option value="none">{{ text('SETTINGS_TRANSLATION_AUTH_NONE') }}</option><option value="api-key">{{ text('SETTINGS_TRANSLATION_AUTH_API_KEY') }}</option><option value="bearer">{{ text('SETTINGS_TRANSLATION_AUTH_BEARER') }}</option><option value="custom">{{ text('SETTINGS_TRANSLATION_AUTH_CUSTOM') }}</option></select></label>
+            </div>
+            <div v-if="editorForm.authMode !== 'none'" class="translation-custom-grid">
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_LOCATION') }}</span><select v-model="editorForm.authLocation" :disabled="connectionControlsDisabled()" data-testid="settings-custom-auth-location"><option value="header">{{ text('SETTINGS_TRANSLATION_AUTH_HEADER') }}</option><option value="query">{{ text('SETTINGS_TRANSLATION_AUTH_QUERY') }}</option></select></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_HEADER') }}</span><input v-model="editorForm.authHeaderName" type="text" autocomplete="off" :disabled="connectionControlsDisabled()" data-testid="settings-custom-auth-header"></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_PREFIX') }}</span><input v-model="editorForm.authPrefix" type="text" autocomplete="off" :disabled="connectionControlsDisabled()" data-testid="settings-custom-auth-prefix"></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_API_KEY') }}</span><div class="translation-secret-field"><input v-model="editorForm.apiKey" :type="showApiKey ? 'text' : 'password'" autocomplete="new-password" :disabled="connectionControlsDisabled()" :placeholder="editorForm.hasCredential ? '••••••••••••••••' : text('SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER')" data-testid="settings-custom-api-key"><button type="button" :disabled="connectionControlsDisabled()" @click="showApiKey = !showApiKey">{{ text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY') }}</button></div></label>
+            </div>
+            <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_HEADERS') }}</span><textarea v-model="editorForm.headersText" rows="3" spellcheck="false" :disabled="connectionControlsDisabled()" data-testid="settings-custom-headers" /></label>
+            <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_BODY') }}</span><textarea v-model="editorForm.bodyTemplateText" rows="5" spellcheck="false" :disabled="connectionControlsDisabled()" data-testid="settings-custom-body" /></label>
+            <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH') }}</span><input v-model="editorForm.responsePath" type="text" autocomplete="off" :disabled="connectionControlsDisabled()" data-testid="settings-custom-response-path"></label>
+            <div class="translation-permission-box" :class="{'translation-permission-box--allowed': permissionStates[selectedProviderId] === 'allowed'}">
+              <strong>{{ text('SETTINGS_TRANSLATION_CUSTOM_PERMISSION_TITLE') }}</strong>
+              <code v-if="customPermissionPattern">{{ customPermissionPattern }}</code>
+              <p>{{ text(permissionStates[selectedProviderId] === 'allowed' ? 'SETTINGS_TRANSLATION_CUSTOM_PERMISSION_GRANTED' : 'SETTINGS_TRANSLATION_CUSTOM_PERMISSION_HINT') }}</p>
+              <button type="button" class="translation-secondary-button" :disabled="permissionRequestState === 'requesting' || connectionControlsDisabled()" data-testid="settings-custom-request-permission" @click="requestCustomPermissionFromForm">{{ text(permissionRequestState === 'requesting' ? 'SETTINGS_TRANSLATION_PERMISSION_REQUESTING' : 'SETTINGS_TRANSLATION_CUSTOM_PERMISSION_REQUEST') }}</button>
+            </div>
+            <ul v-if="formErrors.length" class="translation-form-errors" role="alert" data-testid="settings-custom-errors"><li v-for="(error, index) in formErrors" :key="`${error.code}-${index}`">{{ text(errorTextKey(error)) }}</li></ul>
+            <p v-if="selectedConnectionState().messageKey" class="translation-detail-result" :class="`translation-detail-result--${selectedConnectionState().status}`" role="status" data-testid="settings-translation-test-result">{{ text(selectedConnectionState().messageKey) }}</p>
+            <div class="translation-detail-actions">
+              <button type="button" class="translation-secondary-button" :disabled="connectionControlsDisabled()" data-testid="settings-custom-test" @click="testCustomConnection">{{ text(selectedConnectionState().status === 'testing' ? 'SETTINGS_TRANSLATION_TESTING' : 'SETTINGS_TRANSLATION_TEST') }}</button>
+              <button type="submit" class="translation-primary-button" :disabled="connectionControlsDisabled()" data-testid="settings-custom-save">{{ text('SETTINGS_TRANSLATION_CUSTOM_SAVE') }}</button>
+              <button v-if="editorProviderId" type="button" class="translation-danger-button" :disabled="controlsDisabled" @click="deleteCustomProvider(editorProviderId)">{{ text('SETTINGS_TRANSLATION_CUSTOM_DELETE') }}</button>
+              <button v-else type="button" class="translation-text-button" :disabled="controlsDisabled" @click="cancelCustomDraft">{{ text('SETTINGS_TRANSLATION_CUSTOM_CANCEL') }}</button>
+              <button v-if="activeProviderId !== selectedProviderId" type="button" class="translation-secondary-button" :disabled="controlsDisabled || !canActivateSelected()" data-testid="settings-translation-activate" @click="activateSelectedProvider">{{ text('SETTINGS_TRANSLATION_ACTIVATE') }}</button>
+              <span v-else class="translation-active-label">{{ text('SETTINGS_TRANSLATION_ACTIVE') }}</span>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
   </section>
 </template>
 
 <style scoped>
-.translation-settings {
-  overflow: visible;
-}
-
-.translation-settings__general {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
-  padding: 20px 0;
-  border-bottom: 1px solid var(--naverdic-settings-divider);
-}
-
-.translation-settings__field,
-.translation-provider-editor__field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-  color: var(--naverdic-settings-text);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 20px;
-}
-
-.translation-settings__field > span,
-.translation-provider-editor__field > span {
-  color: var(--naverdic-settings-text-muted);
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 17px;
-}
-
-.translation-settings__field input,
-.translation-settings__field select,
-.translation-provider-editor__field input,
-.translation-provider-editor__field select,
-.translation-provider-editor__field textarea {
-  width: 100%;
-  min-height: 36px;
-  padding: 7px 10px;
-  color: var(--naverdic-settings-text);
-  background: var(--naverdic-input-background-default);
-  border: 1px solid var(--naverdic-input-border-default);
-  border-radius: var(--naverdic-radius-sm);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 20px;
-}
-
-.translation-provider-editor__field textarea {
-  min-height: 90px;
-  resize: vertical;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 11px;
-  line-height: 18px;
-}
-
-.translation-settings__field input:focus-visible,
-.translation-settings__field select:focus-visible,
-.translation-provider-editor__field input:focus-visible,
-.translation-provider-editor__field select:focus-visible,
-.translation-provider-editor__field textarea:focus-visible,
-.translation-provider-editor__show-secret:focus-visible,
-.translation-provider-editor__close:focus-visible,
-.translation-provider-editor__actions button:focus-visible,
-.translation-settings__add:focus-visible,
-.translation-provider-card button:focus-visible {
-  outline: 2px solid var(--naverdic-color-focus);
-  outline-offset: 2px;
-  box-shadow: var(--naverdic-input-focus-ring);
-}
-
-.translation-settings__services {
-  padding-top: 20px;
-}
-
-.translation-settings__selection-status {
-  margin: 12px 0 0;
-  color: var(--naverdic-settings-text-muted);
-  font-size: 11px;
-  line-height: 17px;
-}
-
-.translation-settings__selection-status--error {
-  color: var(--naverdic-color-danger);
-}
-
-.translation-settings__services-heading h4 {
-  margin: 0;
-  color: var(--naverdic-settings-text);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 24px;
-}
-
-.translation-settings__services-heading p {
-  margin: 4px 0 16px;
-  color: var(--naverdic-settings-text-muted);
-  font-size: 11px;
-  line-height: 17px;
-}
-
-.translation-provider-card {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 92px;
-  margin-bottom: 14px;
-  padding: 12px 15px;
-  background: var(--naverdic-settings-surface);
-  border: 1px solid var(--naverdic-settings-border);
-  border-radius: 8px;
-}
-
-.translation-provider-card--active {
-  background: var(--naverdic-settings-info);
-}
-
-.translation-provider-card__copy {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.translation-provider-card__copy h5 {
-  margin: 0;
-  color: var(--naverdic-settings-text);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 20px;
-}
-
-.translation-provider-card__copy p {
-  margin: 5px 0 0;
-  color: var(--naverdic-settings-text-muted);
-  font-size: 11px;
-  line-height: 17px;
-}
-
-.translation-provider-card__badge,
-.translation-provider-card__active {
-  flex: 0 0 auto;
-  padding: 3px 9px;
-  color: var(--naverdic-settings-primary-text);
-  background: var(--naverdic-settings-nav-active);
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 18px;
-}
-
-.translation-provider-card__actions {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 6px;
-}
-
-.translation-provider-card button,
-.translation-settings__add,
-.translation-provider-editor__actions button {
-  min-height: 28px;
-  padding: 0 10px;
-  border-radius: 7px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.translation-provider-card button:disabled,
-.translation-settings__add:disabled,
-.translation-provider-editor__actions button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.translation-provider-card__action,
-.translation-provider-card__use,
-.translation-provider-card__delete {
-  color: var(--naverdic-settings-primary-text);
-  background: var(--naverdic-settings-surface);
-  border: 1px solid var(--naverdic-settings-border);
-}
-
-.translation-provider-card__use {
-  background: var(--naverdic-settings-nav-active);
-  border-color: transparent;
-}
-
-.translation-provider-card__delete {
-  color: var(--naverdic-color-danger);
-}
-
-.translation-settings__add {
-  color: var(--naverdic-settings-primary-text);
-  background: var(--naverdic-settings-surface);
-  border: 1px dashed var(--naverdic-settings-primary);
-}
-
-.translation-settings__note {
-  margin: 14px 0 0;
-  color: var(--naverdic-settings-text-muted);
-  font-size: 11px;
-  line-height: 17px;
-}
-
-.translation-provider-editor {
-  margin-top: 20px;
-  padding: 20px;
-  background: var(--naverdic-settings-info);
-  border: 1px solid var(--naverdic-settings-border);
-  border-radius: 10px;
-}
-
-.translation-provider-editor__heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.translation-provider-editor__heading h4 {
-  margin: 0;
-  color: var(--naverdic-settings-text);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 24px;
-}
-
-.translation-provider-editor__heading p {
-  margin: 4px 0 0;
-  color: var(--naverdic-settings-text-muted);
-  font-size: 11px;
-  line-height: 17px;
-}
-
-.translation-provider-editor__close {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  color: var(--naverdic-settings-text-muted);
-  background: transparent;
-  border: 0;
-  font-size: 20px;
-  line-height: 28px;
-  cursor: pointer;
-}
-
-.translation-provider-editor__field {
-  margin-bottom: 14px;
-}
-
-.translation-provider-editor__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 14px;
-}
-
-.translation-provider-editor__secret {
-  display: flex;
-  gap: 6px;
-}
-
-.translation-provider-editor__secret input {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.translation-provider-editor__show-secret {
-  flex: 0 0 auto;
-  min-height: 36px;
-  padding: 0 8px;
-  color: var(--naverdic-settings-primary-text);
-  background: var(--naverdic-settings-surface);
-  border: 1px solid var(--naverdic-settings-border);
-  border-radius: var(--naverdic-radius-sm);
-  font-size: 10px;
-  cursor: pointer;
-}
-
-.translation-provider-editor__clear-secret {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--naverdic-color-danger);
-  font-size: 11px;
-  font-weight: 400;
-}
-
-.translation-provider-editor__clear-secret input {
-  width: auto;
-  min-height: auto;
-}
-
-.translation-provider-editor__warning,
-.translation-provider-editor__errors {
-  margin: 5px 0 0;
-  color: var(--naverdic-color-danger);
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 17px;
-}
-
-.translation-provider-editor__errors {
-  padding: 10px 12px 10px 28px;
-  background: #fff5f5;
-  border-radius: var(--naverdic-radius-sm);
-}
-
-.translation-provider-editor__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.translation-provider-editor__test,
-.translation-provider-editor__save {
-  color: var(--naverdic-button-text-default);
-  background: var(--naverdic-button-background-default);
-  border: 0;
-}
-
-.translation-provider-editor__cancel {
-  color: var(--naverdic-settings-primary-text);
-  background: var(--naverdic-settings-surface);
-  border: 1px solid var(--naverdic-settings-border);
-}
-
-.translation-provider-editor__result {
-  margin: 12px 0 0;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 18px;
-}
-
-.translation-provider-editor__result--success {
-  color: var(--naverdic-settings-success);
-}
-
-.translation-provider-editor__result--error {
-  color: var(--naverdic-color-danger);
-}
-
-@media (max-width: 600px) {
-  .translation-settings__general,
-  .translation-provider-editor__grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .translation-provider-card {
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .translation-provider-card__actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
+.translation-settings { min-width: 0; }
+.translation-settings__layout { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 556px); gap: 28px; align-items: start; }
+.translation-settings__heading { min-height: 66px; }
+.translation-settings__heading h2 { margin: 0; color: var(--naverdic-settings-text); font-size: 22px; font-weight: 700; line-height: 32px; }
+.translation-settings__heading p { margin: 2px 0 0; color: var(--naverdic-settings-text-muted); font-size: 12px; line-height: 20px; }
+.translation-settings__selector-card, .translation-settings__detail-card { padding: 18px; background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-settings-border); border-radius: var(--naverdic-radius-md); box-shadow: var(--naverdic-card-shadow-default); }
+.translation-settings__selector-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--naverdic-settings-divider); }
+.translation-settings__selector-card-heading h3 { margin: 0; color: var(--naverdic-settings-text); font-size: 14px; line-height: 22px; }
+.settings-switch--compact { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 6px; cursor: pointer; }
+.settings-switch--compact input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.settings-switch--compact .settings-switch__track { position: relative; display: inline-flex; align-items: center; padding: 2px; background: var(--naverdic-settings-divider); border-radius: 99px; transition: background 120ms ease; }
+.settings-switch--compact .settings-switch__thumb { display: block; background: var(--naverdic-settings-surface); border-radius: 50%; box-shadow: 0 1px 2px rgb(0 0 0 / 16%); transition: transform 120ms ease; }
+.settings-switch--compact input:checked + .settings-switch__track { background: var(--naverdic-settings-primary); }
+.settings-switch--compact .settings-switch__label { font-size: 10px; line-height: 16px; }
+.settings-switch--compact .settings-switch__track { width: 28px; height: 16px; }
+.settings-switch--compact .settings-switch__thumb { width: 12px; height: 12px; }
+.settings-switch--compact input:checked + .settings-switch__track .settings-switch__thumb { transform: translateX(12px); }
+.translation-settings__service-list { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
+.translation-service-row { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto 8px; gap: 9px; align-items: center; min-height: 58px; padding: 8px 9px; color: var(--naverdic-settings-text); background: transparent; border: 1px solid transparent; border-radius: 8px; text-align: left; cursor: pointer; }
+.translation-service-row:hover { background: var(--naverdic-settings-nav-hover); }
+.translation-service-row--selected { background: var(--naverdic-settings-nav-active); border-color: var(--naverdic-settings-primary-light, #dbeafe); }
+.translation-service-row:focus-visible, .translation-settings button:focus-visible, .translation-settings input:focus-visible, .translation-settings select:focus-visible, .translation-settings textarea:focus-visible { outline: 2px solid var(--naverdic-color-focus); outline-offset: 2px; }
+.translation-service-row__icon { display: grid; width: 30px; height: 30px; place-items: center; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); border-radius: 8px; font-size: 12px; font-weight: 800; }
+.translation-service-row__copy { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.translation-service-row__copy strong { overflow: hidden; color: var(--naverdic-settings-text); font-size: 12px; line-height: 18px; text-overflow: ellipsis; white-space: nowrap; }
+.translation-service-row__copy small { overflow: hidden; color: var(--naverdic-settings-text-muted); font-size: 10px; line-height: 15px; text-overflow: ellipsis; white-space: nowrap; }
+.translation-service-row__status, .translation-detail-badge { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border-radius: 999px; font-size: 9px; font-weight: 700; line-height: 16px; white-space: nowrap; }
+.translation-service-row__status--connected, .translation-service-row__status--setup { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
+.translation-service-row__status--error { color: var(--naverdic-color-danger); background: var(--naverdic-settings-danger-hover); }
+.translation-service-row__active { color: var(--naverdic-settings-primary); font-size: 10px; }
+.translation-settings__add { width: 100%; min-height: 34px; color: var(--naverdic-settings-primary-text); background: transparent; border: 1px dashed var(--naverdic-settings-primary-light, #bfdbfe); border-radius: 7px; font-size: 11px; font-weight: 700; cursor: pointer; }
+.translation-settings__add:hover { background: var(--naverdic-settings-info); }
+.translation-settings__general { margin-top: 16px; padding: 14px 2px 0; border-top: 1px solid var(--naverdic-settings-divider); }
+.translation-settings__field, .translation-detail-field { display: flex; min-width: 0; flex-direction: column; gap: 5px; color: var(--naverdic-settings-text); font-size: 11px; font-weight: 700; line-height: 18px; }
+.translation-settings__field small, .translation-detail-field small { color: var(--naverdic-settings-text-muted); font-size: 10px; font-weight: 400; line-height: 16px; }
+.translation-settings__field input, .translation-detail-field input, .translation-detail-field select, .translation-detail-field textarea { width: 100%; min-height: 36px; padding: 7px 10px; color: var(--naverdic-settings-text); background: var(--naverdic-input-background-default); border: 1px solid var(--naverdic-input-border-default); border-radius: var(--naverdic-radius-sm); font: inherit; font-size: 11px; font-weight: 400; line-height: 18px; }
+.translation-detail-field textarea { min-height: 80px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; line-height: 16px; }
+.translation-settings__detail-card { min-height: 460px; }
+.translation-detail-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--naverdic-settings-divider); }
+.translation-detail-header h3 { margin: 0; color: var(--naverdic-settings-text); font-size: 16px; line-height: 24px; }
+.translation-detail-header p { margin: 4px 0 0; color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 17px; }
+.translation-detail-badge--local, .translation-detail-badge--connected { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
+.translation-detail-badge--required { color: var(--naverdic-settings-text-muted); background: var(--naverdic-settings-divider); }
+.translation-detail-badge--error { color: var(--naverdic-color-danger); background: var(--naverdic-settings-danger-hover); }
+.translation-fixed-pair { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; padding: 12px 14px; color: var(--naverdic-settings-text-muted); background: var(--naverdic-settings-page); border-radius: 8px; font-size: 11px; }
+.translation-fixed-pair strong { color: var(--naverdic-settings-text); font-size: 13px; }
+.translation-fixed-pair code { padding: 2px 5px; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; }
+.translation-status-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 18px 0 0; }
+.translation-status-list > div { padding: 12px 13px; background: var(--naverdic-settings-page); border-radius: 8px; }
+.translation-status-list dt { color: var(--naverdic-settings-text-muted); font-size: 10px; line-height: 16px; }
+.translation-status-list dd { margin: 4px 0 0; color: var(--naverdic-settings-text); font-size: 12px; font-weight: 700; line-height: 18px; }
+.translation-status-list dd.is-ready { color: var(--naverdic-settings-primary-text); }
+.translation-status-list dd.is-error { color: var(--naverdic-color-danger); }
+.translation-download-progress { margin-top: 18px; }
+.translation-download-progress__labels { display: flex; justify-content: space-between; color: var(--naverdic-settings-text); font-size: 11px; line-height: 18px; }
+.translation-download-progress__track { height: 8px; margin-top: 7px; overflow: hidden; background: var(--naverdic-settings-divider); border-radius: 99px; }
+.translation-download-progress__bar { display: block; height: 100%; background: var(--naverdic-settings-primary); border-radius: inherit; transition: width 160ms ease; }
+.translation-download-progress__bar--indeterminate { width: 45%; animation: translation-progress 1.2s ease-in-out infinite; }
+.translation-download-progress p { margin: 7px 0 0; color: var(--naverdic-settings-text-muted); font-size: 10px; line-height: 16px; }
+@keyframes translation-progress { from { transform: translateX(-100%); } to { transform: translateX(230%); } }
+.translation-detail-callout, .translation-permission-box { margin: 18px 0 0; padding: 12px 14px; border-radius: 8px; font-size: 10px; line-height: 17px; }
+.translation-detail-callout--warning, .translation-permission-box { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
+.translation-detail-callout--error { color: var(--naverdic-color-danger); background: var(--naverdic-settings-danger-hover); }
+.translation-detail-note { margin: 18px 0 0; color: var(--naverdic-settings-text-muted); font-size: 10px; line-height: 17px; }
+.translation-primary-button, .translation-secondary-button, .translation-danger-button, .translation-text-button { min-height: 34px; padding: 0 13px; border-radius: var(--naverdic-radius-sm); font-size: 11px; font-weight: 700; cursor: pointer; }
+.translation-primary-button { color: #fff; background: var(--naverdic-settings-primary); border: 1px solid var(--naverdic-settings-primary); }
+.translation-secondary-button { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-settings-primary-light, #bfdbfe); }
+.translation-danger-button { color: var(--naverdic-color-danger); background: transparent; border: 1px solid currentColor; }
+.translation-text-button { padding: 0 5px; color: var(--naverdic-settings-primary-text); background: transparent; border: 0; }
+.translation-primary-button:disabled, .translation-secondary-button:disabled, .translation-danger-button:disabled, .translation-text-button:disabled, .translation-settings__add:disabled, .translation-service-row:disabled { opacity: .55; cursor: not-allowed; }
+.translation-detail-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 20px; }
+.translation-active-label { color: var(--naverdic-settings-primary-text); font-size: 11px; font-weight: 700; }
+.translation-plan-switch { display: inline-flex; margin-top: 18px; padding: 3px; background: var(--naverdic-settings-page); border-radius: 7px; }
+.translation-plan-switch button { min-height: 28px; padding: 0 10px; color: var(--naverdic-settings-text-muted); background: transparent; border: 0; border-radius: 5px; font-size: 10px; font-weight: 700; cursor: pointer; }
+.translation-plan-switch button.is-selected { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-surface); box-shadow: var(--naverdic-card-shadow-default); }
+.translation-detail-field { margin-top: 18px; }
+.translation-secret-field { display: flex; gap: 7px; }
+.translation-secret-field input { flex: 1 1 auto; min-width: 0; }
+.translation-secret-field button { flex: 0 0 auto; min-width: 48px; padding: 0 8px; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-input-border-default); border-radius: var(--naverdic-radius-sm); font-size: 10px; cursor: pointer; }
+.translation-detail-field .translation-text-button { align-self: flex-start; margin-top: 2px; }
+.translation-detail-result { margin: 14px 0 0; font-size: 10px; line-height: 17px; }
+.translation-detail-result--success { color: var(--naverdic-settings-primary-text); }
+.translation-detail-result--error { color: var(--naverdic-color-danger); }
+.translation-custom-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
+.translation-permission-box strong { display: block; color: var(--naverdic-settings-text); font-size: 11px; }
+.translation-permission-box code { display: inline-block; margin-top: 5px; padding: 2px 5px; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-surface); border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; }
+.translation-permission-box p { margin: 4px 0 10px; color: var(--naverdic-settings-text-muted); }
+.translation-form-errors { margin: 14px 0 0; padding: 10px 12px 10px 28px; color: var(--naverdic-color-danger); background: var(--naverdic-settings-danger-hover); border-radius: 7px; font-size: 10px; line-height: 17px; }
+@media (max-width: 1050px) { .translation-settings__layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) { .translation-detail-header, .translation-settings__selector-card-heading { flex-direction: column; } .translation-custom-grid, .translation-status-list { grid-template-columns: minmax(0, 1fr); } .translation-service-row { grid-template-columns: 30px minmax(0, 1fr) 8px; } .translation-service-row__status { display: none; } }
 </style>

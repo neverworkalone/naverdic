@@ -268,3 +268,30 @@ test('keeps Chrome built-in Translator outside the background HTTP adapter', asy
     error => error.code === PROVIDER_ERROR_CODES.UNSUPPORTED_CONTEXT
   )
 })
+
+test('runs Chrome Translator directly in the content-page runtime without fetch or permission checks', async () => {
+  const calls = []
+  const result = await executeProviderTranslation(getProviderPreset('chrome-translator'), {
+    text: ['hello', 'world'],
+    targetLanguage: 'ko',
+    fetchFn: async () => {
+      throw new Error('background fetch must not run')
+    },
+    permissionChecker: async () => {
+      throw new Error('background permission check must not run')
+    },
+    translatorRuntime: {
+      translate: async value => {
+        calls.push(value)
+        return `ko:${value}`
+      }
+    }
+  })
+
+  assert.deepEqual(calls, ['hello', 'world'])
+  assert.equal(result.providerId, 'chrome-translator')
+  assert.equal(result.text, 'ko:hello\nko:world')
+  assert.deepEqual(result.raw, {
+    translations: [{text: 'ko:hello'}, {text: 'ko:world'}]
+  })
+})

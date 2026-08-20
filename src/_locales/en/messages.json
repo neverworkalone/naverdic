@@ -395,7 +395,7 @@
     "message": "Chrome built-in translation (Translator API)"
   },
   "SETTINGS_TRANSLATION_CHROME_DESCRIPTION": {
-    "message": "A free built-in translation service"
+    "message": "Free local translation provided by the browser"
   },
   "SETTINGS_TRANSLATION_CHROME_PREVIEW_DESCRIPTION": {
     "message": "The Chrome Translator API provided by the browser."
@@ -618,5 +618,140 @@
   },
   "SETTINGS_TRANSLATION_VALIDATION_INVALID": {
     "message": "Check the Custom API settings."
+  },
+  "SETTINGS_TRANSLATION_SELECTOR_TITLE": {
+    "message": "Translation services"
+  },
+  "SETTINGS_TRANSLATION_SELECTOR_HINT": {
+    "message": "Choose a service and manage its detailed settings."
+  },
+  "SETTINGS_TRANSLATION_DETAIL_TITLE": {
+    "message": "Service details"
+  },
+  "SETTINGS_TRANSLATION_DETAIL_HINT": {
+    "message": "Manage settings for the selected translation service."
+  },
+  "SETTINGS_TRANSLATION_STATUS_READY": {
+    "message": "Available"
+  },
+  "SETTINGS_TRANSLATION_STATUS_DOWNLOADING": {
+    "message": "Preparing"
+  },
+  "SETTINGS_TRANSLATION_STATUS_UNAVAILABLE": {
+    "message": "Unavailable"
+  },
+  "SETTINGS_TRANSLATION_STATUS_ERROR": {
+    "message": "Error"
+  },
+  "SETTINGS_TRANSLATION_STATUS_SETUP": {
+    "message": "Setup needed"
+  },
+  "SETTINGS_TRANSLATION_STATUS_CONNECTED": {
+    "message": "Connected"
+  },
+  "SETTINGS_TRANSLATION_STATUS_PERMISSION": {
+    "message": "Permission needed"
+  },
+  "SETTINGS_TRANSLATION_CONNECTED_BADGE": {
+    "message": "Connected"
+  },
+  "SETTINGS_TRANSLATION_ERROR_BADGE": {
+    "message": "Connection error"
+  },
+  "SETTINGS_TRANSLATION_REQUIRED_BADGE": {
+    "message": "Setup needed"
+  },
+  "SETTINGS_TRANSLATION_DELETE_KEY": {
+    "message": "Delete"
+  },
+  "SETTINGS_TRANSLATION_ACTIVATE": {
+    "message": "Use this service"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DETAIL_DESCRIPTION": {
+    "message": "Uses Chrome's official Translator API."
+  },
+  "SETTINGS_TRANSLATION_CHROME_LOCAL_BADGE": {
+    "message": "Free · Local processing"
+  },
+  "SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR": {
+    "message": "Language pair"
+  },
+  "SETTINGS_TRANSLATION_CHROME_BROWSER": {
+    "message": "Browser support"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL": {
+    "message": "Translation model"
+  },
+  "SETTINGS_TRANSLATION_CHROME_SUPPORTED": {
+    "message": "Supported"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNSUPPORTED": {
+    "message": "Not supported"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_NEEDED": {
+    "message": "Download needed"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_DOWNLOADING": {
+    "message": "Downloading"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_READY": {
+    "message": "Ready"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_UNAVAILABLE": {
+    "message": "Unavailable"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_FAILED": {
+    "message": "Download failed"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_BUTTON": {
+    "message": "Download model"
+  },
+  "SETTINGS_TRANSLATION_CHROME_RETRY": {
+    "message": "Try again"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS": {
+    "message": "Downloading"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_HINT": {
+    "message": "Preparing the translation model."
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNSUPPORTED_GUIDANCE": {
+    "message": "Available in desktop Chrome 138 or later."
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_GUIDANCE": {
+    "message": "The en → ko model is unavailable in this environment."
+  },
+  "SETTINGS_TRANSLATION_CHROME_NETWORK_ERROR": {
+    "message": "The model download failed. Check your network connection."
+  },
+  "SETTINGS_TRANSLATION_CHROME_PERMISSION_ERROR": {
+    "message": "The browser did not allow the model download. Try again."
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_FAILED_HINT": {
+    "message": "The model could not be prepared. Try again."
+  },
+  "SETTINGS_TRANSLATION_CHROME_NOTE": {
+    "message": "No API key is needed. Translation runs through Chrome's Translator API in this page."
+  },
+  "SETTINGS_TRANSLATION_PERMISSION_BADGE": {
+    "message": "Permission needed"
+  },
+  "SETTINGS_TRANSLATION_PERMISSION_ALLOWED_BADGE": {
+    "message": "Permission allowed"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_TITLE": {
+    "message": "Host permission"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_HINT": {
+    "message": "Access to the API host is required for testing and use."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_GRANTED": {
+    "message": "API host access has been allowed."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_REQUEST": {
+    "message": "Request permission"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_TEST_REQUIRED": {
+    "message": "Allow host permission and pass a connection test before activating this service."
   }
 }

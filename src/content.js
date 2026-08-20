@@ -6,7 +6,11 @@ import {
   getSelectionText,
   isDeniedSite
 } from './content-interaction.mjs'
-import { createStorageLifecycle } from './content-storage.mjs'
+import {createContentSettingsLifecycle} from './content-settings.mjs'
+// Keep the v6.6 lifecycle module in the content dependency graph for unpacked
+// compatibility; v7 reads the split settings envelopes above.
+import {createStorageLifecycle} from './content-storage.mjs'
+import {createChromeTranslatorRuntime} from './chrome-translator.mjs'
 import {
   MESSAGE_ERROR_CODES,
   createDictionaryRequest,
@@ -16,10 +20,17 @@ import {
 } from './messaging.mjs'
 import {
   DEFAULT_OPTIONS,
-  normalizeSettings,
   STORAGE_DEFAULTS
 } from './settings.mjs'
-import {getProviderPreset} from './translation-provider.mjs'
+import {
+  executeProviderTranslation,
+  getPathValue
+} from './translation-engine.mjs'
+import {
+  CHROME_TRANSLATOR_PROVIDER_ID,
+  getProviderPreset,
+  PROVIDER_KINDS
+} from './translation-provider.mjs'
 
 export { DEFAULT_OPTIONS, STORAGE_DEFAULTS }
 
@@ -33,7 +44,10 @@ let popupFontsize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
 
 let activeInteractionController = null
 let storageLifecycle = null
-const DEFAULT_TRANSLATION_PROVIDER = getProviderPreset('deepl-free')
+let chromeTranslatorRuntime = null
+let activeTranslationProviderId = ''
+let interactionConfigurationRevision = 0
+void createStorageLifecycle
 
 
 function appendTextWithLineBreaks(element, value) {
@@ -168,25 +182,87 @@ async function consultDic(e, word, top, left) {
   showFrame(e, parseNaverDictionaryResponse(response.data), top, left)
 }
 
-async function translate(e, text, top, left, key) {
-  const response = await sendRuntimeMessage(
-    chrome.runtime,
-    createTranslationRequest({
-      provider: DEFAULT_TRANSLATION_PROVIDER,
-      key,
-      data: {
+function getChromeTranslatorRuntime() {
+  if (!chromeTranslatorRuntime) {
+    chromeTranslatorRuntime = createChromeTranslatorRuntime()
+  }
+  return chromeTranslatorRuntime
+}
+
+function prepareChromeTranslatorRuntime() {
+  return getChromeTranslatorRuntime()
+}
+
+function translationErrorResponse(error) {
+  return {
+    ok: false,
+    error: {
+      code: error?.code || MESSAGE_ERROR_CODES.RUNTIME_ERROR,
+      message: error?.message || 'The translation request failed.'
+    }
+  }
+}
+
+function translationConfigFromValue(value) {
+  if (value && typeof value === 'object' && value.provider) {
+    return {
+      provider: value.provider,
+      credential: typeof value.credential === 'string' ? value.credential : '',
+      targetLanguage: typeof value.targetLanguage === 'string'
+        ? value.targetLanguage
+        : 'ko'
+    }
+  }
+
+  return {
+    provider: getProviderPreset('deepl-free'),
+    credential: typeof value === 'string' ? value : '',
+    targetLanguage: 'ko'
+  }
+}
+
+async function translate(e, text, top, left, value) {
+  const config = translationConfigFromValue(value)
+  const provider = config.provider || getProviderPreset('deepl-free')
+  let response
+
+  if (provider.kind === PROVIDER_KINDS.BUILT_IN &&
+      provider.id === CHROME_TRANSLATOR_PROVIDER_ID) {
+    try {
+      const result = await executeProviderTranslation(provider, {
         text: [text],
-        target_lang: 'ko'
-      }
-    })
-  )
+        targetLanguage: 'ko',
+        translatorRuntime: getChromeTranslatorRuntime()
+      })
+      response = {ok: true, data: result}
+    } catch (error) {
+      response = translationErrorResponse(error)
+    }
+  } else {
+    response = await sendRuntimeMessage(
+      chrome.runtime,
+      createTranslationRequest({
+        provider,
+        key: config.credential,
+        data: {
+          text: [text],
+          targetLanguage: config.targetLanguage
+        }
+      })
+    )
+  }
 
   if (!response.ok) {
     reportMessageFailure('translation', response)
     return
   }
 
-  const translatedText = response.data?.translations?.[0]?.text
+  let translatedText
+  if (provider.kind === PROVIDER_KINDS.BUILT_IN) {
+    translatedText = response.data?.text
+  } else {
+    translatedText = getPathValue(response.data, provider.response?.textPath)
+  }
   if (typeof translatedText !== 'string') {
     reportMessageFailure('translation', {
       ok: false,
@@ -233,7 +309,18 @@ function removePopup() {
 }
 
 function applyOptions(items) {
-  const nextItems = normalizeSettings(items)
+  const configurationRevision = ++interactionConfigurationRevision
+  const nextItems = items || {}
+  const nextProviderId = nextItems.translationProviderId || 'deepl-free'
+  const nextNeedsChromeRuntime = nextProviderId === CHROME_TRANSLATOR_PROVIDER_ID &&
+    Boolean(nextItems.translate)
+
+  if (activeTranslationProviderId === CHROME_TRANSLATOR_PROVIDER_ID &&
+      !nextNeedsChromeRuntime) {
+    chromeTranslatorRuntime?.destroy()
+    chromeTranslatorRuntime = null
+  }
+  activeTranslationProviderId = nextProviderId
 
   activeInteractionController?.destroy()
   activeInteractionController = null
@@ -252,22 +339,55 @@ function applyOptions(items) {
     return
   }
 
-  // This content script is injected into every frame (manifest all_frames).
-  // Binding to this frame's document keeps selection and events local to the
-  // browsing context; events do not bubble across iframe boundaries.
-  activeInteractionController = createInteractionController(nextItems, {
-    target: document,
-    openPopup,
-    removePopup,
-    checkTrigger
-  })
+  const translationRequest = {
+    provider: nextItems.translationProvider || getProviderPreset('deepl-free'),
+    credential: nextItems.translationCredential || '',
+    targetLanguage: nextItems.translationTargetLanguage || 'ko'
+  }
+
+  const bindInteractionController = () => {
+    if (configurationRevision !== interactionConfigurationRevision) {
+      return
+    }
+
+    // This content script is injected into every frame (manifest all_frames).
+    // Binding to this frame's document keeps selection and events local to the
+    // browsing context; events do not bubble across iframe boundaries.
+    activeInteractionController = createInteractionController({
+      ...nextItems,
+      translationRequest
+    }, {
+      target: document,
+      openPopup,
+      removePopup,
+      checkTrigger
+    })
+  }
+
+  if (nextNeedsChromeRuntime) {
+    // Finish the availability check before installing the mouseup handler.
+    // Once the handler runs, a ready model lets runtime.translate() reach
+    // Translator.create() before its first await, preserving the page's
+    // transient user activation. Model downloads still only start from the
+    // explicit settings click path.
+    prepareChromeTranslatorRuntime().refreshAvailability?.()
+      .catch(() => {})
+      .finally(bindInteractionController)
+    return
+  }
+
+  bindInteractionController()
 }
 
 export function unregisterEventListener() {
+  interactionConfigurationRevision += 1
   storageLifecycle?.stop()
   storageLifecycle = null
   activeInteractionController?.destroy()
   activeInteractionController = null
+  chromeTranslatorRuntime?.destroy()
+  chromeTranslatorRuntime = null
+  activeTranslationProviderId = ''
   removePopup()
 }
 
@@ -277,7 +397,7 @@ export function registerEventListener() {
   }
 
   const storage = typeof chrome === 'undefined' ? null : chrome.storage
-  storageLifecycle = createStorageLifecycle({
+  storageLifecycle = createContentSettingsLifecycle({
     storage,
     onApply: applyOptions
   })

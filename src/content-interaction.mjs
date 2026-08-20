@@ -262,7 +262,11 @@ export function createInteractionController(options, dependencies = {}) {
         openPopup(event)
       } else if (config.translate && triggerMatches(event, config.translate_trigger_key)) {
         removePopup()
-        openPopup(event, config.deepl_auth_key, 'translate')
+        openPopup(
+          event,
+          config.translationRequest || config.deepl_auth_key,
+          'translate'
+        )
       } else {
         removePopup()
       }
