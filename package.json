@@ -1,6 +1,7 @@
 {
   "name": "naverdic",
   "private": true,
+  "type": "module",
   "version": "6.6.0",
   "scripts": {
     "dev": "vite",

@@ -207,6 +207,17 @@ test('represents Chrome built-in Translator with a content-page execution bounda
   )
 })
 
+test('keeps the official Chrome Translator display name and translation panel boundary', () => {
+  const ko = JSON.parse(fs.readFileSync(path.join(projectRoot, 'src/_locales/ko/messages.json'), 'utf8'))
+  const en = JSON.parse(fs.readFileSync(path.join(projectRoot, 'src/_locales/en/messages.json'), 'utf8'))
+  assert.equal(ko.SETTINGS_TRANSLATION_CHROME_NAME.message, 'Chrome 내장 번역 (Translator API)')
+  assert.equal(en.SETTINGS_TRANSLATION_CHROME_NAME.message.includes('Translator API'), true)
+
+  const shell = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsShell.vue'), 'utf8')
+  assert.match(shell, /settings-content--translation/)
+  assert.match(shell, /currentNavigation\.id !== 'translation-service'/)
+})
+
 test('normalizes a custom provider and drops credential-shaped input fields', () => {
   const provider = normalizeProviderDefinition({
     id: 'Custom API',

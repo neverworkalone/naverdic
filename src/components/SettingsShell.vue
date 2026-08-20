@@ -336,10 +336,11 @@ onBeforeUnmount(() => {
 
       <section
         class="settings-content"
+        :class="{'settings-content--translation': currentNavigation.id === 'translation-service'}"
         :aria-labelledby="`settings-page-title-${currentNavigation.id}`"
       >
         <div class="settings-form-column">
-          <div class="settings-page-heading">
+          <div v-if="currentNavigation.id !== 'translation-service'" class="settings-page-heading">
             <h2 :id="`settings-page-title-${currentNavigation.id}`">
               {{ text(currentNavigation.titleKey) }}
             </h2>
@@ -381,6 +382,7 @@ onBeforeUnmount(() => {
         </div>
 
         <aside
+          v-if="currentNavigation.id !== 'translation-service'"
           class="settings-preview-column"
           :aria-label="text('SETTINGS_SHELL_PREVIEW_TITLE')"
         >
@@ -596,6 +598,15 @@ a {
   background: var(--naverdic-settings-page);
 }
 
+.settings-content--translation {
+  grid-template-columns: minmax(0, 300px) minmax(0, 556px);
+  gap: 28px;
+}
+
+.settings-content--translation .settings-form-column {
+  grid-column: 1 / -1;
+}
+
 .settings-form-column,
 .settings-preview-column {
   min-width: 0;
@@ -689,6 +700,10 @@ a {
 @media (max-width: 1050px) {
   .settings-content {
     grid-template-columns: minmax(0, 556px);
+  }
+
+  .settings-content--translation {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .settings-preview-column {

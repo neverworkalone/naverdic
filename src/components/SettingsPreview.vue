@@ -95,12 +95,14 @@ const translationHasCredential = computed(() => {
       <span class="settings-translation-preview__service-button">
         {{ text('SETTINGS_TRANSLATION_SERVICE_SETTINGS') }}
       </span>
-      <label class="settings-translation-preview__label">
-        {{ text('SETTINGS_TRANSLATION_API_KEY') }}
-      </label>
-      <div class="settings-translation-preview__secret">
-        {{ translationHasCredential ? '••••••••••••••••' : text('SETTINGS_TRANSLATION_API_KEY_EMPTY') }}
-      </div>
+      <template v-if="translationProvider?.id !== 'chrome-translator'">
+        <label class="settings-translation-preview__label">
+          {{ text('SETTINGS_TRANSLATION_API_KEY') }}
+        </label>
+        <div class="settings-translation-preview__secret">
+          {{ translationHasCredential ? '••••••••••••••••' : text('SETTINGS_TRANSLATION_API_KEY_EMPTY') }}
+        </div>
+      </template>
       <p class="settings-translation-preview__hint">
         {{ translationProvider?.id === 'chrome-translator'
           ? text('SETTINGS_TRANSLATION_CHROME_PREVIEW_HINT')

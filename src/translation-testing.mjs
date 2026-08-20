@@ -8,8 +8,25 @@ import {
 } from './translation-provider.mjs'
 import {
   getProviderOriginPattern,
+  hasProviderOriginPermission,
   requestProviderOriginPermission
 } from './provider-permissions.mjs'
+
+export async function hasTranslationProviderPermission(
+  provider,
+  permissionApi = globalThis.chrome?.permissions
+) {
+  if (provider?.source !== PROVIDER_SOURCES.CUSTOM) {
+    return true
+  }
+
+  const pattern = getProviderOriginPattern(provider.endpoint?.url)
+  if (!pattern) {
+    return false
+  }
+
+  return hasProviderOriginPermission(permissionApi, provider.endpoint.url)
+}
 
 export async function requestTranslationProviderPermission(
   provider,
@@ -22,6 +39,11 @@ export async function requestTranslationProviderPermission(
   const pattern = getProviderOriginPattern(provider.endpoint?.url)
   if (!pattern) {
     return false
+  }
+
+  if (typeof permissionApi?.contains === 'function' &&
+      await hasProviderOriginPermission(permissionApi, provider.endpoint.url)) {
+    return true
   }
 
   return requestProviderOriginPermission(permissionApi, provider.endpoint?.url)

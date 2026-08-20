@@ -1,7 +1,10 @@
 import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
+import { dirname, resolve } from 'path'
 import { defineConfig } from 'vite'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
+import { fileURLToPath } from 'url'
+
+const projectRoot = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   server: {
@@ -10,9 +13,9 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        index: resolve(__dirname, 'index.html'),
-        popup: resolve(__dirname, 'popup.html'),
-        options: resolve(__dirname, 'options.html'),
+        index: resolve(projectRoot, 'index.html'),
+        popup: resolve(projectRoot, 'popup.html'),
+        options: resolve(projectRoot, 'options.html'),
       }
     }
   },
@@ -56,7 +59,35 @@ export default defineConfig({
           dest: '.'
         },
         {
+          src: 'src/content-settings.mjs',
+          dest: '.'
+        },
+        {
+          src: 'src/chrome-translator.mjs',
+          dest: '.'
+        },
+        {
           src: 'src/settings.mjs',
+          dest: '.'
+        },
+        {
+          src: 'src/settings-v2.mjs',
+          dest: '.'
+        },
+        {
+          src: 'src/settings-v2-storage.mjs',
+          dest: '.'
+        },
+        {
+          src: 'src/settings-migration-v2.mjs',
+          dest: '.'
+        },
+        {
+          src: 'src/translation-settings.mjs',
+          dest: '.'
+        },
+        {
+          src: 'src/translation-testing.mjs',
           dest: '.'
         },
         {

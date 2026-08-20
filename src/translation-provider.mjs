@@ -405,7 +405,7 @@ const PRESET_DEFINITIONS = {
   [CHROME_TRANSLATOR_PROVIDER_ID]: {
     modelVersion: TRANSLATION_PROVIDER_MODEL_VERSION,
     id: CHROME_TRANSLATOR_PROVIDER_ID,
-    name: 'Chrome built-in Translator',
+    name: 'Chrome built-in translation (Translator API)',
     kind: PROVIDER_KINDS.BUILT_IN,
     source: PROVIDER_SOURCES.PRESET,
     presetId: CHROME_TRANSLATOR_PROVIDER_ID,

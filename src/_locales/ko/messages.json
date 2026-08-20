@@ -395,7 +395,7 @@
     "message": "Chrome 내장 번역 (Translator API)"
   },
   "SETTINGS_TRANSLATION_CHROME_DESCRIPTION": {
-    "message": "무료로 제공되는 기본 번역 서비스"
+    "message": "브라우저에서 무료로 제공되는 로컬 번역"
   },
   "SETTINGS_TRANSLATION_CHROME_PREVIEW_DESCRIPTION": {
     "message": "브라우저에서 제공하는 Chrome Translator API입니다."
@@ -618,5 +618,140 @@
   },
   "SETTINGS_TRANSLATION_VALIDATION_INVALID": {
     "message": "Custom API 설정을 확인하세요."
+  },
+  "SETTINGS_TRANSLATION_SELECTOR_TITLE": {
+    "message": "번역 서비스"
+  },
+  "SETTINGS_TRANSLATION_SELECTOR_HINT": {
+    "message": "사용할 서비스를 선택하고 세부 설정을 관리하세요."
+  },
+  "SETTINGS_TRANSLATION_DETAIL_TITLE": {
+    "message": "세부 설정"
+  },
+  "SETTINGS_TRANSLATION_DETAIL_HINT": {
+    "message": "선택한 번역 서비스의 설정을 관리하세요."
+  },
+  "SETTINGS_TRANSLATION_STATUS_READY": {
+    "message": "사용 가능"
+  },
+  "SETTINGS_TRANSLATION_STATUS_DOWNLOADING": {
+    "message": "준비 중"
+  },
+  "SETTINGS_TRANSLATION_STATUS_UNAVAILABLE": {
+    "message": "사용 불가"
+  },
+  "SETTINGS_TRANSLATION_STATUS_ERROR": {
+    "message": "오류"
+  },
+  "SETTINGS_TRANSLATION_STATUS_SETUP": {
+    "message": "설정 필요"
+  },
+  "SETTINGS_TRANSLATION_STATUS_CONNECTED": {
+    "message": "연결됨"
+  },
+  "SETTINGS_TRANSLATION_STATUS_PERMISSION": {
+    "message": "권한 필요"
+  },
+  "SETTINGS_TRANSLATION_CONNECTED_BADGE": {
+    "message": "연결됨"
+  },
+  "SETTINGS_TRANSLATION_ERROR_BADGE": {
+    "message": "연결 오류"
+  },
+  "SETTINGS_TRANSLATION_REQUIRED_BADGE": {
+    "message": "설정 필요"
+  },
+  "SETTINGS_TRANSLATION_DELETE_KEY": {
+    "message": "삭제"
+  },
+  "SETTINGS_TRANSLATION_ACTIVATE": {
+    "message": "이 서비스 사용"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DETAIL_DESCRIPTION": {
+    "message": "Chrome에서 제공하는 Translator API를 사용합니다."
+  },
+  "SETTINGS_TRANSLATION_CHROME_LOCAL_BADGE": {
+    "message": "무료 · 로컬 처리"
+  },
+  "SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR": {
+    "message": "지원 언어쌍"
+  },
+  "SETTINGS_TRANSLATION_CHROME_BROWSER": {
+    "message": "브라우저 지원"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL": {
+    "message": "번역 모델"
+  },
+  "SETTINGS_TRANSLATION_CHROME_SUPPORTED": {
+    "message": "지원됨"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNSUPPORTED": {
+    "message": "지원 안 함"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_NEEDED": {
+    "message": "다운로드 필요"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_DOWNLOADING": {
+    "message": "다운로드 중"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_READY": {
+    "message": "준비 완료"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_UNAVAILABLE": {
+    "message": "사용 불가"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_FAILED": {
+    "message": "다운로드 실패"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_BUTTON": {
+    "message": "모델 다운로드"
+  },
+  "SETTINGS_TRANSLATION_CHROME_RETRY": {
+    "message": "다시 시도"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS": {
+    "message": "다운로드 중"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_HINT": {
+    "message": "번역 모델을 준비하고 있습니다."
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNSUPPORTED_GUIDANCE": {
+    "message": "Chrome 138 이상 데스크톱 브라우저에서 사용할 수 있습니다."
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_GUIDANCE": {
+    "message": "현재 환경에서는 en → ko 모델을 사용할 수 없습니다."
+  },
+  "SETTINGS_TRANSLATION_CHROME_NETWORK_ERROR": {
+    "message": "모델 다운로드에 실패했습니다. 네트워크 연결을 확인하세요."
+  },
+  "SETTINGS_TRANSLATION_CHROME_PERMISSION_ERROR": {
+    "message": "브라우저가 모델 다운로드를 허용하지 않았습니다. 다시 시도하세요."
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_FAILED_HINT": {
+    "message": "모델을 준비하지 못했습니다. 다시 시도하세요."
+  },
+  "SETTINGS_TRANSLATION_CHROME_NOTE": {
+    "message": "API 키가 필요하지 않습니다. 번역은 이 페이지의 Chrome Translator API에서 처리됩니다."
+  },
+  "SETTINGS_TRANSLATION_PERMISSION_BADGE": {
+    "message": "권한 필요"
+  },
+  "SETTINGS_TRANSLATION_PERMISSION_ALLOWED_BADGE": {
+    "message": "권한 허용됨"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_TITLE": {
+    "message": "호스트 권한"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_HINT": {
+    "message": "연결 테스트와 사용을 위해 API 호스트 접근 권한이 필요합니다."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_GRANTED": {
+    "message": "API 호스트 접근 권한이 허용되었습니다."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_REQUEST": {
+    "message": "권한 요청"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_TEST_REQUIRED": {
+    "message": "활성화하려면 호스트 권한을 허용하고 연결 테스트를 성공시켜야 합니다."
   }
 }
