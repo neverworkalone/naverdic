@@ -1,26 +1,172 @@
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { getText } from '/src/text.js'
 import {
+  createDefaultSecretsV2,
   createDefaultSettingsV2,
   SETTINGS_NAVIGATION
 } from '/src/settings-v2.mjs'
+import {
+  hasPendingSettingsChanges,
+  loadSettingsV2,
+  saveSettingsV2,
+  shouldWarnBeforeUnload
+} from '/src/settings-v2-storage.mjs'
 
 const navigation = SETTINGS_NAVIGATION
 const activeNavigationId = ref(navigation[0].id)
+const storage = globalThis.chrome?.storage || null
 
-// TASK 2 owns only the in-memory draft boundary. TASK 3 will connect this
-// object to the explicit save and migration flow; this shell deliberately
-// does not read from or write to chrome.storage.
+const defaultSettings = createDefaultSettingsV2()
+const defaultSecrets = createDefaultSecretsV2()
+const persistedSettings = reactive(createDefaultSettingsV2())
+const persistedSecrets = reactive(createDefaultSecretsV2())
 const draftSettings = reactive(createDefaultSettingsV2())
+const draftSecrets = reactive(createDefaultSecretsV2())
 const navButtonRefs = ref([])
+const isLoading = ref(true)
+const isSaving = ref(false)
+const migrationPending = ref(false)
+const hasLoadError = ref(false)
+const saveState = ref('idle')
 
 const currentNavigation = computed(() => navigation.find(item => (
   item.id === activeNavigationId.value
 )) || navigation[0])
 
+function cloneValue(value) {
+  return JSON.parse(JSON.stringify(value))
+}
+
+function replaceReactive(target, source) {
+  Object.keys(target).forEach(key => {
+    if (!Object.prototype.hasOwnProperty.call(source, key)) {
+      delete target[key]
+    }
+  })
+  Object.assign(target, cloneValue(source))
+}
+
+const hasPendingChanges = computed(() => (
+  hasPendingSettingsChanges(
+    {settings: persistedSettings, secrets: persistedSecrets},
+    {settings: draftSettings, secrets: draftSecrets}
+  )
+))
+
+const canSave = computed(() => (
+  !isLoading.value &&
+  !isSaving.value &&
+  (hasPendingChanges.value || migrationPending.value)
+))
+
+const statusMessageKey = computed(() => {
+  if (isLoading.value) {
+    return 'SETTINGS_SHELL_STATUS_LOADING'
+  }
+  if (isSaving.value) {
+    return 'SETTINGS_SHELL_STATUS_SAVING'
+  }
+  if (hasLoadError.value) {
+    return 'SETTINGS_SHELL_STATUS_LOAD_ERROR'
+  }
+  if (saveState.value === 'error' || migrationPending.value) {
+    return 'SETTINGS_SHELL_STATUS_SAVE_ERROR'
+  }
+  if (saveState.value === 'reset') {
+    return 'SETTINGS_SHELL_STATUS_RESET'
+  }
+  if (hasPendingChanges.value) {
+    return 'SETTINGS_SHELL_STATUS_UNSAVED'
+  }
+  return 'SETTINGS_SHELL_STATUS_SAVED'
+})
+
+const statusClass = computed(() => ({
+  'settings-header__status--unsaved': hasPendingChanges.value || migrationPending.value,
+  'settings-header__status--error': hasLoadError.value ||
+    saveState.value === 'error' || migrationPending.value,
+  'settings-header__status--saving': isLoading.value || isSaving.value
+}))
+
 function text(key, placeholders = undefined) {
   return getText(key, placeholders)
+}
+
+function resetDraft() {
+  const confirmMessage = text('SETTINGS_SHELL_RESET_CONFIRM')
+  const confirmFn = globalThis.confirm
+  if (typeof confirmFn === 'function' && !confirmFn(confirmMessage)) {
+    return
+  }
+
+  replaceReactive(draftSettings, defaultSettings)
+  replaceReactive(draftSecrets, defaultSecrets)
+  saveState.value = 'reset'
+}
+
+async function initializeSettings() {
+  isLoading.value = true
+  hasLoadError.value = false
+  saveState.value = 'idle'
+
+  try {
+    const loaded = await loadSettingsV2(storage)
+    replaceReactive(persistedSettings, loaded.settings)
+    replaceReactive(persistedSecrets, loaded.secrets)
+    replaceReactive(draftSettings, loaded.settings)
+    replaceReactive(draftSecrets, loaded.secrets)
+    migrationPending.value = loaded.migrationNeeded
+
+    if (loaded.migrationNeeded) {
+      try {
+        await saveSettingsV2(storage, loaded)
+        migrationPending.value = false
+      } catch (_error) {
+        saveState.value = 'error'
+      }
+    }
+  } catch (_error) {
+    hasLoadError.value = true
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function saveDraft() {
+  if (!canSave.value) {
+    return
+  }
+
+  isSaving.value = true
+  saveState.value = 'saving'
+
+  try {
+    const saved = await saveSettingsV2(storage, {
+      settings: draftSettings,
+      secrets: draftSecrets
+    })
+    replaceReactive(persistedSettings, saved.settings)
+    replaceReactive(persistedSecrets, saved.secrets)
+    replaceReactive(draftSettings, saved.settings)
+    replaceReactive(draftSecrets, saved.secrets)
+    migrationPending.value = false
+    hasLoadError.value = false
+    saveState.value = 'success'
+  } catch (_error) {
+    saveState.value = 'error'
+  } finally {
+    isSaving.value = false
+  }
+}
+
+function handleBeforeUnload(event) {
+  if (!shouldWarnBeforeUnload(hasPendingChanges.value)) {
+    return
+  }
+
+  event.preventDefault()
+  event.returnValue = ''
 }
 
 function selectNavigation(item) {
@@ -69,10 +215,30 @@ function handleNavigationKeydown(event, index) {
 
 defineExpose({
   activeNavigationId,
+  canSave,
   currentNavigation,
   draftSettings,
+  draftSecrets,
+  hasPendingChanges,
+  initializeSettings,
+  isLoading,
+  isSaving,
+  migrationPending,
   navigation,
+  persistedSettings,
+  persistedSecrets,
+  resetDraft,
+  saveDraft,
   selectNavigation
+})
+
+onMounted(() => {
+  globalThis.window?.addEventListener('beforeunload', handleBeforeUnload)
+  initializeSettings()
+})
+
+onBeforeUnmount(() => {
+  globalThis.window?.removeEventListener('beforeunload', handleBeforeUnload)
 })
 </script>
 
@@ -84,15 +250,21 @@ defineExpose({
       </h1>
 
       <div class="settings-header__actions" aria-live="polite">
-        <span class="settings-header__status" data-testid="settings-save-status">
-          {{ text('SETTINGS_SHELL_STATUS_SAVED') }}
+        <span
+          class="settings-header__status"
+          :class="statusClass"
+          data-testid="settings-save-status"
+          :data-status="statusMessageKey"
+        >
+          {{ text(statusMessageKey) }}
         </span>
         <button
           type="button"
           class="settings-header__save"
           data-testid="settings-save-button"
-          disabled
+          :disabled="!canSave"
           :aria-label="text('SETTINGS_SHELL_SAVE')"
+          @click="saveDraft"
         >
           {{ text('SETTINGS_SHELL_SAVE') }}
         </button>
@@ -172,6 +344,7 @@ defineExpose({
             name="page"
             :active-page="currentNavigation"
             :draft="draftSettings"
+            :draft-secrets="draftSecrets"
           >
             <div class="settings-placeholder-card" data-testid="settings-page-placeholder">
               <h3>{{ text('SETTINGS_SHELL_PLACEHOLDER_TITLE') }}</h3>
@@ -187,7 +360,8 @@ defineExpose({
                   type="button"
                   class="settings-placeholder-card__reset"
                   data-testid="settings-reset-button"
-                  disabled
+                  :disabled="isLoading || isSaving"
+                  @click="resetDraft"
                 >
                   {{ text('RESET') }}
                 </button>
@@ -286,6 +460,18 @@ a {
   font-weight: var(--naverdic-font-weight-medium);
   line-height: 40px;
   text-align: right;
+}
+
+.settings-header__status--unsaved {
+  color: var(--naverdic-color-warning);
+}
+
+.settings-header__status--error {
+  color: var(--naverdic-color-danger);
+}
+
+.settings-header__status--saving {
+  color: var(--naverdic-settings-text-muted);
 }
 
 .settings-header__save {
@@ -481,6 +667,17 @@ a {
   font-size: var(--naverdic-font-size-sm);
   font-weight: var(--naverdic-font-weight-medium);
   cursor: not-allowed;
+}
+
+.settings-placeholder-card__reset:not(:disabled) {
+  color: var(--naverdic-color-danger);
+  background: var(--naverdic-settings-surface);
+  border-color: var(--naverdic-color-danger);
+  cursor: pointer;
+}
+
+.settings-placeholder-card__reset:not(:disabled):hover {
+  background: var(--naverdic-settings-danger-hover);
 }
 
 .settings-preview-card {

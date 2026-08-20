@@ -234,12 +234,33 @@
     "message": "Controls for this screen will be connected in the next TASK."
   },
   "SETTINGS_SHELL_DRAFT_NOTE": {
-    "message": "Values entered here stay in memory while you move between screens and are not saved in this TASK."
+    "message": "Values entered here stay in memory while you move between screens and are applied only when you save."
   },
   "SETTINGS_SHELL_PREVIEW_TITLE": {
     "message": "Preview"
   },
   "SETTINGS_SHELL_PREVIEW_DESCRIPTION": {
     "message": "Preview the result of changes on the current screen."
+  },
+  "SETTINGS_SHELL_STATUS_LOADING": {
+    "message": "Loading…"
+  },
+  "SETTINGS_SHELL_STATUS_SAVING": {
+    "message": "Saving…"
+  },
+  "SETTINGS_SHELL_STATUS_UNSAVED": {
+    "message": "Unsaved changes"
+  },
+  "SETTINGS_SHELL_STATUS_SAVE_ERROR": {
+    "message": "Save failed"
+  },
+  "SETTINGS_SHELL_STATUS_LOAD_ERROR": {
+    "message": "Could not load settings"
+  },
+  "SETTINGS_SHELL_STATUS_RESET": {
+    "message": "Reset ready"
+  },
+  "SETTINGS_SHELL_RESET_CONFIRM": {
+    "message": "Reset all settings to their defaults? The reset will not affect stored settings until you save."
   }
 }
