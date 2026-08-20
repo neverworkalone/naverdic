@@ -12,7 +12,7 @@ function fallbackText(textId, placeholder) {
 
   let message = entry.message
   Object.entries(entry.placeholders || {}).forEach(([name, definition]) => {
-    const match = /\$(\d+)\$/.exec(definition.content || '')
+    const match = /^\$(\d+)\$?$/.exec(definition.content || '')
     const index = match ? Number(match[1]) - 1 : -1
     const value = Array.isArray(placeholder)
       ? placeholder[index]
