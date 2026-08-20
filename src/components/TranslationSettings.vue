@@ -268,6 +268,8 @@ function closeEditor() {
   showApiKey.value = false
   connectionState.value = 'idle'
   connectionMessageKey.value = ''
+  providerSelectionState.value = 'idle'
+  providerSelectionMessageKey.value = ''
 }
 
 function setProviderSecret(provider, value) {
@@ -704,7 +706,7 @@ watch(editorForm, () => {
           <h4>{{ editorProvider.name }}</h4>
           <p>{{ text('SETTINGS_TRANSLATION_PRESET_DESCRIPTION') }}</p>
         </div>
-        <button type="button" class="translation-provider-editor__close" :disabled="controlsDisabled" @click="closeEditor">
+        <button type="button" class="translation-provider-editor__close" :disabled="interactionDisabled" @click="closeEditor">
           ×
         </button>
       </div>
@@ -766,7 +768,7 @@ watch(editorForm, () => {
         >
           {{ text(connectionState === 'testing' ? 'SETTINGS_TRANSLATION_TESTING' : 'SETTINGS_TRANSLATION_TEST') }}
         </button>
-        <button type="button" class="translation-provider-editor__cancel" @click="closeEditor">
+        <button type="button" class="translation-provider-editor__cancel" :disabled="interactionDisabled" @click="closeEditor">
           {{ text('SETTINGS_TRANSLATION_CUSTOM_CANCEL') }}
         </button>
       </div>
@@ -792,14 +794,14 @@ watch(editorForm, () => {
           <h4>{{ text(editorProviderId ? 'SETTINGS_TRANSLATION_CUSTOM_EDIT' : 'SETTINGS_TRANSLATION_CUSTOM_TITLE') }}</h4>
           <p>{{ text('SETTINGS_TRANSLATION_CUSTOM_DESCRIPTION') }}</p>
         </div>
-        <button type="button" class="translation-provider-editor__close" :disabled="controlsDisabled" @click="closeEditor">
+        <button type="button" class="translation-provider-editor__close" :disabled="interactionDisabled" @click="closeEditor">
           ×
         </button>
       </div>
 
       <div class="translation-provider-editor__grid">
         <label class="translation-provider-editor__field">
-          {{ text('SETTINGS_TRANSLATION_CUSTOM_NAME') }}
+          {{ text('SETTINGS_TRANSLATION_CUSTOM_NAME_LABEL') }}
           <input v-model="editorForm.name" type="text" autocomplete="off" :disabled="editorControlsDisabled" data-testid="settings-custom-name">
           <span>{{ text('SETTINGS_TRANSLATION_CUSTOM_NAME_HINT') }}</span>
         </label>
@@ -908,7 +910,7 @@ watch(editorForm, () => {
         <button type="button" class="translation-provider-editor__test" :disabled="editorControlsDisabled" data-testid="settings-custom-test" @click="testCustomConnection">
           {{ text(connectionState === 'testing' ? 'SETTINGS_TRANSLATION_TESTING' : 'SETTINGS_TRANSLATION_TEST') }}
         </button>
-        <button type="button" class="translation-provider-editor__cancel" @click="closeEditor">
+        <button type="button" class="translation-provider-editor__cancel" :disabled="interactionDisabled" @click="closeEditor">
           {{ text('SETTINGS_TRANSLATION_CUSTOM_CANCEL') }}
         </button>
       </div>

@@ -514,7 +514,7 @@
   "SETTINGS_TRANSLATION_CUSTOM_EDIT": {
     "message": "Custom API settings"
   },
-  "SETTINGS_TRANSLATION_CUSTOM_NAME": {
+  "SETTINGS_TRANSLATION_CUSTOM_NAME_LABEL": {
     "message": "Service name"
   },
   "SETTINGS_TRANSLATION_CUSTOM_NAME_HINT": {
