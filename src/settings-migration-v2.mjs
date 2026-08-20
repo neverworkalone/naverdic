@@ -18,6 +18,10 @@ import {
 
 export const V66_STORAGE_AREA = 'sync'
 
+export const LEGACY_SECRET_KEYS = Object.freeze([
+  'deepl_auth_key'
+])
+
 export const LEGACY_SETTING_KEYS = Object.freeze(
   SETTINGS_SCHEMA.map(definition => definition.key)
 )

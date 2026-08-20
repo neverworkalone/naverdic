@@ -489,3 +489,9 @@ export function getSettingPathValue(settings, path) {
 export function hasSettingsV2Envelope(value) {
   return isRecord(value) && value.schemaVersion === SETTINGS_SCHEMA_VERSION
 }
+
+export function hasSecretsV2Envelope(value) {
+  return isRecord(value) &&
+    value.schemaVersion === SETTINGS_SCHEMA_VERSION &&
+    isRecord(value.providers)
+}

@@ -234,12 +234,33 @@
     "message": "이 화면의 설정 항목은 다음 TASK에서 연결됩니다."
   },
   "SETTINGS_SHELL_DRAFT_NOTE": {
-    "message": "현재 입력값은 화면을 이동해도 유지되며, 이 단계에서는 저장되지 않습니다."
+    "message": "현재 입력값은 화면을 이동해도 유지되며, 저장 버튼을 눌러야 실제 설정에 반영됩니다."
   },
   "SETTINGS_SHELL_PREVIEW_TITLE": {
     "message": "미리보기"
   },
   "SETTINGS_SHELL_PREVIEW_DESCRIPTION": {
     "message": "현재 화면의 변경 결과를 미리 볼 수 있습니다."
+  },
+  "SETTINGS_SHELL_STATUS_LOADING": {
+    "message": "불러오는 중…"
+  },
+  "SETTINGS_SHELL_STATUS_SAVING": {
+    "message": "저장 중…"
+  },
+  "SETTINGS_SHELL_STATUS_UNSAVED": {
+    "message": "저장되지 않음"
+  },
+  "SETTINGS_SHELL_STATUS_SAVE_ERROR": {
+    "message": "저장 실패"
+  },
+  "SETTINGS_SHELL_STATUS_LOAD_ERROR": {
+    "message": "설정 불러오기 실패"
+  },
+  "SETTINGS_SHELL_STATUS_RESET": {
+    "message": "초기화 준비됨"
+  },
+  "SETTINGS_SHELL_RESET_CONFIRM": {
+    "message": "모든 설정을 기본값으로 초기화할까요? 저장하기 전까지는 실제 설정에 반영되지 않습니다."
   }
 }
