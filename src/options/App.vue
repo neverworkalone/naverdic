@@ -5,10 +5,11 @@ import SettingsPage from '/src/components/SettingsPage.vue'
 
 <template>
   <SettingsShell>
-    <template #page="{ activePage, draft, draftRevision, isLoading, isSaving, resetDraft }">
+    <template #page="{ activePage, draft, draftSecrets, draftRevision, isLoading, isSaving, resetDraft }">
       <SettingsPage
         :active-page="activePage"
         :draft="draft"
+        :draft-secrets="draftSecrets"
         :draft-revision="draftRevision"
         :is-loading="isLoading"
         :is-saving="isSaving"
