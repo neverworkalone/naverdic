@@ -363,5 +363,260 @@
   },
   "SETTINGS_PREVIEW_HINT": {
     "message": "현재 팝업 설정"
+  },
+  "SETTINGS_TRANSLATION_ENABLED": {
+    "message": "문장 번역 사용"
+  },
+  "SETTINGS_TRANSLATION_TARGET_LANGUAGE": {
+    "message": "대상 언어"
+  },
+  "SETTINGS_TRANSLATION_TARGET_LANGUAGE_HINT": {
+    "message": "번역 결과에 사용할 언어 코드(예: ko, en)를 입력하세요."
+  },
+  "SETTINGS_TRANSLATION_PROVIDER": {
+    "message": "기본 번역 제공자"
+  },
+  "SETTINGS_TRANSLATION_PROVIDER_HINT": {
+    "message": "문장 번역에 사용할 제공자를 선택하세요."
+  },
+  "SETTINGS_TRANSLATION_CARD_TITLE": {
+    "message": "번역 서비스"
+  },
+  "SETTINGS_TRANSLATION_CARD_DESCRIPTION": {
+    "message": "문장 번역에 사용할 서비스를 선택하고 관리합니다."
+  },
+  "SETTINGS_TRANSLATION_AVAILABLE_SERVICES": {
+    "message": "사용 가능한 서비스"
+  },
+  "SETTINGS_TRANSLATION_AVAILABLE_SERVICES_HINT": {
+    "message": "기본 서비스와 추가 연결 서비스를 한 곳에서 관리합니다."
+  },
+  "SETTINGS_TRANSLATION_CHROME_NAME": {
+    "message": "Chrome 내장 번역 (Translator API)"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DESCRIPTION": {
+    "message": "무료로 제공되는 기본 번역 서비스"
+  },
+  "SETTINGS_TRANSLATION_CHROME_PREVIEW_DESCRIPTION": {
+    "message": "브라우저에서 제공하는 Chrome Translator API입니다."
+  },
+  "SETTINGS_TRANSLATION_CHROME_PREVIEW_HINT": {
+    "message": "Chrome Translator API는 API 키 없이 사용할 수 있습니다."
+  },
+  "SETTINGS_TRANSLATION_DEEPL_NAME": {
+    "message": "DeepL"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_DESCRIPTION": {
+    "message": "고품질 번역을 위한 외부 서비스"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_NAME": {
+    "message": "Gemini"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_DESCRIPTION": {
+    "message": "자연스러운 문장 번역과 요약"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_NAME": {
+    "message": "Custom API"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_DESCRIPTION": {
+    "message": "직접 연결하는 번역 API"
+  },
+  "SETTINGS_TRANSLATION_DEFAULT_BADGE": {
+    "message": "무료 기본 제공"
+  },
+  "SETTINGS_TRANSLATION_EXTERNAL_BADGE": {
+    "message": "외부 서비스"
+  },
+  "SETTINGS_TRANSLATION_EXTERNAL_PREVIEW_HINT": {
+    "message": "외부 서비스는 API 키를 입력한 뒤 사용할 수 있습니다."
+  },
+  "SETTINGS_TRANSLATION_ACTIVE": {
+    "message": "사용 중"
+  },
+  "SETTINGS_TRANSLATION_CONFIGURE": {
+    "message": "설정"
+  },
+  "SETTINGS_TRANSLATION_USE": {
+    "message": "사용"
+  },
+  "SETTINGS_TRANSLATION_EXTERNAL_NOTE": {
+    "message": "외부 서비스는 API 키를 저장한 뒤 사용할 수 있습니다."
+  },
+  "SETTINGS_TRANSLATION_PERMISSION_REQUESTING": {
+    "message": "Custom API 도메인 접근 권한을 확인하는 중입니다."
+  },
+  "SETTINGS_TRANSLATION_PERMISSION_REQUIRED": {
+    "message": "Custom API를 사용하려면 해당 도메인 접근 권한이 필요합니다."
+  },
+  "SETTINGS_TRANSLATION_PRESET_DESCRIPTION": {
+    "message": "인증키를 입력하고 연결 상태를 확인합니다."
+  },
+  "SETTINGS_TRANSLATION_DEEPL_VARIANT": {
+    "message": "DeepL 요금제"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_FREE": {
+    "message": "DeepL Free"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_PRO": {
+    "message": "DeepL Pro"
+  },
+  "SETTINGS_TRANSLATION_API_KEY": {
+    "message": "API 키"
+  },
+  "SETTINGS_TRANSLATION_API_KEY_HINT": {
+    "message": "키는 chrome.storage.local에만 저장됩니다."
+  },
+  "SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER": {
+    "message": "API 키를 입력하세요"
+  },
+  "SETTINGS_TRANSLATION_API_KEY_MISSING": {
+    "message": "API 키를 입력해야 연결 테스트를 할 수 있습니다."
+  },
+  "SETTINGS_TRANSLATION_API_KEY_EMPTY": {
+    "message": "입력되지 않음"
+  },
+  "SETTINGS_TRANSLATION_SHOW_KEY": {
+    "message": "보기"
+  },
+  "SETTINGS_TRANSLATION_HIDE_KEY": {
+    "message": "숨기기"
+  },
+  "SETTINGS_TRANSLATION_TEST": {
+    "message": "연결 테스트"
+  },
+  "SETTINGS_TRANSLATION_TESTING": {
+    "message": "테스트 중…"
+  },
+  "SETTINGS_TRANSLATION_TEST_SUCCESS": {
+    "message": "연결 테스트에 성공했습니다."
+  },
+  "SETTINGS_TRANSLATION_TEST_FAILURE": {
+    "message": "연결 테스트에 실패했습니다. 설정과 API 키를 확인하세요."
+  },
+  "SETTINGS_TRANSLATION_TEST_UNSUPPORTED": {
+    "message": "Chrome 내장 번역은 이 화면에서 연결 테스트를 지원하지 않습니다."
+  },
+  "SETTINGS_TRANSLATION_PROVIDER_UNKNOWN": {
+    "message": "선택한 서비스"
+  },
+  "SETTINGS_TRANSLATION_PROVIDER_UNKNOWN_DESCRIPTION": {
+    "message": "선택한 번역 서비스의 설정을 확인하세요."
+  },
+  "SETTINGS_TRANSLATION_SERVICE_SETTINGS": {
+    "message": "서비스 설정"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_TITLE": {
+    "message": "Custom API 추가"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_ADD": {
+    "message": "Custom API 추가"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_EDIT": {
+    "message": "Custom API 설정"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_NAME_LABEL": {
+    "message": "서비스 이름"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_NAME_HINT": {
+    "message": "설정 화면에 표시할 이름입니다."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_URL": {
+    "message": "URL"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_URL_HINT": {
+    "message": "HTTP 또는 HTTPS 주소만 사용할 수 있습니다."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_METHOD": {
+    "message": "Method"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_AUTH_MODE": {
+    "message": "인증 방식"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_AUTH_LOCATION": {
+    "message": "인증 위치"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_AUTH_HEADER": {
+    "message": "인증 이름"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_AUTH_PREFIX": {
+    "message": "인증 접두사"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_HEADERS": {
+    "message": "Headers"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_HEADERS_HINT": {
+    "message": "한 줄에 하나씩 Name: valueTemplate 형식으로 입력하세요."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_BODY": {
+    "message": "Body template"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_BODY_HINT": {
+    "message": "JSON 형식으로 입력하고 {{text}}, {{targetLanguage}}를 사용할 수 있습니다."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH": {
+    "message": "응답 텍스트 경로"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH_HINT": {
+    "message": "예: result.text 또는 candidates[0].text"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_SAVE": {
+    "message": "저장"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_CANCEL": {
+    "message": "취소"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_DELETE": {
+    "message": "삭제"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_DELETE_CONFIRM": {
+    "message": "이 Custom API와 저장된 인증키를 삭제할까요? 저장 버튼을 눌러야 실제 설정에 반영됩니다."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_CLEAR_KEY": {
+    "message": "저장된 API 키 지우기"
+  },
+  "SETTINGS_TRANSLATION_AUTH_NONE": {
+    "message": "없음"
+  },
+  "SETTINGS_TRANSLATION_AUTH_API_KEY": {
+    "message": "API 키"
+  },
+  "SETTINGS_TRANSLATION_AUTH_BEARER": {
+    "message": "Bearer 토큰"
+  },
+  "SETTINGS_TRANSLATION_AUTH_CUSTOM": {
+    "message": "사용자 지정"
+  },
+  "SETTINGS_TRANSLATION_AUTH_HEADER": {
+    "message": "Header"
+  },
+  "SETTINGS_TRANSLATION_AUTH_QUERY": {
+    "message": "Query"
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_NAME": {
+    "message": "서비스 이름을 입력하세요."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_DUPLICATE": {
+    "message": "같은 이름의 Custom API가 이미 있습니다."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_URL": {
+    "message": "HTTP 또는 HTTPS URL을 입력하세요. URL에 사용자 이름이나 비밀번호를 넣을 수 없습니다."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_METHOD": {
+    "message": "POST, PUT, PATCH 중 하나를 선택하세요."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_HEADERS": {
+    "message": "Headers를 Name: valueTemplate 형식으로 확인하세요."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_BODY": {
+    "message": "Body template은 올바른 JSON이어야 합니다."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_AUTH": {
+    "message": "인증 방식과 인증 이름을 확인하세요."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_RESPONSE": {
+    "message": "응답 텍스트 경로를 입력하세요."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_INVALID": {
+    "message": "Custom API 설정을 확인하세요."
   }
 }

@@ -391,6 +391,7 @@ onBeforeUnmount(() => {
           <SettingsPreview
             :active-page="currentNavigation"
             :draft="draftSettings"
+            :draft-secrets="draftSecrets"
           />
         </aside>
       </section>

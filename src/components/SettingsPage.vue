@@ -7,6 +7,7 @@ import {
   formatDenyList,
   parseDenyListInput
 } from '/src/settings-sites.mjs'
+import TranslationSettings from '/src/components/TranslationSettings.vue'
 
 const props = defineProps({
   activePage: {
@@ -14,6 +15,10 @@ const props = defineProps({
     required: true
   },
   draft: {
+    type: Object,
+    required: true
+  },
+  draftSecrets: {
     type: Object,
     required: true
   },
@@ -348,6 +353,15 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
         </p>
       </div>
     </section>
+
+    <TranslationSettings
+      v-else-if="pageId === 'translation-service'"
+      :draft="draft"
+      :draft-secrets="draftSecrets"
+      :draft-revision="draftRevision"
+      :is-loading="isLoading"
+      :is-saving="isSaving"
+    />
 
     <section v-else class="settings-card settings-card--placeholder">
       <h3>{{ text('SETTINGS_SHELL_PLACEHOLDER_TITLE') }}</h3>

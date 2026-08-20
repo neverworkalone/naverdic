@@ -363,5 +363,260 @@
   },
   "SETTINGS_PREVIEW_HINT": {
     "message": "Current popup settings"
+  },
+  "SETTINGS_TRANSLATION_ENABLED": {
+    "message": "Enable sentence translation"
+  },
+  "SETTINGS_TRANSLATION_TARGET_LANGUAGE": {
+    "message": "Target language"
+  },
+  "SETTINGS_TRANSLATION_TARGET_LANGUAGE_HINT": {
+    "message": "Enter the language code for results, such as ko or en."
+  },
+  "SETTINGS_TRANSLATION_PROVIDER": {
+    "message": "Default translation provider"
+  },
+  "SETTINGS_TRANSLATION_PROVIDER_HINT": {
+    "message": "Choose the provider used for sentence translation."
+  },
+  "SETTINGS_TRANSLATION_CARD_TITLE": {
+    "message": "Translation services"
+  },
+  "SETTINGS_TRANSLATION_CARD_DESCRIPTION": {
+    "message": "Choose and manage services used for sentence translation."
+  },
+  "SETTINGS_TRANSLATION_AVAILABLE_SERVICES": {
+    "message": "Available services"
+  },
+  "SETTINGS_TRANSLATION_AVAILABLE_SERVICES_HINT": {
+    "message": "Manage the built-in service and connected services in one place."
+  },
+  "SETTINGS_TRANSLATION_CHROME_NAME": {
+    "message": "Chrome built-in translation (Translator API)"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DESCRIPTION": {
+    "message": "A free built-in translation service"
+  },
+  "SETTINGS_TRANSLATION_CHROME_PREVIEW_DESCRIPTION": {
+    "message": "The Chrome Translator API provided by the browser."
+  },
+  "SETTINGS_TRANSLATION_CHROME_PREVIEW_HINT": {
+    "message": "The Chrome Translator API does not require an API key."
+  },
+  "SETTINGS_TRANSLATION_DEEPL_NAME": {
+    "message": "DeepL"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_DESCRIPTION": {
+    "message": "An external service for high-quality translation"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_NAME": {
+    "message": "Gemini"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_DESCRIPTION": {
+    "message": "Natural sentence translation and summarization"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_NAME": {
+    "message": "Custom API"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_DESCRIPTION": {
+    "message": "A translation API connected directly by you"
+  },
+  "SETTINGS_TRANSLATION_DEFAULT_BADGE": {
+    "message": "Free built-in"
+  },
+  "SETTINGS_TRANSLATION_EXTERNAL_BADGE": {
+    "message": "External service"
+  },
+  "SETTINGS_TRANSLATION_EXTERNAL_PREVIEW_HINT": {
+    "message": "External services are available after an API key is entered."
+  },
+  "SETTINGS_TRANSLATION_ACTIVE": {
+    "message": "In use"
+  },
+  "SETTINGS_TRANSLATION_CONFIGURE": {
+    "message": "Settings"
+  },
+  "SETTINGS_TRANSLATION_USE": {
+    "message": "Use"
+  },
+  "SETTINGS_TRANSLATION_EXTERNAL_NOTE": {
+    "message": "External services become available after you save an API key."
+  },
+  "SETTINGS_TRANSLATION_PERMISSION_REQUESTING": {
+    "message": "Checking permission to access the Custom API domain."
+  },
+  "SETTINGS_TRANSLATION_PERMISSION_REQUIRED": {
+    "message": "Permission to access the Custom API domain is required."
+  },
+  "SETTINGS_TRANSLATION_PRESET_DESCRIPTION": {
+    "message": "Enter a credential and verify the connection."
+  },
+  "SETTINGS_TRANSLATION_DEEPL_VARIANT": {
+    "message": "DeepL plan"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_FREE": {
+    "message": "DeepL Free"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_PRO": {
+    "message": "DeepL Pro"
+  },
+  "SETTINGS_TRANSLATION_API_KEY": {
+    "message": "API key"
+  },
+  "SETTINGS_TRANSLATION_API_KEY_HINT": {
+    "message": "Keys are stored only in chrome.storage.local."
+  },
+  "SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER": {
+    "message": "Enter an API key"
+  },
+  "SETTINGS_TRANSLATION_API_KEY_MISSING": {
+    "message": "Enter an API key before testing the connection."
+  },
+  "SETTINGS_TRANSLATION_API_KEY_EMPTY": {
+    "message": "Not entered"
+  },
+  "SETTINGS_TRANSLATION_SHOW_KEY": {
+    "message": "Show"
+  },
+  "SETTINGS_TRANSLATION_HIDE_KEY": {
+    "message": "Hide"
+  },
+  "SETTINGS_TRANSLATION_TEST": {
+    "message": "Test connection"
+  },
+  "SETTINGS_TRANSLATION_TESTING": {
+    "message": "Testing…"
+  },
+  "SETTINGS_TRANSLATION_TEST_SUCCESS": {
+    "message": "Connection test succeeded."
+  },
+  "SETTINGS_TRANSLATION_TEST_FAILURE": {
+    "message": "Connection test failed. Check the settings and API key."
+  },
+  "SETTINGS_TRANSLATION_TEST_UNSUPPORTED": {
+    "message": "Chrome built-in Translator cannot be tested from this screen."
+  },
+  "SETTINGS_TRANSLATION_PROVIDER_UNKNOWN": {
+    "message": "Selected service"
+  },
+  "SETTINGS_TRANSLATION_PROVIDER_UNKNOWN_DESCRIPTION": {
+    "message": "Check the settings for the selected translation service."
+  },
+  "SETTINGS_TRANSLATION_SERVICE_SETTINGS": {
+    "message": "Service settings"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_TITLE": {
+    "message": "Add Custom API"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_ADD": {
+    "message": "Add Custom API"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_EDIT": {
+    "message": "Custom API settings"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_NAME_LABEL": {
+    "message": "Service name"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_NAME_HINT": {
+    "message": "The name shown in the settings screen."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_URL": {
+    "message": "URL"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_URL_HINT": {
+    "message": "Only HTTP or HTTPS addresses are supported."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_METHOD": {
+    "message": "Method"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_AUTH_MODE": {
+    "message": "Authentication"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_AUTH_LOCATION": {
+    "message": "Auth location"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_AUTH_HEADER": {
+    "message": "Auth name"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_AUTH_PREFIX": {
+    "message": "Auth prefix"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_HEADERS": {
+    "message": "Headers"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_HEADERS_HINT": {
+    "message": "Enter one Name: valueTemplate per line."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_BODY": {
+    "message": "Body template"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_BODY_HINT": {
+    "message": "Use JSON and the {{text}} or {{targetLanguage}} placeholders."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH": {
+    "message": "Response text path"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH_HINT": {
+    "message": "For example: result.text or candidates[0].text"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_SAVE": {
+    "message": "Save"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_CANCEL": {
+    "message": "Cancel"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_DELETE": {
+    "message": "Delete"
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_DELETE_CONFIRM": {
+    "message": "Delete this Custom API and its stored credential? It will not affect stored settings until you save."
+  },
+  "SETTINGS_TRANSLATION_CUSTOM_CLEAR_KEY": {
+    "message": "Clear stored API key"
+  },
+  "SETTINGS_TRANSLATION_AUTH_NONE": {
+    "message": "None"
+  },
+  "SETTINGS_TRANSLATION_AUTH_API_KEY": {
+    "message": "API key"
+  },
+  "SETTINGS_TRANSLATION_AUTH_BEARER": {
+    "message": "Bearer token"
+  },
+  "SETTINGS_TRANSLATION_AUTH_CUSTOM": {
+    "message": "Custom"
+  },
+  "SETTINGS_TRANSLATION_AUTH_HEADER": {
+    "message": "Header"
+  },
+  "SETTINGS_TRANSLATION_AUTH_QUERY": {
+    "message": "Query"
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_NAME": {
+    "message": "Enter a service name."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_DUPLICATE": {
+    "message": "A Custom API with the same name already exists."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_URL": {
+    "message": "Enter an HTTP or HTTPS URL without a username or password."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_METHOD": {
+    "message": "Choose POST, PUT, or PATCH."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_HEADERS": {
+    "message": "Check Headers in Name: valueTemplate format."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_BODY": {
+    "message": "The Body template must be valid JSON."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_AUTH": {
+    "message": "Check the authentication mode and auth name."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_RESPONSE": {
+    "message": "Enter a response text path."
+  },
+  "SETTINGS_TRANSLATION_VALIDATION_INVALID": {
+    "message": "Check the Custom API settings."
   }
 }
