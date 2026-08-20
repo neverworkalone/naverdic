@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url'
 
 import {
   SETTINGS_MENU,
+  SETTINGS_NAVIGATION,
   SETTINGS_PAGE_IDS,
   SETTINGS_SCHEMA_VERSION,
   SETTINGS_SCHEMA_V2,
@@ -51,6 +52,28 @@ test('defines stable settings pages, ordering, and advanced actions', () => {
   assert.equal(help.kind, 'external')
   assert.equal(help.external, true)
   assert.match(help.url, /^https:\/\//)
+})
+
+test('maps the finalized Figma navigation to stable settings sections', () => {
+  assert.deepEqual(
+    SETTINGS_NAVIGATION.map(item => item.id),
+    ['appearance', 'double-click', 'blocked-sites', 'behavior', 'translation-service', 'help', 'advanced']
+  )
+  assert.equal(
+    SETTINGS_NAVIGATION.find(item => item.id === 'double-click').pageId,
+    SETTINGS_PAGE_IDS.DICTIONARY
+  )
+  assert.equal(
+    SETTINGS_NAVIGATION.find(item => item.id === 'behavior').pageId,
+    SETTINGS_PAGE_IDS.DICTIONARY
+  )
+
+  const help = SETTINGS_NAVIGATION.find(item => item.id === 'help')
+  const advanced = SETTINGS_NAVIGATION.find(item => item.id === 'advanced')
+  assert.equal(help.kind, 'external')
+  assert.equal(help.external, true)
+  assert.match(help.url, /^https:\/\//)
+  assert.deepEqual(advanced.actions, ['reset'])
 })
 
 test('defines the v2 storage split and nested settings defaults', () => {

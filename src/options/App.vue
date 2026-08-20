@@ -1,7 +1,7 @@
 <script setup>
-import Options from '/src/components/Options.vue'
+import SettingsShell from '/src/components/SettingsShell.vue'
 </script>
 
 <template>
-  <Options />
+  <SettingsShell />
 </template>

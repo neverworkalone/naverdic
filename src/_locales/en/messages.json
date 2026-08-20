@@ -148,5 +148,98 @@
   },
   "RESET": {
     "message": "Reset"
+  },
+  "SETTINGS_PRODUCT_TITLE": {
+    "message": "Naver English Dictionary · NaverDic 7.0"
+  },
+  "SETTINGS_SIDEBAR_HEADING": {
+    "message": "Settings"
+  },
+  "SETTINGS_NAV_APPEARANCE": {
+    "message": "Appearance"
+  },
+  "SETTINGS_NAV_DOUBLE_CLICK": {
+    "message": "Double click"
+  },
+  "SETTINGS_NAV_BLOCKED_SITES": {
+    "message": "Blocked sites"
+  },
+  "SETTINGS_NAV_BEHAVIOR": {
+    "message": "Behavior"
+  },
+  "SETTINGS_NAV_TRANSLATION": {
+    "message": "Translation service"
+  },
+  "SETTINGS_NAV_HELP": {
+    "message": "Help"
+  },
+  "SETTINGS_NAV_ADVANCED": {
+    "message": "Advanced"
+  },
+  "SETTINGS_PAGE_APPEARANCE_TITLE": {
+    "message": "Appearance"
+  },
+  "SETTINGS_PAGE_APPEARANCE_DESCRIPTION": {
+    "message": "Configure the popup dictionary colors and typography."
+  },
+  "SETTINGS_PAGE_DOUBLE_CLICK_TITLE": {
+    "message": "Double click"
+  },
+  "SETTINGS_PAGE_DOUBLE_CLICK_DESCRIPTION": {
+    "message": "Configure how the dictionary appears when a word is double-clicked on a page."
+  },
+  "SETTINGS_PAGE_BLOCKED_SITES_TITLE": {
+    "message": "Blocked sites"
+  },
+  "SETTINGS_PAGE_BLOCKED_SITES_DESCRIPTION": {
+    "message": "Manage websites where the popup dictionary should not appear."
+  },
+  "SETTINGS_PAGE_BEHAVIOR_TITLE": {
+    "message": "Behavior"
+  },
+  "SETTINGS_PAGE_BEHAVIOR_DESCRIPTION": {
+    "message": "Configure drag search and page interaction behavior."
+  },
+  "SETTINGS_PAGE_TRANSLATION_TITLE": {
+    "message": "Translation service"
+  },
+  "SETTINGS_PAGE_TRANSLATION_DESCRIPTION": {
+    "message": "Configure translation features and providers."
+  },
+  "SETTINGS_PAGE_HELP_TITLE": {
+    "message": "Help"
+  },
+  "SETTINGS_PAGE_HELP_DESCRIPTION": {
+    "message": "Find NaverDic usage instructions and the latest guidance."
+  },
+  "SETTINGS_PAGE_ADVANCED_TITLE": {
+    "message": "Advanced"
+  },
+  "SETTINGS_PAGE_ADVANCED_DESCRIPTION": {
+    "message": "Manage advanced features such as settings data and reset."
+  },
+  "SETTINGS_SHELL_STATUS_SAVED": {
+    "message": "Saved"
+  },
+  "SETTINGS_SHELL_SAVE": {
+    "message": "Save"
+  },
+  "SETTINGS_SHELL_VERSION": {
+    "message": "NaverDic 7.0"
+  },
+  "SETTINGS_SHELL_PLACEHOLDER_TITLE": {
+    "message": "Settings"
+  },
+  "SETTINGS_SHELL_PLACEHOLDER_DESCRIPTION": {
+    "message": "Controls for this screen will be connected in the next TASK."
+  },
+  "SETTINGS_SHELL_DRAFT_NOTE": {
+    "message": "Values entered here stay in memory while you move between screens and are not saved in this TASK."
+  },
+  "SETTINGS_SHELL_PREVIEW_TITLE": {
+    "message": "Preview"
+  },
+  "SETTINGS_SHELL_PREVIEW_DESCRIPTION": {
+    "message": "Preview the result of changes on the current screen."
   }
 }
