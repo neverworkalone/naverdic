@@ -7,6 +7,7 @@ import {
   normalizeSettingsV2
 } from './settings-v2.mjs'
 import {
+  LEGACY_SECRET_KEYS,
   LEGACY_SETTING_KEYS,
   migrateV66ToV2
 } from './settings-migration-v2.mjs'
@@ -119,6 +120,40 @@ function writeStorageArea(area, values) {
   })
 }
 
+function removeStorageArea(area, keys) {
+  if (!area?.remove) {
+    return Promise.resolve()
+  }
+
+  return new Promise((resolve, reject) => {
+    let settled = false
+    const finish = (callback, value) => {
+      if (settled) {
+        return
+      }
+      settled = true
+      callback(value)
+    }
+    const callback = () => {
+      const lastError = getLastError()
+      if (lastError) {
+        finish(reject, lastError)
+        return
+      }
+      finish(resolve)
+    }
+
+    try {
+      const result = area.remove(keys, callback)
+      if (result && typeof result.then === 'function') {
+        result.then(() => callback()).catch(error => finish(reject, error))
+      }
+    } catch (error) {
+      finish(reject, error)
+    }
+  })
+}
+
 function mergeSecrets(localSecrets, migratedSecrets) {
   const local = normalizeSecretsV2(localSecrets)
   const migrated = normalizeSecretsV2(migratedSecrets)
@@ -163,25 +198,33 @@ export async function loadSettingsV2(storage) {
     ? normalizeSettingsV2(storedSettings)
     : legacyMigration.settings
   const storedSecrets = localValues[SETTINGS_STORAGE.secrets.key]
-  const secrets = mergeSecrets(storedSecrets, legacyMigration.secrets)
+  const hasV2Secrets = hasOwn(localValues, SETTINGS_STORAGE.secrets.key)
+  const secrets = hasV2Secrets
+    ? normalizeSecretsV2(storedSecrets)
+    : mergeSecrets(storedSecrets, legacyMigration.secrets)
   const hasSyncStorage = Boolean(areas.sync?.get || areas.sync?.set)
   const hasLocalStorage = Boolean(areas.local?.get || areas.local?.set)
   const storageAvailable = hasSyncStorage || hasLocalStorage
+  const legacySecretKeys = LEGACY_SECRET_KEYS.filter(key => hasOwn(syncValues, key))
 
   const settingsNeedNormalization = !hasV2Settings || !valuesEqual(storedSettings, settings)
-  const secretsNeedNormalization = !hasOwn(localValues, SETTINGS_STORAGE.secrets.key) ||
+  const secretsNeedNormalization = !hasV2Secrets ||
     !valuesEqual(storedSecrets, secrets)
   const migrationNeeded = storageAvailable && (
-    settingsNeedNormalization || secretsNeedNormalization
+    settingsNeedNormalization ||
+    secretsNeedNormalization ||
+    legacySecretKeys.length > 0
   )
 
   return {
     settings,
     secrets,
     hasV2Settings,
+    hasV2Secrets,
     migratedFromV66: !hasV2Settings && legacyMigration.sourceKeys.length > 0,
     migrationNeeded,
     storageAvailable,
+    legacySecretKeys,
     sourceKeys: legacyMigration.sourceKeys,
     unknownKeys: legacyMigration.unknownKeys
   }
@@ -202,6 +245,7 @@ export async function saveSettingsV2(storage, values = {}) {
   await writeStorageArea(areas.local, {
     [SETTINGS_STORAGE.secrets.key]: secrets
   })
+  await removeStorageArea(areas.sync, LEGACY_SECRET_KEYS)
 
   return {settings, secrets}
 }

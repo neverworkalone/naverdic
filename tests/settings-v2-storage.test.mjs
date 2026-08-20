@@ -18,8 +18,10 @@ class FakeStorageArea {
     this.items = {...items}
     this.getCalls = []
     this.setCalls = []
+    this.removeCalls = []
     this.failGet = options.failGet || null
     this.failSet = options.failSet || null
+    this.failRemove = options.failRemove || null
   }
 
   get(keys, callback) {
@@ -46,6 +48,17 @@ class FakeStorageArea {
     }
 
     Object.assign(this.items, values)
+    callback?.()
+  }
+
+  remove(keys, callback) {
+    this.removeCalls.push(Array.isArray(keys) ? [...keys] : [keys])
+    if (this.failRemove) {
+      throw this.failRemove
+    }
+
+    const keysToRemove = Array.isArray(keys) ? keys : [keys]
+    keysToRemove.forEach(key => delete this.items[key])
     callback?.()
   }
 }
@@ -104,10 +117,11 @@ test('persists the v6.6 migration into separate v2 sync and local envelopes', as
   assert.equal(migrated.migrationNeeded, false)
   assert.equal(storage.sync.setCalls.length, 1)
   assert.equal(storage.local.setCalls.length, 1)
+  assert.deepEqual(storage.sync.removeCalls, [['deepl_auth_key']])
   assert.deepEqual(Object.keys(storage.sync.setCalls[0]), [settingsKey])
   assert.deepEqual(Object.keys(storage.local.setCalls[0]), [secretsKey])
   assert.equal(storage.sync.items.unrelated_key, 'keep-me')
-  assert.equal(storage.sync.items.deepl_auth_key, legacyValues.deepl_auth_key)
+  assert.equal('deepl_auth_key' in storage.sync.items, false)
   assert.equal(
     storage.sync.items[settingsKey].translation.providerId,
     'deepl-free'
@@ -116,6 +130,34 @@ test('persists the v6.6 migration into separate v2 sync and local envelopes', as
     storage.local.items[secretsKey].providers['deepl-free'],
     {apiKey: 'legacy-secret'}
   )
+})
+
+test('does not resurrect a deleted credential from legacy sync storage', async () => {
+  const settingsKey = SETTINGS_STORAGE.settings.key
+  const secretsKey = SETTINGS_STORAGE.secrets.key
+  const storage = createStorage({
+    [settingsKey]: SETTINGS_V2_DEFAULTS,
+    deepl_auth_key: '  stale-secret  ',
+    unrelated_key: 'keep-me'
+  }, {
+    [secretsKey]: {
+      schemaVersion: 2,
+      providers: {}
+    }
+  })
+
+  const loaded = await loadSettingsV2(storage)
+
+  assert.equal(loaded.hasV2Secrets, true)
+  assert.deepEqual(loaded.secrets.providers, {})
+  assert.equal(loaded.migrationNeeded, true)
+  assert.deepEqual(loaded.legacySecretKeys, ['deepl_auth_key'])
+
+  await migrateAndPersistSettingsV2(storage)
+
+  assert.deepEqual(storage.local.items[secretsKey].providers, {})
+  assert.equal('deepl_auth_key' in storage.sync.items, false)
+  assert.equal(storage.sync.items.unrelated_key, 'keep-me')
 })
 
 test('normalizes only invalid v2 fields and schedules the corrected envelope', async () => {
@@ -206,6 +248,32 @@ test('surfaces sync and local write failures to the caller', async () => {
     /local unavailable/
   )
   assert.equal(localFailure.sync.setCalls.length, 1)
+  assert.equal(localFailure.sync.removeCalls.length, 0)
+})
+
+test('reports legacy cleanup failures after local credentials are persisted', async () => {
+  const storage = createStorage({
+    deepl_auth_key: 'legacy-secret'
+  }, {}, {
+    sync: {failRemove: new Error('legacy cleanup unavailable')}
+  })
+
+  await assert.rejects(
+    saveSettingsV2(storage, {
+      secrets: {
+        schemaVersion: 2,
+        providers: {
+          'deepl-free': {apiKey: 'local-secret'}
+        }
+      }
+    }),
+    /legacy cleanup unavailable/
+  )
+  assert.equal(
+    storage.local.items[SETTINGS_STORAGE.secrets.key].providers['deepl-free'].apiKey,
+    'local-secret'
+  )
+  assert.equal(storage.sync.items.deepl_auth_key, 'legacy-secret')
 })
 
 test('tracks draft changes separately from persisted settings for unload warnings', () => {
