@@ -20,6 +20,7 @@ import {
 import {
   canActivateTranslationProvider,
   getTranslationSettingsPanel,
+  isTranslationConnectionLocked,
   TRANSLATION_SETTINGS_PANELS
 } from '/src/translation-settings-state.mjs'
 import {
@@ -759,7 +760,7 @@ watch(() => props.draftRevision, () => {
   loadEditorDraft(selectedProviderId.value)
 })
 
-if (ownsChromeRuntime && typeof chromeRuntime.subscribe === 'function') {
+if (typeof chromeRuntime.subscribe === 'function') {
   chromeRuntime.subscribe(state => {
     chromeState.value = state
   })

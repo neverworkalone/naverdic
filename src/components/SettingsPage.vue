@@ -170,7 +170,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
     </section>
 
     <section
-      v-else-if="pageId === 'double-click'"
+      v-if="pageId === 'double-click'"
       class="settings-card"
       data-testid="settings-double-click-form"
     >
@@ -237,7 +237,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
     </section>
 
     <section
-      v-else-if="pageId === 'behavior'"
+      v-if="pageId === 'behavior'"
       class="settings-card"
       data-testid="settings-behavior-form"
     >
@@ -284,7 +284,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
     </section>
 
     <section
-      v-else-if="pageId === 'blocked-sites'"
+      v-if="pageId === 'blocked-sites'"
       class="settings-card"
       data-testid="settings-blocked-sites-form"
     >
@@ -358,8 +358,9 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
       </div>
     </section>
 
-    <KeepAlive v-else-if="pageId === 'translation-service'">
+    <KeepAlive>
       <TranslationSettings
+        v-if="pageId === 'translation-service'"
         :draft="draft"
         :draft-secrets="draftSecrets"
         :draft-revision="draftRevision"
@@ -369,7 +370,10 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
       />
     </KeepAlive>
 
-    <section v-else class="settings-card settings-card--placeholder">
+    <section
+      v-if="!['appearance', 'double-click', 'behavior', 'blocked-sites', 'translation-service'].includes(pageId)"
+      class="settings-card settings-card--placeholder"
+    >
       <h3>{{ text('SETTINGS_SHELL_PLACEHOLDER_TITLE') }}</h3>
       <p>{{ text('SETTINGS_SHELL_PLACEHOLDER_DESCRIPTION') }}</p>
       <div class="settings-placeholder-card__note">
