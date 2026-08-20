@@ -26,6 +26,10 @@ const props = defineProps({
     type: Number,
     default: 0
   },
+  draftResetRevision: {
+    type: Number,
+    default: 0
+  },
   isLoading: {
     type: Boolean,
     default: false
@@ -364,6 +368,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
         :draft="draft"
         :draft-secrets="draftSecrets"
         :draft-revision="draftRevision"
+        :draft-reset-revision="draftResetRevision"
         :is-loading="isLoading"
         :is-saving="isSaving"
         :on-pending-change="translationPendingChange"

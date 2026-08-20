@@ -30,6 +30,7 @@ const isLoading = ref(true)
 const isSaving = ref(false)
 const migrationPending = ref(false)
 const draftRevision = ref(0)
+const draftResetRevision = ref(0)
 const hasLoadError = ref(false)
 const saveState = ref('idle')
 const translationEditorDirty = ref(false)
@@ -111,6 +112,7 @@ function resetDraft() {
 
   replaceReactive(draftSettings, defaultSettings)
   replaceReactive(draftSecrets, defaultSecrets)
+  draftResetRevision.value += 1
   draftRevision.value += 1
   setTranslationEditorDirty(false)
   saveState.value = 'reset'
@@ -237,6 +239,7 @@ defineExpose({
   draftSettings,
   draftSecrets,
   draftRevision,
+  draftResetRevision,
   hasPendingChanges,
   initializeSettings,
   isLoading,
@@ -367,6 +370,7 @@ onBeforeUnmount(() => {
             :draft="draftSettings"
             :draft-secrets="draftSecrets"
             :draft-revision="draftRevision"
+            :draft-reset-revision="draftResetRevision"
             :is-loading="isLoading"
             :is-saving="isSaving"
             :reset-draft="resetDraft"

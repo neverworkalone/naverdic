@@ -34,6 +34,7 @@ const props = defineProps({
   draft: {type: Object, required: true},
   draftSecrets: {type: Object, required: true},
   draftRevision: {type: Number, default: 0},
+  draftResetRevision: {type: Number, default: 0},
   isLoading: {type: Boolean, default: false},
   isSaving: {type: Boolean, default: false},
   onPendingChange: {type: Function, default: null},
@@ -130,13 +131,18 @@ function text(key, placeholders = undefined) {
   return getText(key, placeholders)
 }
 
+function hasCachedCustomEdits() {
+  return Object.values(customDraftDirty).some(Boolean)
+}
+
+function notifyPendingChange() {
+  props.onPendingChange?.(editorDirty.value || hasCachedCustomEdits())
+}
+
 function setEditorDirty(value) {
   const next = Boolean(value)
-  if (editorDirty.value === next) {
-    return
-  }
   editorDirty.value = next
-  props.onPendingChange?.(next)
+  notifyPendingChange()
 }
 
 function providerForId(providerId) {
@@ -345,13 +351,14 @@ function cacheEditorDraft(providerId = selectedProviderId.value) {
   }
   customDrafts[providerId] = cloneProvider(editorForm)
   customDraftDirty[providerId] = true
+  notifyPendingChange()
 }
 
 function loadEditorDraft(providerId) {
   const provider = providerId === CUSTOM_NEW_ID ? null : customProviders.value[providerId]
   const persistedForm = createCustomProviderForm(provider, props.draftSecrets)
   const hasCachedEdits = Boolean(customDrafts[providerId] && customDraftDirty[providerId])
-  const form = customDrafts[providerId] || persistedForm
+  const form = hasCachedEdits ? customDrafts[providerId] : persistedForm
   Object.assign(editorForm, form)
   editorProviderId.value = providerId === CUSTOM_NEW_ID ? '' : providerId
   editorBaseline.value = JSON.stringify(hasCachedEdits ? persistedForm : form)
@@ -372,7 +379,32 @@ function cancelCustomDraft() {
     loadEditorDraft(editorProviderId.value)
     return
   }
+  setEditorDirty(false)
   selectService(activeProviderId.value)
+}
+
+function clearCustomEditorState() {
+  Object.keys(customDrafts).forEach(providerId => {
+    delete customDrafts[providerId]
+  })
+  Object.keys(customDraftDirty).forEach(providerId => {
+    delete customDraftDirty[providerId]
+  })
+  Object.assign(editorForm, createCustomProviderForm())
+  editorProviderId.value = ''
+  editorBaseline.value = JSON.stringify(editorForm)
+  formErrors.value = []
+  showApiKey.value = false
+  permissionRequestState.value = 'idle'
+  setEditorDirty(false)
+}
+
+function resetCustomEditorFromDraft() {
+  clearCustomEditorState()
+  selectedProviderId.value = activeProviderId.value
+  if (selectedIsCustom.value) {
+    loadEditorDraft(selectedProviderId.value)
+  }
 }
 
 function syncAuthDefaults() {
@@ -638,6 +670,10 @@ function deleteCustomProvider(providerId) {
   delete customDraftDirty[providerId]
   delete connectionStates[providerId]
   delete permissionStates[providerId]
+  notifyPendingChange()
+  if (editorProviderId.value === providerId || selectedProviderId.value === providerId) {
+    setEditorDirty(false)
+  }
   if (activeProviderId.value === providerId) {
     props.draft.translation.providerId = 'deepl-free'
   }
@@ -740,7 +776,10 @@ watch(selectedProviderId, (providerId, previousProviderId) => {
     loadEditorDraft(providerId)
     refreshCustomPermission(providerId === CUSTOM_NEW_ID ? null : customProviders.value[providerId], providerId)
   } else if (providerId === CHROME_ID) {
+    setEditorDirty(false)
     refreshChromeAvailability()
+  } else {
+    setEditorDirty(false)
   }
 }, {immediate: true})
 
@@ -753,7 +792,19 @@ watch(editorForm, () => {
   }
 }, {deep: true})
 
+const lastResetRevision = ref(props.draftResetRevision)
+
+watch(() => props.draftResetRevision, revision => {
+  lastResetRevision.value = revision
+  resetCustomEditorFromDraft()
+})
+
 watch(() => props.draftRevision, () => {
+  if (props.draftResetRevision !== lastResetRevision.value) {
+    lastResetRevision.value = props.draftResetRevision
+    resetCustomEditorFromDraft()
+    return
+  }
   if (!selectedIsCustom.value || editorDirty.value) {
     return
   }

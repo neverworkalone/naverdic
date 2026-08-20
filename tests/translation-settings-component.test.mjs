@@ -172,14 +172,14 @@ function createChromeRuntime(state = {}) {
   }
 }
 
-function createCustomProvider() {
+function createCustomProvider(id = 'custom-api') {
   return normalizeProviderDefinition({
-    id: 'custom-api',
-    name: 'Custom API',
+    id,
+    name: `Custom API ${id}`,
     kind: 'http',
     source: 'custom',
     endpoint: {
-      url: 'https://api.example.test/translate',
+      url: `https://api.example.test/${id}`,
       method: 'POST'
     },
     auth: {mode: 'none'},
@@ -347,6 +347,70 @@ test('Custom edits survive the SettingsPage menu round-trip and keep the dirty c
   await flushPromises()
   assert.equal(wrapper.get('[data-testid="settings-custom-name"]').element.value, 'Edited Custom API')
   assert.equal(pendingValues.at(-1), true)
+  wrapper.unmount()
+})
+
+test('pending state remains true when a dirty Custom provider is cached while switching to another provider', async () => {
+  const customA = createCustomProvider('custom-a')
+  const customB = createCustomProvider('custom-b')
+  const draft = createDraft(customA.id, customA)
+  draft.customProviders[customB.id] = customB
+  const pendingValues = []
+  const wrapper = mount(TranslationSettings, {
+    props: {
+      draft,
+      draftSecrets: createDefaultSecretsV2(),
+      onPendingChange: value => pendingValues.push(value)
+    }
+  })
+  await flushPromises()
+
+  await wrapper.get('[data-testid="settings-custom-name"]').setValue('Edited Custom A')
+  await flushPromises()
+  await wrapper.get('[data-provider-id="custom-b"]').trigger('click')
+  await flushPromises()
+  assert.equal(pendingValues.at(-1), true)
+
+  await wrapper.get('[data-provider-id="custom-a"]').trigger('click')
+  await flushPromises()
+  assert.equal(wrapper.get('[data-testid="settings-custom-name"]').element.value, 'Edited Custom A')
+  assert.equal(pendingValues.at(-1), true)
+  wrapper.unmount()
+})
+
+test('reset revision clears cached Custom edits and the global dirty callback', async () => {
+  const customProvider = createCustomProvider('custom-reset')
+  const pendingValues = []
+  const wrapper = mount(SettingsPage, {
+    props: {
+      activePage: {id: 'translation-service'},
+      draft: createDraft(customProvider.id, customProvider),
+      draftSecrets: createDefaultSecretsV2(),
+      draftRevision: 0,
+      draftResetRevision: 0,
+      translationPendingChange: value => pendingValues.push(value)
+    }
+  })
+  await flushPromises()
+
+  await wrapper.get('[data-testid="settings-custom-name"]').setValue('Discard me')
+  await flushPromises()
+  await wrapper.setProps({activePage: {id: 'appearance'}})
+  await flushPromises()
+
+  await wrapper.setProps({
+    draft: createDefaultSettingsV2(),
+    draftSecrets: createDefaultSecretsV2(),
+    draftRevision: 1,
+    draftResetRevision: 1
+  })
+  await flushPromises()
+  await wrapper.setProps({activePage: {id: 'translation-service'}})
+  await flushPromises()
+
+  assert.equal(wrapper.find('[data-testid="settings-custom-name"]').exists(), false)
+  assert.ok(wrapper.find('[data-testid="settings-translation-preset-api-key"]').exists())
+  assert.equal(pendingValues.at(-1), false)
   wrapper.unmount()
 })
 
