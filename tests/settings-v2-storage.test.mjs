@@ -160,6 +160,37 @@ test('does not resurrect a deleted credential from legacy sync storage', async (
   assert.equal(storage.sync.items.unrelated_key, 'keep-me')
 })
 
+for (const [label, invalidEnvelope] of [
+  ['null', null],
+  ['an array', []],
+  ['a wrong schema version', {schemaVersion: 1, providers: {}}]
+]) {
+  test(`recovers a legacy credential from ${label} local secrets`, async () => {
+    const settingsKey = SETTINGS_STORAGE.settings.key
+    const secretsKey = SETTINGS_STORAGE.secrets.key
+    const storage = createStorage({
+      [settingsKey]: SETTINGS_V2_DEFAULTS,
+      deepl_auth_key: '  recoverable-secret  '
+    }, {
+      [secretsKey]: invalidEnvelope
+    })
+
+    const loaded = await loadSettingsV2(storage)
+
+    assert.equal(loaded.hasV2Secrets, false)
+    assert.equal(loaded.secrets.providers['deepl-free'].apiKey, 'recoverable-secret')
+    assert.equal(loaded.migrationNeeded, true)
+
+    await migrateAndPersistSettingsV2(storage)
+
+    assert.equal(
+      storage.local.items[secretsKey].providers['deepl-free'].apiKey,
+      'recoverable-secret'
+    )
+    assert.equal('deepl_auth_key' in storage.sync.items, false)
+  })
+}
+
 test('normalizes only invalid v2 fields and schedules the corrected envelope', async () => {
   const storage = createStorage({
     [SETTINGS_STORAGE.settings.key]: {

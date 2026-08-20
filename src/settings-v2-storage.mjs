@@ -3,6 +3,7 @@ import {
   createDefaultSecretsV2,
   createDefaultSettingsV2,
   hasSettingsV2Envelope,
+  hasSecretsV2Envelope,
   normalizeSecretsV2,
   normalizeSettingsV2
 } from './settings-v2.mjs'
@@ -198,7 +199,7 @@ export async function loadSettingsV2(storage) {
     ? normalizeSettingsV2(storedSettings)
     : legacyMigration.settings
   const storedSecrets = localValues[SETTINGS_STORAGE.secrets.key]
-  const hasV2Secrets = hasOwn(localValues, SETTINGS_STORAGE.secrets.key)
+  const hasV2Secrets = hasSecretsV2Envelope(storedSecrets)
   const secrets = hasV2Secrets
     ? normalizeSecretsV2(storedSecrets)
     : mergeSecrets(storedSecrets, legacyMigration.secrets)
