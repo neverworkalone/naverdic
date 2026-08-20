@@ -13,6 +13,7 @@ import {
   saveSettingsV2,
   shouldWarnBeforeUnload
 } from '/src/settings-v2-storage.mjs'
+import {hasPendingTranslationChanges} from '/src/translation-settings-state.mjs'
 
 const navigation = SETTINGS_NAVIGATION
 const activeNavigationId = ref(navigation[0].id)
@@ -31,6 +32,7 @@ const migrationPending = ref(false)
 const draftRevision = ref(0)
 const hasLoadError = ref(false)
 const saveState = ref('idle')
+const translationEditorDirty = ref(false)
 
 const currentNavigation = computed(() => navigation.find(item => (
   item.id === activeNavigationId.value
@@ -49,11 +51,12 @@ function replaceReactive(target, source) {
   Object.assign(target, cloneValue(source))
 }
 
-const hasPendingChanges = computed(() => (
+const hasPendingChanges = computed(() => hasPendingTranslationChanges(
   hasPendingSettingsChanges(
     {settings: persistedSettings, secrets: persistedSecrets},
     {settings: draftSettings, secrets: draftSecrets}
-  )
+  ),
+  translationEditorDirty.value
 ))
 
 const canSave = computed(() => (
@@ -95,6 +98,10 @@ function text(key, placeholders = undefined) {
   return getText(key, placeholders)
 }
 
+function setTranslationEditorDirty(value) {
+  translationEditorDirty.value = Boolean(value)
+}
+
 function resetDraft() {
   const confirmMessage = text('SETTINGS_SHELL_RESET_CONFIRM')
   const confirmFn = globalThis.confirm
@@ -105,6 +112,7 @@ function resetDraft() {
   replaceReactive(draftSettings, defaultSettings)
   replaceReactive(draftSecrets, defaultSecrets)
   draftRevision.value += 1
+  setTranslationEditorDirty(false)
   saveState.value = 'reset'
 }
 
@@ -155,6 +163,10 @@ async function saveDraft() {
     replaceReactive(draftSettings, saved.settings)
     replaceReactive(draftSecrets, saved.secrets)
     draftRevision.value += 1
+    // A Custom provider editor only reports dirty until its own validated
+    // form save commits the provider into draftSettings/draftSecrets. Keep
+    // this flag intact here so a top-level save cannot silently discard an
+    // editor that has not been committed yet.
     migrationPending.value = false
     hasLoadError.value = false
     saveState.value = 'success'
@@ -235,7 +247,9 @@ defineExpose({
   persistedSecrets,
   resetDraft,
   saveDraft,
-  selectNavigation
+  selectNavigation,
+  setTranslationEditorDirty,
+  translationEditorDirty
 })
 
 onMounted(() => {
@@ -356,6 +370,7 @@ onBeforeUnmount(() => {
             :is-loading="isLoading"
             :is-saving="isSaving"
             :reset-draft="resetDraft"
+            :translation-pending-change="setTranslationEditorDirty"
           >
             <div class="settings-placeholder-card" data-testid="settings-page-placeholder">
               <h3>{{ text('SETTINGS_SHELL_PLACEHOLDER_TITLE') }}</h3>

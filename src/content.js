@@ -46,6 +46,7 @@ let activeInteractionController = null
 let storageLifecycle = null
 let chromeTranslatorRuntime = null
 let activeTranslationProviderId = ''
+let interactionConfigurationRevision = 0
 void createStorageLifecycle
 
 
@@ -188,6 +189,10 @@ function getChromeTranslatorRuntime() {
   return chromeTranslatorRuntime
 }
 
+function prepareChromeTranslatorRuntime() {
+  return getChromeTranslatorRuntime()
+}
+
 function translationErrorResponse(error) {
   return {
     ok: false,
@@ -304,6 +309,7 @@ function removePopup() {
 }
 
 function applyOptions(items) {
+  const configurationRevision = ++interactionConfigurationRevision
   const nextItems = items || {}
   const nextProviderId = nextItems.translationProviderId || 'deepl-free'
   const nextNeedsChromeRuntime = nextProviderId === CHROME_TRANSLATOR_PROVIDER_ID &&
@@ -339,21 +345,42 @@ function applyOptions(items) {
     targetLanguage: nextItems.translationTargetLanguage || 'ko'
   }
 
-  // This content script is injected into every frame (manifest all_frames).
-  // Binding to this frame's document keeps selection and events local to the
-  // browsing context; events do not bubble across iframe boundaries.
-  activeInteractionController = createInteractionController({
-    ...nextItems,
-    translationRequest
-  }, {
-    target: document,
-    openPopup,
-    removePopup,
-    checkTrigger
-  })
+  const bindInteractionController = () => {
+    if (configurationRevision !== interactionConfigurationRevision) {
+      return
+    }
+
+    // This content script is injected into every frame (manifest all_frames).
+    // Binding to this frame's document keeps selection and events local to the
+    // browsing context; events do not bubble across iframe boundaries.
+    activeInteractionController = createInteractionController({
+      ...nextItems,
+      translationRequest
+    }, {
+      target: document,
+      openPopup,
+      removePopup,
+      checkTrigger
+    })
+  }
+
+  if (nextNeedsChromeRuntime) {
+    // Finish the availability check before installing the mouseup handler.
+    // Once the handler runs, a ready model lets runtime.translate() reach
+    // Translator.create() before its first await, preserving the page's
+    // transient user activation. Model downloads still only start from the
+    // explicit settings click path.
+    prepareChromeTranslatorRuntime().refreshAvailability?.()
+      .catch(() => {})
+      .finally(bindInteractionController)
+    return
+  }
+
+  bindInteractionController()
 }
 
 export function unregisterEventListener() {
+  interactionConfigurationRevision += 1
   storageLifecycle?.stop()
   storageLifecycle = null
   activeInteractionController?.destroy()

@@ -6,6 +6,7 @@ import {
   CHROME_TRANSLATOR_PHASES,
   createChromeTranslatorRuntime
 } from '../src/chrome-translator.mjs'
+import {createInteractionController} from '../src/content-interaction.mjs'
 
 class FakeMonitor {
   constructor() {
@@ -21,6 +22,26 @@ class FakeMonitor {
 
   emit(type, event) {
     this.listeners.get(type)?.forEach(listener => listener(event))
+  }
+}
+
+class FakeTarget {
+  constructor() {
+    this.listeners = new Map()
+  }
+
+  addEventListener(type, listener) {
+    this.listeners.set(type, listener)
+  }
+
+  removeEventListener(type, listener) {
+    if (this.listeners.get(type) === listener) {
+      this.listeners.delete(type)
+    }
+  }
+
+  dispatch(type, event = {}) {
+    this.listeners.get(type)?.(event)
   }
 }
 
@@ -202,4 +223,46 @@ test('does not create a model during translation when availability is downloadab
     error => error.code === CHROME_TRANSLATOR_ERROR_CODES.MODEL_NOT_READY
   )
   assert.equal(createCount, 0)
+})
+
+test('starts the first real translation create call inside the prepared mouseup path', async () => {
+  const order = []
+  const {api} = translatorApi({
+    availability: 'available',
+    create: () => {
+      order.push('create')
+      return Promise.resolve(fakeTranslator())
+    }
+  })
+  const runtime = createChromeTranslatorRuntime({scope: {Translator: api}})
+  await runtime.refreshAvailability()
+
+  const target = new FakeTarget()
+  let translationPromise
+  const controller = createInteractionController({
+    translate: true,
+    translate_trigger_key: 'none'
+  }, {
+    target,
+    checkTrigger: () => true,
+    removePopup: () => {},
+    openPopup: () => {
+      order.push('mouseup')
+      translationPromise = runtime.translate('hello')
+      order.push('after-create-request')
+    }
+  })
+
+  target.dispatch('mousedown', {button: 0, clientX: 0, clientY: 0})
+  target.dispatch('mousemove', {clientX: 12, clientY: 0})
+  target.dispatch('mouseup', {button: 0, clientX: 12, clientY: 0})
+
+  assert.deepEqual(order.slice(-3), [
+    'mouseup',
+    'create',
+    'after-create-request'
+  ])
+  await translationPromise
+  controller.destroy()
+  await runtime.destroy()
 })

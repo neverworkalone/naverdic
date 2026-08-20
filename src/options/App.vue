@@ -5,7 +5,7 @@ import SettingsPage from '/src/components/SettingsPage.vue'
 
 <template>
   <SettingsShell>
-    <template #page="{ activePage, draft, draftSecrets, draftRevision, isLoading, isSaving, resetDraft }">
+    <template #page="{ activePage, draft, draftSecrets, draftRevision, isLoading, isSaving, resetDraft, translationPendingChange }">
       <SettingsPage
         :active-page="activePage"
         :draft="draft"
@@ -14,6 +14,7 @@ import SettingsPage from '/src/components/SettingsPage.vue'
         :is-loading="isLoading"
         :is-saving="isSaving"
         :reset-draft="resetDraft"
+        :translation-pending-change="translationPendingChange"
       />
     </template>
   </SettingsShell>

@@ -37,6 +37,10 @@ const props = defineProps({
   resetDraft: {
     type: Function,
     default: null
+  },
+  translationPendingChange: {
+    type: Function,
+    default: null
   }
 })
 
@@ -354,14 +358,16 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
       </div>
     </section>
 
-    <TranslationSettings
-      v-else-if="pageId === 'translation-service'"
-      :draft="draft"
-      :draft-secrets="draftSecrets"
-      :draft-revision="draftRevision"
-      :is-loading="isLoading"
-      :is-saving="isSaving"
-    />
+    <KeepAlive v-else-if="pageId === 'translation-service'">
+      <TranslationSettings
+        :draft="draft"
+        :draft-secrets="draftSecrets"
+        :draft-revision="draftRevision"
+        :is-loading="isLoading"
+        :is-saving="isSaving"
+        :on-pending-change="translationPendingChange"
+      />
+    </KeepAlive>
 
     <section v-else class="settings-card settings-card--placeholder">
       <h3>{{ text('SETTINGS_SHELL_PLACEHOLDER_TITLE') }}</h3>

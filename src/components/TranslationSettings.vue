@@ -18,6 +18,11 @@ import {
   validateCustomProviderForm
 } from '/src/translation-settings.mjs'
 import {
+  canActivateTranslationProvider,
+  getTranslationSettingsPanel,
+  TRANSLATION_SETTINGS_PANELS
+} from '/src/translation-settings-state.mjs'
+import {
   hasTranslationProviderPermission,
   requestTranslationProviderPermission,
   testTranslationProvider
@@ -30,6 +35,7 @@ const props = defineProps({
   draftRevision: {type: Number, default: 0},
   isLoading: {type: Boolean, default: false},
   isSaving: {type: Boolean, default: false},
+  onPendingChange: {type: Function, default: null},
   // Tests can inject a fake runtime without changing the production
   // document-bound Translator lifecycle.
   translatorRuntime: {type: Object, default: null}
@@ -66,6 +72,10 @@ const translation = computed(() => props.draft.translation || {})
 const customProviders = computed(() => props.draft.customProviders || {})
 const activeProviderId = computed(() => translation.value.providerId || 'deepl-free')
 const selectedProviderId = ref(activeProviderId.value)
+const selectedPanel = computed(() => getTranslationSettingsPanel(
+  selectedProviderId.value,
+  customProviders.value
+))
 const selectedPresetId = computed(() => (
   PRESET_IDS.has(selectedProviderId.value) ? selectedProviderId.value : ''
 ))
@@ -77,11 +87,8 @@ const selectedProvider = computed(() => {
     customProviders.value[selectedProviderId.value] ||
     null
 })
-const selectedIsChrome = computed(() => selectedProviderId.value === CHROME_ID)
-const selectedIsCustom = computed(() => (
-  selectedProviderId.value === CUSTOM_NEW_ID ||
-  customProviders.value[selectedProviderId.value]?.source === PROVIDER_SOURCES.CUSTOM
-))
+const selectedIsChrome = computed(() => selectedPanel.value === TRANSLATION_SETTINGS_PANELS.CHROME)
+const selectedIsCustom = computed(() => selectedPanel.value === TRANSLATION_SETTINGS_PANELS.CUSTOM)
 const customPermissionPattern = computed(() => getProviderOriginPattern(editorForm.url))
 const isDeepL = computed(() => selectedProviderId.value === 'deepl-free' || selectedProviderId.value === 'deepl-pro')
 const controlsDisabled = computed(() => props.isLoading || props.isSaving)
@@ -89,6 +96,7 @@ const controlsDisabled = computed(() => props.isLoading || props.isSaving)
 const connectionStates = reactive({})
 const permissionStates = reactive({})
 const customDrafts = reactive({})
+const customDraftDirty = reactive({})
 const editorForm = reactive(createCustomProviderForm())
 const editorProviderId = ref('')
 const editorBaseline = ref('')
@@ -121,6 +129,15 @@ function text(key, placeholders = undefined) {
   return getText(key, placeholders)
 }
 
+function setEditorDirty(value) {
+  const next = Boolean(value)
+  if (editorDirty.value === next) {
+    return
+  }
+  editorDirty.value = next
+  props.onPendingChange?.(next)
+}
+
 function providerForId(providerId) {
   return getProviderPreset(providerId) || customProviders.value[providerId] || null
 }
@@ -151,6 +168,13 @@ function isConnectionSuccess(providerId) {
 
 function selectedConnectionState() {
   return stateFor(selectedProviderId.value)
+}
+
+function connectionControlsDisabled(providerId = selectedProviderId.value) {
+  return isTranslationConnectionLocked({
+    globallyDisabled: controlsDisabled.value,
+    connectionStatus: stateFor(providerId).status
+  })
 }
 
 function ensureDraftProviders() {
@@ -319,15 +343,18 @@ function cacheEditorDraft(providerId = selectedProviderId.value) {
     return
   }
   customDrafts[providerId] = cloneProvider(editorForm)
+  customDraftDirty[providerId] = true
 }
 
 function loadEditorDraft(providerId) {
   const provider = providerId === CUSTOM_NEW_ID ? null : customProviders.value[providerId]
-  const form = customDrafts[providerId] || createCustomProviderForm(provider, props.draftSecrets)
+  const persistedForm = createCustomProviderForm(provider, props.draftSecrets)
+  const hasCachedEdits = Boolean(customDrafts[providerId] && customDraftDirty[providerId])
+  const form = customDrafts[providerId] || persistedForm
   Object.assign(editorForm, form)
   editorProviderId.value = providerId === CUSTOM_NEW_ID ? '' : providerId
-  editorBaseline.value = JSON.stringify(editorForm)
-  editorDirty.value = false
+  editorBaseline.value = JSON.stringify(hasCachedEdits ? persistedForm : form)
+  setEditorDirty(hasCachedEdits)
   formErrors.value = []
   showApiKey.value = false
 }
@@ -339,6 +366,7 @@ function startCustomProvider() {
 
 function cancelCustomDraft() {
   delete customDrafts[customDraftKey()]
+  delete customDraftDirty[customDraftKey()]
   if (editorProviderId.value) {
     loadEditorDraft(editorProviderId.value)
     return
@@ -475,7 +503,7 @@ async function runConnectionTest(provider, {
   secrets = props.draftSecrets,
   signature = providerSignature(provider, providerId)
 } = {}) {
-  if (!provider || controlsDisabled.value || stateFor(providerId).status === 'testing') {
+  if (!provider || connectionControlsDisabled(providerId)) {
     return
   }
   const credential = getProviderCredential(provider, secrets)
@@ -524,7 +552,7 @@ function testPresetConnection() {
 }
 
 async function testCustomConnection() {
-  if (controlsDisabled.value || selectedConnectionState().status === 'testing') {
+  if (connectionControlsDisabled()) {
     return
   }
   const result = currentCustomFormResult()
@@ -551,7 +579,7 @@ async function testCustomConnection() {
 }
 
 async function saveCustomProvider() {
-  if (controlsDisabled.value || selectedConnectionState().status === 'testing') {
+  if (connectionControlsDisabled()) {
     return
   }
   const result = currentCustomFormResult()
@@ -578,7 +606,9 @@ async function saveCustomProvider() {
   providers[result.provider.id] = result.provider
   applyCustomCredential(result, existingProvider)
   delete customDrafts[customDraftKey()]
-  customDrafts[result.provider.id] = cloneProvider(editorForm)
+  delete customDraftDirty[customDraftKey()]
+  delete customDrafts[result.provider.id]
+  delete customDraftDirty[result.provider.id]
   selectedProviderId.value = result.provider.id
   loadEditorDraft(result.provider.id)
   if (currentState.status === 'success' && currentState.signature === testedSignature) {
@@ -604,6 +634,7 @@ function deleteCustomProvider(providerId) {
   delete ensureDraftProviders()[providerId]
   delete ensureDraftSecrets()[providerId]
   delete customDrafts[providerId]
+  delete customDraftDirty[providerId]
   delete connectionStates[providerId]
   delete permissionStates[providerId]
   if (activeProviderId.value === providerId) {
@@ -615,22 +646,17 @@ function deleteCustomProvider(providerId) {
 }
 
 function canActivateSelected() {
-  if (selectedIsChrome.value) {
-    return chromeState.value.phase === CHROME_TRANSLATOR_PHASES.AVAILABLE
-  }
-  if (selectedIsCustom.value) {
-    return Boolean(
-      selectedProvider.value &&
-      permissionStates[selectedProviderId.value] === 'allowed' &&
-      stateFor(selectedProviderId.value).status === 'success' &&
-      isConnectionSuccess(selectedProviderId.value)
-    )
-  }
+  const state = stateFor(selectedProviderId.value)
   return Boolean(
     selectedProvider.value &&
-    providerCredential(selectedProvider.value) &&
-    stateFor(selectedProviderId.value).status === 'success' &&
-    isConnectionSuccess(selectedProviderId.value)
+    canActivateTranslationProvider({
+      panel: selectedPanel.value,
+      chromeReady: chromeState.value.phase === CHROME_TRANSLATOR_PHASES.AVAILABLE,
+      permissionAllowed: permissionStates[selectedProviderId.value] === 'allowed',
+      connectionStatus: state.status,
+      connectionMatches: isConnectionSuccess(selectedProviderId.value),
+      hasCredential: Boolean(providerCredential(selectedProvider.value))
+    })
   )
 }
 
@@ -719,8 +745,9 @@ watch(selectedProviderId, (providerId, previousProviderId) => {
 
 watch(editorForm, () => {
   const next = JSON.stringify(editorForm)
-  editorDirty.value = next !== editorBaseline.value
-  if (editorDirty.value) {
+  const nextDirty = next !== editorBaseline.value
+  setEditorDirty(nextDirty)
+  if (nextDirty) {
     invalidateConnectionState(selectedProviderId.value)
   }
 }, {deep: true})
@@ -911,19 +938,19 @@ onBeforeUnmount(() => {
                   :type="showApiKey ? 'text' : 'password'"
                   :value="providerCredential(selectedProvider)"
                   autocomplete="new-password"
-                  :disabled="controlsDisabled || stateFor(selectedProviderId).status === 'testing'"
+                  :disabled="connectionControlsDisabled(selectedProviderId)"
                   :placeholder="providerCredential(selectedProvider) ? '••••••••••••••••' : text('SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER')"
                   data-testid="settings-translation-preset-api-key"
                   @input="updatePresetCredential"
                 >
-                <button type="button" :disabled="controlsDisabled || stateFor(selectedProviderId).status === 'testing'" @click="showApiKey = !showApiKey">{{ text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY') }}</button>
+                <button type="button" :disabled="connectionControlsDisabled(selectedProviderId)" @click="showApiKey = !showApiKey">{{ text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY') }}</button>
               </div>
               <small>{{ text('SETTINGS_TRANSLATION_API_KEY_HINT') }}</small>
-              <button v-if="providerCredential(selectedProvider)" type="button" class="translation-text-button" :disabled="controlsDisabled || stateFor(selectedProviderId).status === 'testing'" @click="deletePresetCredential">{{ text('SETTINGS_TRANSLATION_DELETE_KEY') }}</button>
+              <button v-if="providerCredential(selectedProvider)" type="button" class="translation-text-button" :disabled="connectionControlsDisabled(selectedProviderId)" @click="deletePresetCredential">{{ text('SETTINGS_TRANSLATION_DELETE_KEY') }}</button>
             </label>
             <p v-if="stateFor(selectedProviderId).messageKey" class="translation-detail-result" :class="`translation-detail-result--${stateFor(selectedProviderId).status}`" role="status">{{ text(stateFor(selectedProviderId).messageKey) }}</p>
             <div class="translation-detail-actions">
-              <button type="button" class="translation-secondary-button" :disabled="controlsDisabled || stateFor(selectedProviderId).status === 'testing'" data-testid="settings-translation-test" @click="testPresetConnection">{{ text(stateFor(selectedProviderId).status === 'testing' ? 'SETTINGS_TRANSLATION_TESTING' : 'SETTINGS_TRANSLATION_TEST') }}</button>
+              <button type="button" class="translation-secondary-button" :disabled="connectionControlsDisabled(selectedProviderId)" data-testid="settings-translation-test" @click="testPresetConnection">{{ text(stateFor(selectedProviderId).status === 'testing' ? 'SETTINGS_TRANSLATION_TESTING' : 'SETTINGS_TRANSLATION_TEST') }}</button>
               <button v-if="activeProviderId !== selectedProviderId" type="button" class="translation-primary-button" :disabled="controlsDisabled || !canActivateSelected()" data-testid="settings-translation-activate" @click="activateSelectedProvider">{{ text('SETTINGS_TRANSLATION_ACTIVATE') }}</button>
               <span v-else class="translation-active-label">{{ text('SETTINGS_TRANSLATION_ACTIVE') }}</span>
             </div>
@@ -938,31 +965,31 @@ onBeforeUnmount(() => {
               <span class="translation-detail-badge" :class="permissionStates[selectedProviderId] === 'allowed' ? 'translation-detail-badge--connected' : 'translation-detail-badge--required'">{{ text(permissionStates[selectedProviderId] === 'allowed' ? 'SETTINGS_TRANSLATION_PERMISSION_ALLOWED_BADGE' : 'SETTINGS_TRANSLATION_PERMISSION_BADGE') }}</span>
             </div>
             <div class="translation-custom-grid">
-              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_NAME') }}</span><input v-model="editorForm.name" type="text" autocomplete="off" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" data-testid="settings-custom-name"></label>
-              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_URL') }}</span><input v-model="editorForm.url" type="url" autocomplete="off" placeholder="https://api.example.com/translate" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" data-testid="settings-custom-url"></label>
-              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_METHOD') }}</span><select v-model="editorForm.method" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" data-testid="settings-custom-method"><option value="POST">POST</option><option value="PUT">PUT</option><option value="PATCH">PATCH</option></select></label>
-              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_MODE') }}</span><select v-model="editorForm.authMode" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" data-testid="settings-custom-auth-mode" @change="syncAuthDefaults"><option value="none">{{ text('SETTINGS_TRANSLATION_AUTH_NONE') }}</option><option value="api-key">{{ text('SETTINGS_TRANSLATION_AUTH_API_KEY') }}</option><option value="bearer">{{ text('SETTINGS_TRANSLATION_AUTH_BEARER') }}</option><option value="custom">{{ text('SETTINGS_TRANSLATION_AUTH_CUSTOM') }}</option></select></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_NAME') }}</span><input v-model="editorForm.name" type="text" autocomplete="off" :disabled="connectionControlsDisabled()" data-testid="settings-custom-name"></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_URL') }}</span><input v-model="editorForm.url" type="url" autocomplete="off" placeholder="https://api.example.com/translate" :disabled="connectionControlsDisabled()" data-testid="settings-custom-url"></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_METHOD') }}</span><select v-model="editorForm.method" :disabled="connectionControlsDisabled()" data-testid="settings-custom-method"><option value="POST">POST</option><option value="PUT">PUT</option><option value="PATCH">PATCH</option></select></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_MODE') }}</span><select v-model="editorForm.authMode" :disabled="connectionControlsDisabled()" data-testid="settings-custom-auth-mode" @change="syncAuthDefaults"><option value="none">{{ text('SETTINGS_TRANSLATION_AUTH_NONE') }}</option><option value="api-key">{{ text('SETTINGS_TRANSLATION_AUTH_API_KEY') }}</option><option value="bearer">{{ text('SETTINGS_TRANSLATION_AUTH_BEARER') }}</option><option value="custom">{{ text('SETTINGS_TRANSLATION_AUTH_CUSTOM') }}</option></select></label>
             </div>
             <div v-if="editorForm.authMode !== 'none'" class="translation-custom-grid">
-              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_LOCATION') }}</span><select v-model="editorForm.authLocation" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" data-testid="settings-custom-auth-location"><option value="header">{{ text('SETTINGS_TRANSLATION_AUTH_HEADER') }}</option><option value="query">{{ text('SETTINGS_TRANSLATION_AUTH_QUERY') }}</option></select></label>
-              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_HEADER') }}</span><input v-model="editorForm.authHeaderName" type="text" autocomplete="off" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" data-testid="settings-custom-auth-header"></label>
-              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_PREFIX') }}</span><input v-model="editorForm.authPrefix" type="text" autocomplete="off" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" data-testid="settings-custom-auth-prefix"></label>
-              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_API_KEY') }}</span><div class="translation-secret-field"><input v-model="editorForm.apiKey" :type="showApiKey ? 'text' : 'password'" autocomplete="new-password" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" :placeholder="editorForm.hasCredential ? '••••••••••••••••' : text('SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER')" data-testid="settings-custom-api-key"><button type="button" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" @click="showApiKey = !showApiKey">{{ text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY') }}</button></div></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_LOCATION') }}</span><select v-model="editorForm.authLocation" :disabled="connectionControlsDisabled()" data-testid="settings-custom-auth-location"><option value="header">{{ text('SETTINGS_TRANSLATION_AUTH_HEADER') }}</option><option value="query">{{ text('SETTINGS_TRANSLATION_AUTH_QUERY') }}</option></select></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_HEADER') }}</span><input v-model="editorForm.authHeaderName" type="text" autocomplete="off" :disabled="connectionControlsDisabled()" data-testid="settings-custom-auth-header"></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_AUTH_PREFIX') }}</span><input v-model="editorForm.authPrefix" type="text" autocomplete="off" :disabled="connectionControlsDisabled()" data-testid="settings-custom-auth-prefix"></label>
+              <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_API_KEY') }}</span><div class="translation-secret-field"><input v-model="editorForm.apiKey" :type="showApiKey ? 'text' : 'password'" autocomplete="new-password" :disabled="connectionControlsDisabled()" :placeholder="editorForm.hasCredential ? '••••••••••••••••' : text('SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER')" data-testid="settings-custom-api-key"><button type="button" :disabled="connectionControlsDisabled()" @click="showApiKey = !showApiKey">{{ text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY') }}</button></div></label>
             </div>
-            <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_HEADERS') }}</span><textarea v-model="editorForm.headersText" rows="3" spellcheck="false" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" data-testid="settings-custom-headers" /></label>
-            <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_BODY') }}</span><textarea v-model="editorForm.bodyTemplateText" rows="5" spellcheck="false" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" data-testid="settings-custom-body" /></label>
-            <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH') }}</span><input v-model="editorForm.responsePath" type="text" autocomplete="off" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" data-testid="settings-custom-response-path"></label>
+            <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_HEADERS') }}</span><textarea v-model="editorForm.headersText" rows="3" spellcheck="false" :disabled="connectionControlsDisabled()" data-testid="settings-custom-headers" /></label>
+            <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_BODY') }}</span><textarea v-model="editorForm.bodyTemplateText" rows="5" spellcheck="false" :disabled="connectionControlsDisabled()" data-testid="settings-custom-body" /></label>
+            <label class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH') }}</span><input v-model="editorForm.responsePath" type="text" autocomplete="off" :disabled="connectionControlsDisabled()" data-testid="settings-custom-response-path"></label>
             <div class="translation-permission-box" :class="{'translation-permission-box--allowed': permissionStates[selectedProviderId] === 'allowed'}">
               <strong>{{ text('SETTINGS_TRANSLATION_CUSTOM_PERMISSION_TITLE') }}</strong>
               <code v-if="customPermissionPattern">{{ customPermissionPattern }}</code>
               <p>{{ text(permissionStates[selectedProviderId] === 'allowed' ? 'SETTINGS_TRANSLATION_CUSTOM_PERMISSION_GRANTED' : 'SETTINGS_TRANSLATION_CUSTOM_PERMISSION_HINT') }}</p>
-              <button type="button" class="translation-secondary-button" :disabled="controlsDisabled || permissionRequestState === 'requesting' || selectedConnectionState().status === 'testing'" data-testid="settings-custom-request-permission" @click="requestCustomPermissionFromForm">{{ text(permissionRequestState === 'requesting' ? 'SETTINGS_TRANSLATION_PERMISSION_REQUESTING' : 'SETTINGS_TRANSLATION_CUSTOM_PERMISSION_REQUEST') }}</button>
+              <button type="button" class="translation-secondary-button" :disabled="permissionRequestState === 'requesting' || connectionControlsDisabled()" data-testid="settings-custom-request-permission" @click="requestCustomPermissionFromForm">{{ text(permissionRequestState === 'requesting' ? 'SETTINGS_TRANSLATION_PERMISSION_REQUESTING' : 'SETTINGS_TRANSLATION_CUSTOM_PERMISSION_REQUEST') }}</button>
             </div>
             <ul v-if="formErrors.length" class="translation-form-errors" role="alert" data-testid="settings-custom-errors"><li v-for="(error, index) in formErrors" :key="`${error.code}-${index}`">{{ text(errorTextKey(error)) }}</li></ul>
             <p v-if="selectedConnectionState().messageKey" class="translation-detail-result" :class="`translation-detail-result--${selectedConnectionState().status}`" role="status" data-testid="settings-translation-test-result">{{ text(selectedConnectionState().messageKey) }}</p>
             <div class="translation-detail-actions">
-              <button type="button" class="translation-secondary-button" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" data-testid="settings-custom-test" @click="testCustomConnection">{{ text(selectedConnectionState().status === 'testing' ? 'SETTINGS_TRANSLATION_TESTING' : 'SETTINGS_TRANSLATION_TEST') }}</button>
-              <button type="submit" class="translation-primary-button" :disabled="controlsDisabled || selectedConnectionState().status === 'testing'" data-testid="settings-custom-save">{{ text('SETTINGS_TRANSLATION_CUSTOM_SAVE') }}</button>
+              <button type="button" class="translation-secondary-button" :disabled="connectionControlsDisabled()" data-testid="settings-custom-test" @click="testCustomConnection">{{ text(selectedConnectionState().status === 'testing' ? 'SETTINGS_TRANSLATION_TESTING' : 'SETTINGS_TRANSLATION_TEST') }}</button>
+              <button type="submit" class="translation-primary-button" :disabled="connectionControlsDisabled()" data-testid="settings-custom-save">{{ text('SETTINGS_TRANSLATION_CUSTOM_SAVE') }}</button>
               <button v-if="editorProviderId" type="button" class="translation-danger-button" :disabled="controlsDisabled" @click="deleteCustomProvider(editorProviderId)">{{ text('SETTINGS_TRANSLATION_CUSTOM_DELETE') }}</button>
               <button v-else type="button" class="translation-text-button" :disabled="controlsDisabled" @click="cancelCustomDraft">{{ text('SETTINGS_TRANSLATION_CUSTOM_CANCEL') }}</button>
               <button v-if="activeProviderId !== selectedProviderId" type="button" class="translation-secondary-button" :disabled="controlsDisabled || !canActivateSelected()" data-testid="settings-translation-activate" @click="activateSelectedProvider">{{ text('SETTINGS_TRANSLATION_ACTIVATE') }}</button>
