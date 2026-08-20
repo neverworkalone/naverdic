@@ -1,0 +1,91 @@
+/*
+ * Stage 2 shared design tokens.
+ *
+ * The surface, border, spacing, and radius values marked by the Figma file
+ * are kept as semantic variables so the Settings and Popup screens can share
+ * one vocabulary. Components should consume these variables instead of
+ * introducing page-specific literals.
+ */
+:root {
+  /* Figma surfaces and borders */
+  --naverdic-color-canvas: #E5E5E5;
+  --naverdic-color-surface-page: #F5F6F8;
+  --naverdic-color-surface-popup: #F5F6F8;
+  --naverdic-color-surface-subtle: #E2E8F0;
+  --naverdic-color-surface-raised: #FFFFFF;
+  --naverdic-color-border: #DDE3EC;
+  --naverdic-color-border-popup: #E2E6EC;
+
+  /* Semantic text, action, and feedback colors */
+  --naverdic-color-text: #1F2937;
+  --naverdic-color-text-muted: #64748B;
+  --naverdic-color-text-disabled: #94A3B8;
+  --naverdic-color-text-on-primary: #FFFFFF;
+  --naverdic-color-action-primary: #2563EB;
+  --naverdic-color-action-primary-hover: #1D4ED8;
+  --naverdic-color-action-primary-disabled: #BFDBFE;
+  --naverdic-color-focus: #2563EB;
+  --naverdic-color-danger: #DC2626;
+  --naverdic-color-success: #15803D;
+  --naverdic-color-warning: #B45309;
+
+  /* Figma spacing rhythm: 8px controls, 14px popup padding, 22px columns. */
+  --naverdic-space-0: 0;
+  --naverdic-space-1: 4px;
+  --naverdic-space-2: 8px;
+  --naverdic-space-3: 12px;
+  --naverdic-space-4: 14px;
+  --naverdic-space-5: 16px;
+  --naverdic-space-6: 22px;
+  --naverdic-space-7: 24px;
+  --naverdic-space-8: 30px;
+  --naverdic-space-9: 40px;
+
+  --naverdic-radius-sm: 6px;
+  --naverdic-radius-md: 10px;
+  --naverdic-radius-lg: 14px;
+  --naverdic-shadow-popup: 0 8px 24px rgba(15, 23, 42, 0.14);
+  --naverdic-shadow-settings: 0 12px 30px rgba(15, 23, 42, 0.16);
+
+  /* Typography */
+  --naverdic-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --naverdic-font-size-xs: 11px;
+  --naverdic-font-size-sm: 12px;
+  --naverdic-font-size-md: 14px;
+  --naverdic-font-size-lg: 16px;
+  --naverdic-font-size-xl: 20px;
+  --naverdic-font-size-2xl: 24px;
+  --naverdic-font-size-popup: 11pt;
+  --naverdic-line-height-tight: 1.25;
+  --naverdic-line-height-normal: 1.5;
+  --naverdic-font-weight-regular: 400;
+  --naverdic-font-weight-medium: 500;
+  --naverdic-font-weight-semibold: 600;
+
+  /* Input states */
+  --naverdic-input-background-default: var(--naverdic-color-surface-raised);
+  --naverdic-input-background-disabled: #F1F5F9;
+  --naverdic-input-border-default: var(--naverdic-color-border);
+  --naverdic-input-border-hover: #94A3B8;
+  --naverdic-input-border-focus: var(--naverdic-color-focus);
+  --naverdic-input-border-error: var(--naverdic-color-danger);
+  --naverdic-input-text-disabled: var(--naverdic-color-text-disabled);
+  --naverdic-input-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.22);
+
+  /* Button states */
+  --naverdic-button-background-default: var(--naverdic-color-action-primary);
+  --naverdic-button-background-hover: var(--naverdic-color-action-primary-hover);
+  --naverdic-button-background-disabled: var(--naverdic-color-action-primary-disabled);
+  --naverdic-button-text-default: var(--naverdic-color-text-on-primary);
+  --naverdic-button-border-focus: var(--naverdic-color-focus);
+  --naverdic-button-focus-ring: var(--naverdic-input-focus-ring);
+
+  /* Card states */
+  --naverdic-card-background-default: var(--naverdic-color-surface-raised);
+  --naverdic-card-background-hover: #F8FAFC;
+  --naverdic-card-background-selected: #EFF6FF;
+  --naverdic-card-background-disabled: #F1F5F9;
+  --naverdic-card-border-default: var(--naverdic-color-border);
+  --naverdic-card-border-selected: var(--naverdic-color-action-primary);
+  --naverdic-card-shadow-default: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
