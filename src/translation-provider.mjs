@@ -9,8 +9,23 @@
 export const TRANSLATION_PROVIDER_MODEL_VERSION = 1
 
 export const PROVIDER_KINDS = Object.freeze({
+  HTTP: 'http',
+  BUILT_IN: 'built-in'
+})
+
+export const PROVIDER_SOURCES = Object.freeze({
   PRESET: 'preset',
   CUSTOM: 'custom'
+})
+
+export const PROVIDER_EXECUTION_CONTEXTS = Object.freeze({
+  BACKGROUND: 'background',
+  CONTENT_PAGE: 'content-page'
+})
+
+export const PROVIDER_ADAPTERS = Object.freeze({
+  HTTP: 'http',
+  CHROME_TRANSLATOR: 'chrome-translator'
 })
 
 export const PROVIDER_AUTH_MODES = Object.freeze({
@@ -28,12 +43,11 @@ export const PROVIDER_HTTP_METHODS = Object.freeze([
 ])
 
 export const DEFAULT_PROVIDER_ID = 'deepl-free'
+export const CHROME_TRANSLATOR_PROVIDER_ID = 'chrome-translator'
 
 const PROVIDER_ID_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/
 const SECRET_REF_PATTERN = /^providers\.[a-z0-9][a-z0-9._-]{0,63}\.(?:apiKey|token)$/
 const SECRET_PLACEHOLDER_PATTERN = /\{\{(?:apiKey|token|secret)\}\}/
-const SENSITIVE_FIELD_PATTERN = /^(?:api[-_]?key|authorization|password|secret|token)$/i
-const SENSITIVE_HEADER_PATTERN = /(?:authorization|api[-_]?key|token|secret)/i
 
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -76,6 +90,37 @@ function normalizedString(value, fallback = '') {
   return result || fallback
 }
 
+function normalizedFieldName(value) {
+  return String(value ?? '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/[^a-z0-9]+/gi, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase()
+}
+
+function isSensitiveFieldName(value) {
+  const fieldName = normalizedFieldName(value)
+  return fieldName === 'key' ||
+    fieldName === 'apikey' ||
+    fieldName.endsWith('_key') ||
+    fieldName === 'token' ||
+    fieldName.endsWith('_token') ||
+    fieldName === 'authorization' ||
+    fieldName.endsWith('_authorization') ||
+    fieldName === 'credential' ||
+    fieldName === 'credentials' ||
+    fieldName.endsWith('_credential') ||
+    fieldName.endsWith('_credentials') ||
+    fieldName === 'password' ||
+    fieldName.endsWith('_password') ||
+    fieldName === 'secret' ||
+    fieldName.endsWith('_secret')
+}
+
+function isSensitiveHeaderName(value) {
+  return isSensitiveFieldName(value)
+}
+
 function normalizedProviderId(value, fallback = '') {
   const result = normalizedString(value, fallback).toLowerCase()
   return PROVIDER_ID_PATTERN.test(result) ? result : fallback
@@ -113,14 +158,14 @@ function sanitizeTemplateValue(value, fieldName = '') {
   if (isRecord(value)) {
     return Object.fromEntries(
       Object.entries(value)
-        .filter(([key, child]) => !SENSITIVE_FIELD_PATTERN.test(key) || (
+        .filter(([key, child]) => !isSensitiveFieldName(key) || (
           typeof child === 'string' && SECRET_PLACEHOLDER_PATTERN.test(child)
         ))
         .map(([key, child]) => [key, sanitizeTemplateValue(child, key)])
     )
   }
 
-  if (SENSITIVE_FIELD_PATTERN.test(fieldName) && (
+  if (isSensitiveFieldName(fieldName) && (
     typeof value !== 'string' || !SECRET_PLACEHOLDER_PATTERN.test(value)
   )) {
     return undefined
@@ -144,7 +189,9 @@ function normalizedHeader(header) {
     return null
   }
 
-  if (SENSITIVE_HEADER_PATTERN.test(name) &&
+  const sensitive = isSensitiveHeaderName(name)
+
+  if (sensitive &&
       !secretRef &&
       !SECRET_PLACEHOLDER_PATTERN.test(valueTemplate)) {
     // A sensitive header without a local secret reference is not safe to
@@ -152,7 +199,7 @@ function normalizedHeader(header) {
     return null
   }
 
-  const safeValueTemplate = SENSITIVE_HEADER_PATTERN.test(name) &&
+  const safeValueTemplate = sensitive &&
     !SECRET_PLACEHOLDER_PATTERN.test(valueTemplate)
     ? '{{secret}}'
     : valueTemplate
@@ -206,6 +253,28 @@ function normalizedAuth(value, providerId, fallback = {}) {
   }
 }
 
+function normalizedExecution(value, kind, adapterId) {
+  const source = isRecord(value) ? value : {}
+
+  if (kind === PROVIDER_KINDS.BUILT_IN) {
+    return {
+      adapterId: PROVIDER_ADAPTERS.CHROME_TRANSLATOR,
+      context: PROVIDER_EXECUTION_CONTEXTS.CONTENT_PAGE,
+      globalName: normalizedString(source.globalName, 'Translator'),
+      requiresDocument: true,
+      supportsWebWorker: false
+    }
+  }
+
+  return {
+    adapterId: normalizedString(adapterId, PROVIDER_ADAPTERS.HTTP),
+    context: PROVIDER_EXECUTION_CONTEXTS.BACKGROUND,
+    globalName: '',
+    requiresDocument: false,
+    supportsWebWorker: true
+  }
+}
+
 const DEEPL_REQUEST = deepFreeze({
   headers: [
     {name: 'Content-Type', valueTemplate: 'application/json'}
@@ -227,7 +296,8 @@ const PRESET_DEFINITIONS = {
     modelVersion: TRANSLATION_PROVIDER_MODEL_VERSION,
     id: 'deepl-free',
     name: 'DeepL Free',
-    kind: PROVIDER_KINDS.PRESET,
+    kind: PROVIDER_KINDS.HTTP,
+    source: PROVIDER_SOURCES.PRESET,
     presetId: 'deepl-free',
     endpoint: {
       url: 'https://api-free.deepl.com/v2/translate',
@@ -247,7 +317,8 @@ const PRESET_DEFINITIONS = {
     modelVersion: TRANSLATION_PROVIDER_MODEL_VERSION,
     id: 'deepl-pro',
     name: 'DeepL Pro',
-    kind: PROVIDER_KINDS.PRESET,
+    kind: PROVIDER_KINDS.HTTP,
+    source: PROVIDER_SOURCES.PRESET,
     presetId: 'deepl-pro',
     endpoint: {
       url: 'https://api.deepl.com/v2/translate',
@@ -262,6 +333,34 @@ const PRESET_DEFINITIONS = {
     },
     request: DEEPL_REQUEST,
     response: DEEPL_RESPONSE
+  },
+  [CHROME_TRANSLATOR_PROVIDER_ID]: {
+    modelVersion: TRANSLATION_PROVIDER_MODEL_VERSION,
+    id: CHROME_TRANSLATOR_PROVIDER_ID,
+    name: 'Chrome built-in Translator',
+    kind: PROVIDER_KINDS.BUILT_IN,
+    source: PROVIDER_SOURCES.PRESET,
+    presetId: CHROME_TRANSLATOR_PROVIDER_ID,
+    endpoint: null,
+    auth: {
+      mode: PROVIDER_AUTH_MODES.NONE
+    },
+    request: {
+      headers: [],
+      bodyTemplate: null,
+      textPath: 'text',
+      targetLanguagePath: 'targetLanguage'
+    },
+    response: {
+      textPath: 'result'
+    },
+    execution: {
+      adapterId: PROVIDER_ADAPTERS.CHROME_TRANSLATOR,
+      context: PROVIDER_EXECUTION_CONTEXTS.CONTENT_PAGE,
+      globalName: 'Translator',
+      requiresDocument: true,
+      supportsWebWorker: false
+    }
   }
 }
 
@@ -281,21 +380,26 @@ export function normalizeProviderDefinition(input, {id: fallbackId = ''} = {}) {
     return null
   }
 
-  const kind = input.kind === PROVIDER_KINDS.PRESET
-    ? PROVIDER_KINDS.PRESET
-    : PROVIDER_KINDS.CUSTOM
-  const presetId = kind === PROVIDER_KINDS.PRESET
+  const kind = input.kind === PROVIDER_KINDS.BUILT_IN
+    ? PROVIDER_KINDS.BUILT_IN
+    : PROVIDER_KINDS.HTTP
+  const source = input.kind === PROVIDER_KINDS.BUILT_IN ||
+    input.source === PROVIDER_SOURCES.PRESET ||
+    input.kind === 'preset'
+    ? PROVIDER_SOURCES.PRESET
+    : PROVIDER_SOURCES.CUSTOM
+  const presetId = source === PROVIDER_SOURCES.PRESET
     ? normalizedProviderId(input.presetId, id)
     : null
   const endpointSource = isRecord(input.endpoint) ? input.endpoint : input
   const url = normalizedHttpUrl(endpointSource.url)
-  if (!url) {
+  if (kind === PROVIDER_KINDS.HTTP && !url) {
     return null
   }
 
   const requestSource = isRecord(input.request) ? input.request : {}
   const responseSource = isRecord(input.response) ? input.response : {}
-  const authFallback = kind === PROVIDER_KINDS.PRESET && PROVIDER_PRESETS[presetId]
+  const authFallback = source === PROVIDER_SOURCES.PRESET && PROVIDER_PRESETS[presetId]
     ? PROVIDER_PRESETS[presetId].auth
     : {}
   const bodyTemplate = hasOwn(requestSource, 'bodyTemplate')
@@ -307,12 +411,17 @@ export function normalizeProviderDefinition(input, {id: fallbackId = ''} = {}) {
     id,
     name: normalizedString(input.name, id),
     kind,
+    source,
     presetId,
-    endpoint: {
-      url,
-      method: normalizedMethod(endpointSource.method)
-    },
-    auth: normalizedAuth(input.auth, id, authFallback),
+    endpoint: kind === PROVIDER_KINDS.BUILT_IN
+      ? null
+      : {
+        url,
+        method: normalizedMethod(endpointSource.method)
+      },
+    auth: kind === PROVIDER_KINDS.BUILT_IN
+      ? normalizedAuth({mode: PROVIDER_AUTH_MODES.NONE}, id)
+      : normalizedAuth(input.auth, id, authFallback),
     request: {
       headers: normalizedHeaderEntries(requestSource.headers),
       bodyTemplate,
@@ -324,7 +433,12 @@ export function normalizeProviderDefinition(input, {id: fallbackId = ''} = {}) {
     },
     response: {
       textPath: normalizedString(responseSource.textPath, 'text')
-    }
+    },
+    execution: normalizedExecution(
+      input.execution,
+      kind,
+      input.execution?.adapterId
+    )
   }
 }
 
@@ -339,11 +453,19 @@ export function isProviderDefinition(value) {
     value.modelVersion === TRANSLATION_PROVIDER_MODEL_VERSION &&
     typeof value.id === 'string' &&
     Object.values(PROVIDER_KINDS).includes(value.kind) &&
-    isRecord(value.endpoint) &&
-    typeof value.endpoint.url === 'string' &&
-    typeof value.endpoint.method === 'string' &&
+    Object.values(PROVIDER_SOURCES).includes(value.source) &&
+    (value.kind === PROVIDER_KINDS.BUILT_IN
+      ? value.endpoint === null
+      : isRecord(value.endpoint) &&
+        typeof value.endpoint.url === 'string' &&
+        typeof value.endpoint.method === 'string') &&
     isRecord(value.auth) &&
     isRecord(value.request) &&
-    isRecord(value.response)
+    isRecord(value.response) &&
+    isRecord(value.execution) &&
+    typeof value.execution.adapterId === 'string' &&
+    typeof value.execution.context === 'string' &&
+    (value.kind !== PROVIDER_KINDS.BUILT_IN ||
+      value.execution.context === PROVIDER_EXECUTION_CONTEXTS.CONTENT_PAGE)
   )
 }

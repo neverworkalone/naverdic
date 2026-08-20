@@ -1,5 +1,7 @@
 import {
   DEFAULT_PROVIDER_ID,
+  PROVIDER_PRESETS,
+  PROVIDER_SOURCES,
   normalizeProviderDefinition
 } from './translation-provider.mjs'
 
@@ -266,7 +268,9 @@ function normalizeCustomProviders(value) {
   const normalized = {}
   Object.entries(value).forEach(([id, definition]) => {
     const provider = normalizeProviderDefinition(definition, {id})
-    if (provider && provider.kind === 'custom') {
+    if (provider &&
+        provider.source === PROVIDER_SOURCES.CUSTOM &&
+        !PROVIDER_PRESETS[provider.id]) {
       normalized[provider.id] = provider
     }
   })
@@ -284,6 +288,18 @@ export function createDefaultSecretsV2() {
 export function normalizeSettingsV2(values) {
   const source = isRecord(values) ? values : {}
   const defaults = createDefaultSettingsV2()
+  const customProviders = normalizeCustomProviders(source.customProviders)
+  const requestedProviderId = normalizeProviderId(
+    source.translation?.providerId,
+    defaults.translation.providerId
+  )
+  const knownProviderIds = new Set([
+    ...Object.keys(PROVIDER_PRESETS),
+    ...Object.keys(customProviders)
+  ])
+  const providerId = knownProviderIds.has(requestedProviderId)
+    ? requestedProviderId
+    : defaults.translation.providerId
 
   return {
     schemaVersion: SETTINGS_SCHEMA_VERSION,
@@ -346,16 +362,13 @@ export function normalizeSettingsV2(values) {
         source.translation?.triggerKey,
         defaults.translation.triggerKey
       ),
-      providerId: normalizeProviderId(
-        source.translation?.providerId,
-        defaults.translation.providerId
-      ),
+      providerId,
       targetLanguage: normalizeLanguageCode(
         source.translation?.targetLanguage,
         defaults.translation.targetLanguage
       )
     },
-    customProviders: normalizeCustomProviders(source.customProviders)
+    customProviders
   }
 }
 

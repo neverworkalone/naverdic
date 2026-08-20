@@ -23,8 +23,11 @@ import {
 } from '../src/settings-migration-v2.mjs'
 import {
   DEFAULT_PROVIDER_ID,
+  PROVIDER_ADAPTERS,
   PROVIDER_AUTH_MODES,
+  PROVIDER_EXECUTION_CONTEXTS,
   PROVIDER_KINDS,
+  PROVIDER_SOURCES,
   getProviderPreset,
   isProviderDefinition,
   normalizeProviderDefinition
@@ -117,9 +120,22 @@ test('normalizes v2 values without accepting invalid enums or provider secrets',
   assert.equal(normalized.translation.providerId, 'deepl-free')
   assert.equal(normalized.translation.targetLanguage, 'ja')
   assert.equal(normalized.customProviders.sample.endpoint.method, 'POST')
+  assert.equal(normalized.customProviders.sample.source, PROVIDER_SOURCES.CUSTOM)
   assert.equal(normalized.customProviders.sample.auth.secretRef, 'providers.sample.token')
   assert.equal('apiKey' in normalized.customProviders.sample, false)
   assert.equal('key' in normalized.customProviders.sample, false)
+
+  const knownCustom = normalizeSettingsV2({
+    translation: {providerId: 'sample'},
+    customProviders: normalized.customProviders
+  })
+  assert.equal(knownCustom.translation.providerId, 'sample')
+  assert.equal(
+    normalizeSettingsV2({
+      translation: {providerId: 'missing-provider'}
+    }).translation.providerId,
+    'deepl-free'
+  )
 })
 
 test('creates independent default settings and local secret objects', () => {
@@ -135,13 +151,37 @@ test('creates independent default settings and local secret objects', () => {
 test('provides normalized DeepL presets through the common provider model', () => {
   const provider = getProviderPreset('deepl-free')
   assert.equal(isProviderDefinition(provider), true)
-  assert.equal(provider.kind, PROVIDER_KINDS.PRESET)
+  assert.equal(provider.kind, PROVIDER_KINDS.HTTP)
+  assert.equal(provider.source, PROVIDER_SOURCES.PRESET)
   assert.equal(provider.endpoint.method, 'POST')
   assert.equal(provider.endpoint.url, 'https://api-free.deepl.com/v2/translate')
   assert.equal(provider.auth.mode, PROVIDER_AUTH_MODES.API_KEY)
   assert.equal(provider.auth.secretRef, 'providers.deepl-free.apiKey')
   assert.equal(provider.request.bodyTemplate.target_lang, '{{targetLanguage}}')
   assert.equal(provider.response.textPath, 'translations[0].text')
+})
+
+test('represents Chrome built-in Translator with a content-page execution boundary', () => {
+  const provider = getProviderPreset('chrome-translator')
+
+  assert.equal(isProviderDefinition(provider), true)
+  assert.equal(provider.kind, PROVIDER_KINDS.BUILT_IN)
+  assert.equal(provider.source, PROVIDER_SOURCES.PRESET)
+  assert.equal(provider.endpoint, null)
+  assert.equal(provider.execution.adapterId, PROVIDER_ADAPTERS.CHROME_TRANSLATOR)
+  assert.equal(provider.execution.context, PROVIDER_EXECUTION_CONTEXTS.CONTENT_PAGE)
+  assert.equal(provider.execution.globalName, 'Translator')
+  assert.equal(provider.execution.requiresDocument, true)
+  assert.equal(provider.execution.supportsWebWorker, false)
+  assert.equal(provider.request.bodyTemplate, null)
+  assert.equal(provider.auth.mode, PROVIDER_AUTH_MODES.NONE)
+
+  assert.equal(
+    normalizeSettingsV2({
+      translation: {providerId: 'chrome-translator'}
+    }).translation.providerId,
+    'chrome-translator'
+  )
 })
 
 test('normalizes a custom provider and drops credential-shaped input fields', () => {
@@ -163,7 +203,12 @@ test('normalizes a custom provider and drops credential-shaped input fields', ()
       bodyTemplate: {
         input: '{{text}}',
         apiKey: 'raw-secret',
-        authorization: 'Bearer raw-secret'
+        authorization: 'Bearer raw-secret',
+        access_token: 'raw-secret',
+        credentials: {token: 'raw-secret'},
+        key: 'raw-secret',
+        apikey: 'raw-secret',
+        refreshToken: 'raw-secret'
       },
       textPath: 'input',
       targetLanguagePath: 'language'
@@ -194,7 +239,12 @@ test('normalizes a custom provider and drops credential-shaped input fields', ()
       bodyTemplate: {
         input: '{{text}}',
         apiKey: 'raw-secret',
-        authorization: 'Bearer raw-secret'
+        authorization: 'Bearer raw-secret',
+        access_token: 'raw-secret',
+        credentials: {token: 'raw-secret'},
+        key: 'raw-secret',
+        apikey: 'raw-secret',
+        refreshToken: 'raw-secret'
       },
       textPath: 'input',
       targetLanguagePath: 'language'
