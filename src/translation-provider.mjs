@@ -25,6 +25,8 @@ export const PROVIDER_EXECUTION_CONTEXTS = Object.freeze({
 
 export const PROVIDER_ADAPTERS = Object.freeze({
   HTTP: 'http',
+  DEEPL: 'deepl',
+  GEMINI: 'gemini',
   CHROME_TRANSLATOR: 'chrome-translator'
 })
 
@@ -36,7 +38,6 @@ export const PROVIDER_AUTH_MODES = Object.freeze({
 })
 
 export const PROVIDER_HTTP_METHODS = Object.freeze([
-  'GET',
   'POST',
   'PUT',
   'PATCH'
@@ -139,15 +140,28 @@ function normalizedHttpUrl(value) {
 
   try {
     const url = new URL(result)
-    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : ''
+    if ((url.protocol !== 'http:' && url.protocol !== 'https:') ||
+        url.username || url.password) {
+      return ''
+    }
+
+    return url.toString()
   } catch (_error) {
     return ''
   }
 }
 
+function isValidHeaderName(value) {
+  return /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(value)
+}
+
 function normalizedMethod(value, fallback = 'POST') {
-  const method = normalizedString(value, fallback).toUpperCase()
-  return PROVIDER_HTTP_METHODS.includes(method) ? method : fallback
+  const method = normalizedString(value).toUpperCase()
+  if (!method) {
+    return fallback
+  }
+
+  return PROVIDER_HTTP_METHODS.includes(method) ? method : ''
 }
 
 function sanitizeTemplateValue(value, fieldName = '') {
@@ -181,7 +195,7 @@ function normalizedHeader(header) {
     ''
   )
   const secretRef = normalizedSecretRef(header.secretRef)
-  if (!name) {
+  if (!name || !isValidHeaderName(name)) {
     return null
   }
 
@@ -280,7 +294,7 @@ const DEEPL_REQUEST = deepFreeze({
     {name: 'Content-Type', valueTemplate: 'application/json'}
   ],
   bodyTemplate: {
-    text: ['{{text}}'],
+    text: '{{texts}}',
     target_lang: '{{targetLanguage}}'
   },
   textPath: 'text',
@@ -289,6 +303,24 @@ const DEEPL_REQUEST = deepFreeze({
 
 const DEEPL_RESPONSE = deepFreeze({
   textPath: 'translations[0].text'
+})
+
+const GEMINI_REQUEST = deepFreeze({
+  headers: [
+    {name: 'Content-Type', valueTemplate: 'application/json'}
+  ],
+  bodyTemplate: {
+    contents: [{
+      role: 'user',
+      parts: [{text: 'Translate the following text to {{targetLanguage}}. Return only the translated text.\\n\\n{{text}}'}]
+    }]
+  },
+  textPath: 'text',
+  targetLanguagePath: 'targetLanguage'
+})
+
+const GEMINI_RESPONSE = deepFreeze({
+  textPath: 'candidates[0].content.parts[0].text'
 })
 
 const PRESET_DEFINITIONS = {
@@ -311,7 +343,12 @@ const PRESET_DEFINITIONS = {
       secretRef: 'providers.deepl-free.apiKey'
     },
     request: DEEPL_REQUEST,
-    response: DEEPL_RESPONSE
+    response: DEEPL_RESPONSE,
+    execution: {
+      adapterId: PROVIDER_ADAPTERS.DEEPL,
+      context: PROVIDER_EXECUTION_CONTEXTS.BACKGROUND,
+      supportsWebWorker: true
+    }
   },
   'deepl-pro': {
     modelVersion: TRANSLATION_PROVIDER_MODEL_VERSION,
@@ -332,7 +369,38 @@ const PRESET_DEFINITIONS = {
       secretRef: 'providers.deepl-pro.apiKey'
     },
     request: DEEPL_REQUEST,
-    response: DEEPL_RESPONSE
+    response: DEEPL_RESPONSE,
+    execution: {
+      adapterId: PROVIDER_ADAPTERS.DEEPL,
+      context: PROVIDER_EXECUTION_CONTEXTS.BACKGROUND,
+      supportsWebWorker: true
+    }
+  },
+  gemini: {
+    modelVersion: TRANSLATION_PROVIDER_MODEL_VERSION,
+    id: 'gemini',
+    name: 'Gemini',
+    kind: PROVIDER_KINDS.HTTP,
+    source: PROVIDER_SOURCES.PRESET,
+    presetId: 'gemini',
+    endpoint: {
+      url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+      method: 'POST'
+    },
+    auth: {
+      mode: PROVIDER_AUTH_MODES.API_KEY,
+      location: 'header',
+      headerName: 'x-goog-api-key',
+      prefix: '',
+      secretRef: 'providers.gemini.apiKey'
+    },
+    request: GEMINI_REQUEST,
+    response: GEMINI_RESPONSE,
+    execution: {
+      adapterId: PROVIDER_ADAPTERS.GEMINI,
+      context: PROVIDER_EXECUTION_CONTEXTS.BACKGROUND,
+      supportsWebWorker: true
+    }
   },
   [CHROME_TRANSLATOR_PROVIDER_ID]: {
     modelVersion: TRANSLATION_PROVIDER_MODEL_VERSION,
@@ -397,6 +465,13 @@ export function normalizeProviderDefinition(input, {id: fallbackId = ''} = {}) {
     return null
   }
 
+  const method = kind === PROVIDER_KINDS.HTTP
+    ? normalizedMethod(endpointSource.method)
+    : null
+  if (kind === PROVIDER_KINDS.HTTP && !method) {
+    return null
+  }
+
   const requestSource = isRecord(input.request) ? input.request : {}
   const responseSource = isRecord(input.response) ? input.response : {}
   const authFallback = source === PROVIDER_SOURCES.PRESET && PROVIDER_PRESETS[presetId]
@@ -417,7 +492,7 @@ export function normalizeProviderDefinition(input, {id: fallbackId = ''} = {}) {
       ? null
       : {
         url,
-        method: normalizedMethod(endpointSource.method)
+        method
       },
     auth: kind === PROVIDER_KINDS.BUILT_IN
       ? normalizedAuth({mode: PROVIDER_AUTH_MODES.NONE}, id)

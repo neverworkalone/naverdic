@@ -1,0 +1,542 @@
+import {
+  CHROME_TRANSLATOR_PROVIDER_ID,
+  PROVIDER_ADAPTERS,
+  PROVIDER_AUTH_MODES,
+  PROVIDER_EXECUTION_CONTEXTS,
+  PROVIDER_KINDS,
+  PROVIDER_SOURCES,
+  getProviderPreset,
+  isProviderDefinition,
+  normalizeProviderDefinition
+} from './translation-provider.mjs'
+import {
+  getProviderOriginPattern,
+  isProviderOriginAllowed
+} from './provider-permissions.mjs'
+
+export const PROVIDER_ERROR_CODES = Object.freeze({
+  INVALID_PROVIDER: 'INVALID_PROVIDER',
+  INVALID_ENDPOINT: 'INVALID_ENDPOINT',
+  PERMISSION_REQUIRED: 'PERMISSION_REQUIRED',
+  AUTH_REQUIRED: 'AUTH_REQUIRED',
+  UNSUPPORTED_CONTEXT: 'UNSUPPORTED_CONTEXT',
+  HTTP_ERROR: 'HTTP_ERROR',
+  INVALID_RESPONSE: 'INVALID_RESPONSE',
+  NETWORK_ERROR: 'NETWORK_ERROR',
+  TIMEOUT: 'TIMEOUT'
+})
+
+const TEMPLATE_PATTERN = /\{\{([a-zA-Z][a-zA-Z0-9_.-]*)\}\}/g
+const PATH_PATTERN = /(?:^|\.)([^.[\]]+)|\[(\d+)\]/g
+const DEFAULT_TIMEOUT_MS = 10000
+
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function providerError(code, message, details = {}) {
+  const error = new Error(message)
+  error.name = 'ProviderError'
+  error.code = code
+  Object.entries(details).forEach(([key, value]) => {
+    if (value !== undefined) {
+      error[key] = value
+    }
+  })
+  return error
+}
+
+function providerDefinition(value) {
+  const normalized = normalizeProviderDefinition(value, {
+    id: value?.id || ''
+  })
+  return normalized && isProviderDefinition(normalized) ? normalized : null
+}
+
+function pathTokens(path) {
+  const tokens = []
+  String(path ?? '').replace(PATH_PATTERN, (_match, property, index) => {
+    tokens.push(index === undefined ? property : Number(index))
+    return _match
+  })
+  return tokens
+}
+
+export function getPathValue(value, path) {
+  if (!path) {
+    return value
+  }
+
+  return pathTokens(path).reduce((current, token) => current?.[token], value)
+}
+
+function setHeader(headers, name, value) {
+  const existing = Object.keys(headers).find(key => key.toLowerCase() === name.toLowerCase())
+  headers[existing || name] = value
+}
+
+function getSecretValue(secretRef, secrets) {
+  const value = getPathValue(secrets, secretRef)
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function collectSecretValues(value, output = []) {
+  if (Array.isArray(value)) {
+    value.forEach(child => collectSecretValues(child, output))
+    return output
+  }
+
+  if (!isRecord(value)) {
+    return output
+  }
+
+  Object.entries(value).forEach(([key, child]) => {
+    const normalizedKey = key.toLowerCase().replace(/[^a-z]/g, '')
+    if (['apikey', 'token', 'authorization', 'secret', 'password'].includes(normalizedKey) &&
+        typeof child === 'string' && child.trim()) {
+      output.push(child.trim())
+    }
+    collectSecretValues(child, output)
+  })
+  return output
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+export function redactSecrets(value, secrets = {}, extraSecrets = []) {
+  let result = String(value ?? '')
+  const secretsToRedact = [
+    ...collectSecretValues(secrets),
+    ...(Array.isArray(extraSecrets) ? extraSecrets : [extraSecrets])
+  ]
+    .filter(secret => typeof secret === 'string' && secret.length >= 4)
+    .sort((left, right) => right.length - left.length)
+
+  secretsToRedact.forEach(secret => {
+    result = result.replace(new RegExp(escapeRegExp(secret), 'g'), '[REDACTED]')
+  })
+
+  return result
+}
+
+function templateValue(value, variables) {
+  if (Array.isArray(value)) {
+    return value.map(child => templateValue(child, variables))
+  }
+
+  if (isRecord(value)) {
+    return Object.fromEntries(Object.entries(value).map(([key, child]) => [
+      key,
+      templateValue(child, variables)
+    ]))
+  }
+
+  if (typeof value !== 'string') {
+    return value
+  }
+
+  const exact = /^\{\{([a-zA-Z][a-zA-Z0-9_.-]*)\}\}$/.exec(value)
+  if (exact) {
+    return variables[exact[1]] ?? ''
+  }
+
+  return value.replace(TEMPLATE_PATTERN, (_match, name) => {
+    const replacement = variables[name]
+    return replacement === undefined || replacement === null
+      ? ''
+      : String(replacement)
+  })
+}
+
+function normalizeTextInput(value) {
+  const values = Array.isArray(value) ? value : [value]
+  return values
+    .filter(item => typeof item === 'string')
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+function defaultAuthHeader(mode) {
+  if (mode === PROVIDER_AUTH_MODES.API_KEY) {
+    return 'X-API-Key'
+  }
+
+  return 'Authorization'
+}
+
+function resolveProviderSecret(provider, secrets) {
+  if (provider.auth.mode === PROVIDER_AUTH_MODES.NONE) {
+    return ''
+  }
+
+  const secret = getSecretValue(provider.auth.secretRef, secrets)
+  if (!secret) {
+    throw providerError(
+      PROVIDER_ERROR_CODES.AUTH_REQUIRED,
+      'The translation provider credential is required.'
+    )
+  }
+  return secret
+}
+
+export function createProviderRequest(providerInput, {
+  text,
+  targetLanguage,
+  sourceLanguage = '',
+  secrets = {}
+} = {}) {
+  const provider = providerDefinition(providerInput)
+  if (!provider) {
+    throw providerError(
+      PROVIDER_ERROR_CODES.INVALID_PROVIDER,
+      'The translation provider configuration is invalid.'
+    )
+  }
+
+  if (provider.kind === PROVIDER_KINDS.BUILT_IN) {
+    throw providerError(
+      PROVIDER_ERROR_CODES.UNSUPPORTED_CONTEXT,
+      'This translation provider must run in the content page.',
+      {context: PROVIDER_EXECUTION_CONTEXTS.CONTENT_PAGE}
+    )
+  }
+
+  const textValues = normalizeTextInput(text)
+  if (!textValues.length || typeof targetLanguage !== 'string' || !targetLanguage.trim()) {
+    throw providerError(
+      PROVIDER_ERROR_CODES.INVALID_PROVIDER,
+      'The translation input is incomplete.'
+    )
+  }
+
+  const authSecret = resolveProviderSecret(provider, secrets)
+  const variables = {
+    text: textValues.length === 1 ? textValues[0] : textValues.join('\n'),
+    texts: textValues,
+    targetLanguage: targetLanguage.trim(),
+    sourceLanguage: typeof sourceLanguage === 'string' ? sourceLanguage.trim() : '',
+    secret: authSecret,
+    apiKey: authSecret,
+    token: authSecret
+  }
+  const url = new URL(provider.endpoint.url)
+  const headers = {}
+
+  provider.request.headers.forEach(header => {
+    const headerSecret = getSecretValue(header.secretRef, secrets)
+    if (header.secretRef && !headerSecret) {
+      throw providerError(
+        PROVIDER_ERROR_CODES.AUTH_REQUIRED,
+        'The translation provider credential is required.'
+      )
+    }
+
+    const rendered = templateValue(header.valueTemplate, {
+      ...variables,
+      secret: headerSecret || authSecret,
+      apiKey: headerSecret || authSecret,
+      token: headerSecret || authSecret
+    })
+    if (typeof rendered === 'string' && rendered) {
+      setHeader(headers, header.name, rendered)
+    }
+  })
+
+  if (provider.auth.mode !== PROVIDER_AUTH_MODES.NONE) {
+    const authValue = `${provider.auth.prefix}${authSecret}`
+    if (provider.auth.location === 'query') {
+      url.searchParams.set(provider.auth.headerName || 'key', authValue)
+    } else {
+      setHeader(
+        headers,
+        provider.auth.headerName || defaultAuthHeader(provider.auth.mode),
+        authValue
+      )
+    }
+  }
+
+  const options = {
+    method: provider.endpoint.method,
+    headers
+  }
+  if (provider.endpoint.method !== 'GET' && provider.endpoint.method !== 'HEAD' &&
+      provider.request.bodyTemplate !== null) {
+    options.body = JSON.stringify(templateValue(provider.request.bodyTemplate, variables))
+    if (!Object.keys(headers).some(name => name.toLowerCase() === 'content-type')) {
+      setHeader(headers, 'Content-Type', 'application/json')
+    }
+  }
+
+  return {
+    url: url.toString(),
+    options
+  }
+}
+
+export const buildProviderRequest = createProviderRequest
+
+export function normalizeProviderResponse(providerInput, payload) {
+  const provider = providerDefinition(providerInput)
+  const translatedText = provider
+    ? getPathValue(payload, provider.response.textPath)
+    : null
+
+  if (!provider || typeof translatedText !== 'string' || !translatedText.trim()) {
+    throw providerError(
+      PROVIDER_ERROR_CODES.INVALID_RESPONSE,
+      'The translation provider response did not include translated text.'
+    )
+  }
+
+  return {
+    providerId: provider.id,
+    text: translatedText,
+    raw: payload
+  }
+}
+
+async function hasPermission(provider, {allowedOrigins = [], permissionChecker} = {}) {
+  if (provider.source === PROVIDER_SOURCES.PRESET) {
+    const preset = getProviderPreset(provider.presetId)
+    if (!preset || preset.endpoint?.url !== provider.endpoint?.url) {
+      throw providerError(
+        PROVIDER_ERROR_CODES.INVALID_ENDPOINT,
+        'The preset translation provider endpoint is invalid.'
+      )
+    }
+    return true
+  }
+
+  const pattern = getProviderOriginPattern(provider.endpoint.url)
+  if (!pattern) {
+    throw providerError(
+      PROVIDER_ERROR_CODES.INVALID_ENDPOINT,
+      'The translation provider endpoint must use HTTP or HTTPS.'
+    )
+  }
+
+  if (isProviderOriginAllowed(provider.endpoint.url, allowedOrigins)) {
+    return true
+  }
+
+  if (typeof permissionChecker === 'function' &&
+      await permissionChecker(pattern, provider.endpoint.url)) {
+    return true
+  }
+
+  throw providerError(
+    PROVIDER_ERROR_CODES.PERMISSION_REQUIRED,
+    'Permission for the translation provider domain is required.'
+  )
+}
+
+function effectiveTimeout(timeoutMs) {
+  const normalized = Number(timeoutMs)
+  return Number.isFinite(normalized) && normalized > 0 ? normalized : DEFAULT_TIMEOUT_MS
+}
+
+async function fetchProviderResponse(fetchFn, request, timeoutMs) {
+  if (typeof fetchFn !== 'function') {
+    throw providerError(
+      PROVIDER_ERROR_CODES.NETWORK_ERROR,
+      'The translation provider request could not be completed.'
+    )
+  }
+
+  const controller = typeof AbortController === 'function'
+    ? new AbortController()
+    : null
+  const options = {...request.options}
+  if (controller) {
+    options.signal = controller.signal
+  }
+
+  let timeoutId = null
+  let rejectTimeout
+  const timeout = new Promise((_resolve, reject) => {
+    rejectTimeout = reject
+    timeoutId = setTimeout(() => {
+      controller?.abort()
+      rejectTimeout(providerError(
+        PROVIDER_ERROR_CODES.TIMEOUT,
+        'The translation provider request timed out.'
+      ))
+    }, effectiveTimeout(timeoutMs))
+  })
+
+  try {
+    const response = await Promise.race([
+      Promise.resolve().then(() => fetchFn(request.url, options)),
+      timeout
+    ])
+
+    if (!response || typeof response.json !== 'function') {
+      throw providerError(
+        PROVIDER_ERROR_CODES.INVALID_RESPONSE,
+        'The translation provider response was invalid.'
+      )
+    }
+
+    if (response.ok === false || response.status >= 400) {
+      throw providerError(
+        PROVIDER_ERROR_CODES.HTTP_ERROR,
+        'The translation provider request failed.',
+        {status: Number.isFinite(response.status) ? response.status : undefined}
+      )
+    }
+
+    let payload
+    try {
+      payload = await Promise.race([
+        Promise.resolve().then(() => response.json()),
+        timeout
+      ])
+    } catch (error) {
+      if (error?.code === PROVIDER_ERROR_CODES.TIMEOUT) {
+        throw error
+      }
+      throw providerError(
+        PROVIDER_ERROR_CODES.INVALID_RESPONSE,
+        'The translation provider response was not valid JSON.'
+      )
+    }
+
+    return payload
+  } catch (error) {
+    if (error?.code) {
+      throw error
+    }
+
+    if (error?.name === 'AbortError') {
+      throw providerError(
+        PROVIDER_ERROR_CODES.TIMEOUT,
+        'The translation provider request timed out.'
+      )
+    }
+
+    throw providerError(
+      PROVIDER_ERROR_CODES.NETWORK_ERROR,
+      'The translation provider request could not be completed.'
+    )
+  } finally {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId)
+    }
+  }
+}
+
+const HTTP_ADAPTER = Object.freeze({
+  id: PROVIDER_ADAPTERS.HTTP,
+  buildRequest: createProviderRequest,
+  normalizeResponse: normalizeProviderResponse
+})
+
+const DEEPL_ADAPTER = Object.freeze({
+  ...HTTP_ADAPTER,
+  id: PROVIDER_ADAPTERS.DEEPL
+})
+
+const GEMINI_ADAPTER = Object.freeze({
+  ...HTTP_ADAPTER,
+  id: PROVIDER_ADAPTERS.GEMINI
+})
+
+const CHROME_TRANSLATOR_ADAPTER = Object.freeze({
+  id: PROVIDER_ADAPTERS.CHROME_TRANSLATOR,
+  buildRequest() {
+    throw providerError(
+      PROVIDER_ERROR_CODES.UNSUPPORTED_CONTEXT,
+      'This translation provider must run in the content page.',
+      {context: PROVIDER_EXECUTION_CONTEXTS.CONTENT_PAGE}
+    )
+  },
+  normalizeResponse: normalizeProviderResponse
+})
+
+export const TRANSLATION_ADAPTERS = Object.freeze({
+  [PROVIDER_ADAPTERS.HTTP]: HTTP_ADAPTER,
+  [PROVIDER_ADAPTERS.DEEPL]: DEEPL_ADAPTER,
+  [PROVIDER_ADAPTERS.GEMINI]: GEMINI_ADAPTER,
+  [PROVIDER_ADAPTERS.CHROME_TRANSLATOR]: CHROME_TRANSLATOR_ADAPTER
+})
+
+export function getTranslationAdapter(providerInput) {
+  const provider = providerDefinition(providerInput)
+  if (!provider) {
+    return null
+  }
+
+  return TRANSLATION_ADAPTERS[provider.execution.adapterId] || (
+    provider.kind === PROVIDER_KINDS.HTTP ? HTTP_ADAPTER : null
+  )
+}
+
+export function normalizeProviderError(error, {secrets = {}, extraSecrets = []} = {}) {
+  if (error?.name === 'ProviderError') {
+    error.message = redactSecrets(error.message, secrets, extraSecrets)
+    return error
+  }
+
+  const code = error?.name === 'AbortError'
+    ? PROVIDER_ERROR_CODES.TIMEOUT
+    : PROVIDER_ERROR_CODES.NETWORK_ERROR
+  const fallback = code === PROVIDER_ERROR_CODES.TIMEOUT
+    ? 'The translation provider request timed out.'
+    : 'The translation provider request could not be completed.'
+  const message = redactSecrets(error?.message || fallback, secrets, extraSecrets)
+  return providerError(code, message || fallback)
+}
+
+export async function executeProviderTranslation(providerInput, {
+  text,
+  targetLanguage,
+  sourceLanguage = '',
+  secrets = {},
+  allowedOrigins = [],
+  permissionChecker,
+  fetchFn = globalThis.fetch,
+  timeoutMs = DEFAULT_TIMEOUT_MS
+} = {}) {
+  const provider = providerDefinition(providerInput)
+  if (!provider) {
+    throw providerError(
+      PROVIDER_ERROR_CODES.INVALID_PROVIDER,
+      'The translation provider configuration is invalid.'
+    )
+  }
+
+  const adapter = getTranslationAdapter(provider)
+  if (!adapter) {
+    throw providerError(
+      PROVIDER_ERROR_CODES.INVALID_PROVIDER,
+      'The translation provider adapter is unavailable.'
+    )
+  }
+
+  try {
+    await hasPermission(provider, {allowedOrigins, permissionChecker})
+    const request = adapter.buildRequest(provider, {
+      text,
+      targetLanguage,
+      sourceLanguage,
+      secrets
+    })
+    const payload = await fetchProviderResponse(fetchFn, request, timeoutMs)
+    const normalized = adapter.normalizeResponse(provider, payload)
+    return normalized
+  } catch (error) {
+    throw normalizeProviderError(error, {secrets})
+  }
+}
+
+export function isBackgroundProvider(providerInput) {
+  const provider = providerDefinition(providerInput)
+  return Boolean(
+    provider &&
+    provider.kind === PROVIDER_KINDS.HTTP &&
+    provider.execution.context === PROVIDER_EXECUTION_CONTEXTS.BACKGROUND &&
+    provider.id !== CHROME_TRANSLATOR_PROVIDER_ID
+  )
+}
