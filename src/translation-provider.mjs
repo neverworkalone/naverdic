@@ -38,7 +38,6 @@ export const PROVIDER_AUTH_MODES = Object.freeze({
 })
 
 export const PROVIDER_HTTP_METHODS = Object.freeze([
-  'GET',
   'POST',
   'PUT',
   'PATCH'
@@ -157,8 +156,12 @@ function isValidHeaderName(value) {
 }
 
 function normalizedMethod(value, fallback = 'POST') {
-  const method = normalizedString(value, fallback).toUpperCase()
-  return PROVIDER_HTTP_METHODS.includes(method) ? method : fallback
+  const method = normalizedString(value).toUpperCase()
+  if (!method) {
+    return fallback
+  }
+
+  return PROVIDER_HTTP_METHODS.includes(method) ? method : ''
 }
 
 function sanitizeTemplateValue(value, fieldName = '') {
@@ -291,7 +294,7 @@ const DEEPL_REQUEST = deepFreeze({
     {name: 'Content-Type', valueTemplate: 'application/json'}
   ],
   bodyTemplate: {
-    text: ['{{text}}'],
+    text: '{{texts}}',
     target_lang: '{{targetLanguage}}'
   },
   textPath: 'text',
@@ -462,6 +465,13 @@ export function normalizeProviderDefinition(input, {id: fallbackId = ''} = {}) {
     return null
   }
 
+  const method = kind === PROVIDER_KINDS.HTTP
+    ? normalizedMethod(endpointSource.method)
+    : null
+  if (kind === PROVIDER_KINDS.HTTP && !method) {
+    return null
+  }
+
   const requestSource = isRecord(input.request) ? input.request : {}
   const responseSource = isRecord(input.response) ? input.response : {}
   const authFallback = source === PROVIDER_SOURCES.PRESET && PROVIDER_PRESETS[presetId]
@@ -482,7 +492,7 @@ export function normalizeProviderDefinition(input, {id: fallbackId = ''} = {}) {
       ? null
       : {
         url,
-        method: normalizedMethod(endpointSource.method)
+        method
       },
     auth: kind === PROVIDER_KINDS.BUILT_IN
       ? normalizedAuth({mode: PROVIDER_AUTH_MODES.NONE}, id)

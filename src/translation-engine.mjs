@@ -525,13 +525,7 @@ export async function executeProviderTranslation(providerInput, {
     })
     const payload = await fetchProviderResponse(fetchFn, request, timeoutMs)
     const normalized = adapter.normalizeResponse(provider, payload)
-    return {
-      ...normalized,
-      request: {
-        url: request.url,
-        method: request.options.method
-      }
-    }
+    return normalized
   } catch (error) {
     throw normalizeProviderError(error, {secrets})
   }

@@ -75,7 +75,7 @@ test('builds and normalizes a DeepL fixture through the shared adapter', () => {
     'https://api.deepl.com/v2/translate'
   )
   const request = createProviderRequest(provider, {
-    text: 'hello',
+    text: ['hello', 'world'],
     targetLanguage: 'ko',
     secrets: secretStore('deepl-free', 'apiKey', 'deep-secret')
   })
@@ -83,7 +83,7 @@ test('builds and normalizes a DeepL fixture through the shared adapter', () => {
   assert.equal(request.url, 'https://api-free.deepl.com/v2/translate')
   assert.equal(request.options.headers.Authorization, 'DeepL-Auth-Key deep-secret')
   assert.deepEqual(JSON.parse(request.options.body), {
-    text: ['hello'],
+    text: ['hello', 'world'],
     target_lang: 'ko'
   })
   assert.deepEqual(normalizeProviderResponse(provider, {
@@ -168,6 +168,11 @@ test('rejects unsafe endpoints and keeps credentials out of errors', async () =>
     kind: 'custom',
     endpoint: {url: 'https://user:pass@example.test/translate', method: 'POST'}
   }), null)
+  assert.equal(normalizeProviderDefinition({
+    id: 'unsupported-get',
+    kind: 'custom',
+    endpoint: {url: 'https://api.example.test/translate', method: 'GET'}
+  }), null)
 
   const secret = 'custom-secret'
   const redacted = redactSecrets(
@@ -187,6 +192,34 @@ test('rejects unsafe endpoints and keeps credentials out of errors', async () =>
     error => error.code === PROVIDER_ERROR_CODES.HTTP_ERROR &&
       !error.message.includes(secret)
   )
+})
+
+test('does not return query authentication credentials in the normalized result', async () => {
+  const provider = customProvider({
+    auth: {
+      mode: 'api-key',
+      location: 'query',
+      headerName: 'key',
+      prefix: '',
+      secretRef: 'providers.custom-api.apiKey'
+    }
+  })
+  const secret = 'query-secret'
+
+  const result = await executeProviderTranslation(provider, {
+    text: 'hello',
+    targetLanguage: 'ko',
+    secrets: secretStore('custom-api', 'apiKey', secret),
+    allowedOrigins: ['https://api.example.test/*'],
+    fetchFn: async (url) => {
+      assert.match(url, /[?&]key=query-secret(?:&|$)/)
+      return jsonResponse({result: {text: '안녕'}})
+    }
+  })
+
+  assert.equal(result.text, '안녕')
+  assert.equal('request' in result, false)
+  assert.doesNotMatch(JSON.stringify(result), /query-secret/)
 })
 
 test('supports nested response paths and origin pattern boundaries', () => {
