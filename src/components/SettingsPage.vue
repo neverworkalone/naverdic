@@ -1662,7 +1662,7 @@ watch(() => props.draftRevision, () => {
   left: 0;
   display: flex;
   width: 508px;
-  height: 20px;
+  height: 34px;
   align-items: center;
   margin: 0;
   line-height: 20px;
@@ -1721,7 +1721,7 @@ watch(() => props.draftRevision, () => {
 .settings-advanced-row__label strong {
   color: var(--naverdic-settings-text);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 22px;
 }
 
@@ -1746,7 +1746,7 @@ watch(() => props.draftRevision, () => {
   border: 1px solid var(--naverdic-settings-primary);
   border-radius: 7px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 20px;
   cursor: pointer;
 }
