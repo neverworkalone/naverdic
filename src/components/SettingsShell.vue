@@ -266,7 +266,8 @@ onBeforeUnmount(() => {
     class="settings-shell"
     :class="{
       'settings-shell--double-click': currentNavigation.id === 'double-click',
-      'settings-shell--drag': currentNavigation.id === 'behavior'
+      'settings-shell--drag': currentNavigation.id === 'behavior',
+      'settings-shell--blocked-sites': currentNavigation.id === 'blocked-sites'
     }"
     data-testid="settings-shell"
   >
@@ -339,6 +340,9 @@ onBeforeUnmount(() => {
               v-else
               :ref="element => setNavigationRef(element, index)"
               class="settings-navigation__item settings-navigation__item--external"
+              :class="{
+                'settings-navigation__item--help': item.id === 'help'
+              }"
               :href="item.url"
               target="_blank"
               rel="noopener noreferrer"
@@ -348,6 +352,10 @@ onBeforeUnmount(() => {
               <span class="settings-navigation__label">
                 {{ text(item.labelKey) }}
               </span>
+              <span
+                class="settings-navigation__external-icon"
+                aria-hidden="true"
+              >↗</span>
             </a>
           </template>
         </nav>
@@ -362,7 +370,8 @@ onBeforeUnmount(() => {
         :class="{
           'settings-content--translation': currentNavigation.id === 'translation-service',
           'settings-content--double-click': currentNavigation.id === 'double-click',
-          'settings-content--drag': currentNavigation.id === 'behavior'
+          'settings-content--drag': currentNavigation.id === 'behavior',
+          'settings-content--blocked-sites': currentNavigation.id === 'blocked-sites'
         }"
         :aria-labelledby="`settings-page-title-${currentNavigation.id}`"
       >
@@ -483,11 +492,24 @@ a {
   box-shadow: var(--naverdic-settings-shadow);
 }
 
+.settings-shell--blocked-sites {
+  width: min(1200px, 100%);
+  min-height: min(860px, calc(100vh - 32px));
+  margin: 16px auto;
+  border: 1px solid var(--naverdic-settings-border);
+  border-radius: var(--naverdic-settings-radius);
+  box-shadow: var(--naverdic-settings-shadow);
+}
+
 .settings-shell--double-click .settings-body {
   min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
 }
 
 .settings-shell--drag .settings-body {
+  min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
+}
+
+.settings-shell--blocked-sites .settings-body {
   min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
 }
 
@@ -593,6 +615,15 @@ a {
   border-radius: 0;
 }
 
+.settings-navigation__external-icon {
+  display: inline-flex;
+  margin-left: 8px;
+  color: currentColor;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .settings-navigation__item {
   position: relative;
   display: flex;
@@ -672,6 +703,11 @@ a {
 }
 
 .settings-content--drag {
+  grid-template-columns: 556px 300px;
+  gap: 28px;
+}
+
+.settings-content--blocked-sites {
   grid-template-columns: 556px 300px;
   gap: 28px;
 }
@@ -803,6 +839,14 @@ a {
   }
 
   .settings-content--drag .settings-preview-column {
+    display: block;
+  }
+
+  .settings-content--blocked-sites {
+    grid-template-columns: minmax(0, 556px);
+  }
+
+  .settings-content--blocked-sites .settings-preview-column {
     display: block;
   }
 }

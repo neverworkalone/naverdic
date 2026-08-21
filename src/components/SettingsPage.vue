@@ -463,15 +463,13 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
     <section
       v-if="pageId === 'blocked-sites'"
-      class="settings-card"
+      class="settings-card settings-blocked-sites-card"
       data-testid="settings-blocked-sites-form"
     >
-      <div class="settings-card__heading">
-        <h3>{{ text('SETTINGS_SECTION_BLOCKED_SITES') }}</h3>
-        <p>{{ text('SETTINGS_SECTION_BLOCKED_SITES_DESCRIPTION') }}</p>
-      </div>
-
-      <label class="settings-switch" for="settings-blocked-sites-enabled">
+      <label class="settings-switch settings-blocked-sites-switch" for="settings-blocked-sites-enabled">
+        <span class="settings-switch__label">
+          {{ text('SETTINGS_FIELD_BLOCKED_SITES_ENABLED') }}
+        </span>
         <input
           id="settings-blocked-sites-enabled"
           v-model="draft.sites.denyListEnabled"
@@ -482,12 +480,14 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
         <span class="settings-switch__track" aria-hidden="true">
           <span class="settings-switch__thumb" />
         </span>
-        <span class="settings-switch__label">
-          {{ text('SETTINGS_FIELD_BLOCKED_SITES_ENABLED') }}
-        </span>
       </label>
 
-      <div class="settings-textarea-field">
+      <div
+        class="settings-blocked-sites-divider settings-blocked-sites-divider--toggle"
+        aria-hidden="true"
+      />
+
+      <div class="settings-textarea-field settings-blocked-sites-field">
         <label for="settings-blocked-sites-input">
           {{ text('SETTINGS_FIELD_BLOCKED_SITES') }}
         </label>
@@ -513,9 +513,14 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
         </p>
       </div>
 
-      <div class="settings-normalized-sites">
+      <div
+        class="settings-blocked-sites-divider settings-blocked-sites-divider--editor"
+        aria-hidden="true"
+      />
+
+      <div class="settings-normalized-sites settings-blocked-sites-list">
         <div class="settings-normalized-sites__heading">
-          {{ text('SETTINGS_BLOCKED_SITES_NORMALIZED') }}
+          {{ text('SETTINGS_BLOCKED_SITES_REGISTERED') }}
         </div>
         <div
           v-if="siteDomains.length"
@@ -572,26 +577,6 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
           {{ text('RESET') }}
         </button>
       </div>
-    </section>
-
-    <section
-      v-if="pageId === 'help'"
-      class="settings-card settings-card--help"
-      data-testid="settings-help-page"
-    >
-      <div class="settings-card__heading">
-        <h3>{{ text('SETTINGS_PAGE_HELP_TITLE') }}</h3>
-        <p>{{ text('SETTINGS_PAGE_HELP_DESCRIPTION') }}</p>
-      </div>
-      <div class="settings-help-links">
-        <a href="https://neverworkalone.github.io/naverdic/" target="_blank" rel="noopener noreferrer">
-          {{ text('SETTINGS_HELP_GUIDE_LINK') }}
-        </a>
-        <a href="https://www.deepl.com/pro-api" target="_blank" rel="noopener noreferrer">
-          {{ text('SETTINGS_HELP_DEEPL_LINK') }}
-        </a>
-      </div>
-      <p class="settings-help-quick-guide">{{ text('SETTINGS_HELP_QUICK_GUIDE') }}</p>
     </section>
 
     <section
@@ -659,6 +644,139 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   height: 244px;
   padding: 0;
   overflow: hidden;
+}
+
+.settings-blocked-sites-card {
+  position: relative;
+  height: 390px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.settings-blocked-sites-divider {
+  position: absolute;
+  left: 23px;
+  width: 508px;
+  height: 1px;
+  background: var(--naverdic-settings-divider);
+}
+
+.settings-blocked-sites-divider--toggle {
+  top: 69px;
+}
+
+.settings-blocked-sites-divider--editor {
+  top: 284px;
+}
+
+.settings-blocked-sites-switch {
+  position: absolute;
+  top: 0;
+  left: 23px;
+  display: flex;
+  width: 508px;
+  height: 70px;
+  min-height: 70px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 0;
+}
+
+.settings-blocked-sites-switch .settings-switch__label {
+  position: absolute;
+  top: 25px;
+  left: 0;
+  display: flex;
+  height: 22px;
+  align-items: center;
+  color: #344054;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.settings-blocked-sites-switch .settings-switch__track {
+  position: absolute;
+  top: 25px;
+  right: 0;
+  width: 40px;
+  height: 22px;
+  padding: 2px;
+}
+
+.settings-blocked-sites-switch .settings-switch__thumb {
+  width: 18px;
+  height: 18px;
+}
+
+.settings-blocked-sites-switch input:checked + .settings-switch__track .settings-switch__thumb {
+  transform: translateX(18px);
+}
+
+.settings-blocked-sites-switch input:disabled + .settings-switch__track {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.settings-blocked-sites-field {
+  position: absolute;
+  top: 70px;
+  left: 23px;
+  display: block;
+  width: 508px;
+  height: 214px;
+  padding-top: 0;
+}
+
+.settings-blocked-sites-field > label,
+.settings-blocked-sites-field > .settings-textarea-field__hint,
+.settings-blocked-sites-field > textarea,
+.settings-blocked-sites-field > .settings-field-error {
+  position: absolute;
+  left: 0;
+  width: 508px;
+}
+
+.settings-blocked-sites-field > label {
+  top: 22px;
+}
+
+.settings-blocked-sites-field > .settings-textarea-field__hint {
+  top: 45px;
+}
+
+.settings-blocked-sites-card .settings-blocked-sites-field > textarea {
+  top: 70px;
+  height: 120px;
+  min-height: 120px;
+  margin-top: 0;
+  padding: 10px 12px;
+  resize: none;
+  vertical-align: top;
+}
+
+.settings-blocked-sites-field > .settings-field-error {
+  top: 193px;
+  margin: 0;
+}
+
+.settings-blocked-sites-card .settings-blocked-sites-list {
+  position: absolute;
+  top: 308px;
+  left: 23px;
+  width: 508px;
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+}
+
+.settings-blocked-sites-card .settings-blocked-sites-list .settings-domain-list {
+  margin-top: 9px;
+}
+
+.settings-blocked-sites-card .settings-blocked-sites-list .settings-domain-chip {
+  padding: 5px 10px;
+  line-height: 18px;
 }
 
 .settings-double-click-card .settings-card__heading {
@@ -789,7 +907,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
 .settings-double-click-switch .settings-switch__label {
   position: absolute;
-  top: 25px;
+  top: 18px;
   left: 0;
   height: 22px;
   align-items: center;
@@ -800,7 +918,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
 .settings-double-click-switch .settings-switch__track {
   position: absolute;
-  top: 26px;
+  top: 18px;
   right: 0;
   width: 40px;
   height: 22px;
@@ -837,7 +955,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
 .settings-drag-switch .settings-switch__label {
   position: absolute;
-  top: 25px;
+  top: 18px;
   left: 0;
   height: 22px;
   align-items: center;
@@ -848,7 +966,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
 .settings-drag-switch .settings-switch__track {
   position: absolute;
-  top: 26px;
+  top: 18px;
   right: 0;
   width: 40px;
   height: 22px;
@@ -1384,34 +1502,6 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   line-height: 20px;
 }
 
-.settings-help-links {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.settings-help-links a {
-  color: var(--naverdic-settings-primary-text);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 20px;
-  text-decoration: none;
-}
-
-.settings-help-links a:hover {
-  text-decoration: underline;
-}
-
-.settings-help-quick-guide {
-  margin: 22px 0 0;
-  padding-top: 18px;
-  color: var(--naverdic-settings-text-muted);
-  border-top: 1px solid var(--naverdic-settings-divider);
-  font-size: 12px;
-  line-height: 20px;
-}
-
 .settings-placeholder-card__note {
   margin-top: 24px;
   padding: 12px 14px;
@@ -1473,6 +1563,13 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   }
 
   .settings-drag-card {
+    height: auto;
+    min-height: 0;
+    padding: 0 18px 18px;
+    overflow: visible;
+  }
+
+  .settings-blocked-sites-card {
     height: auto;
     min-height: 0;
     padding: 0 18px 18px;
@@ -1541,6 +1638,13 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
     width: 100%;
   }
 
+  .settings-blocked-sites-divider {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+  }
+
   .settings-double-click-switch,
   .settings-double-click-row {
     position: relative;
@@ -1555,6 +1659,32 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
     top: auto;
     left: auto;
     width: auto;
+  }
+
+  .settings-blocked-sites-switch,
+  .settings-blocked-sites-field,
+  .settings-blocked-sites-card .settings-blocked-sites-list {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+  }
+
+  .settings-blocked-sites-switch {
+    height: 70px;
+    min-height: 70px;
+  }
+
+  .settings-blocked-sites-switch .settings-switch__label {
+    position: static;
+    width: auto;
+    height: auto;
+  }
+
+  .settings-blocked-sites-switch .settings-switch__track {
+    position: relative;
+    top: auto;
+    right: auto;
   }
 
   .settings-double-click-switch {
@@ -1585,6 +1715,33 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
     flex-direction: column;
     gap: 10px;
     padding: 14px 0;
+  }
+
+  .settings-blocked-sites-field {
+    display: flex;
+    height: auto;
+    min-height: 0;
+    flex-direction: column;
+    gap: 4px;
+    padding: 20px 0;
+  }
+
+  .settings-blocked-sites-field > label,
+  .settings-blocked-sites-field > .settings-textarea-field__hint,
+  .settings-blocked-sites-field > textarea,
+  .settings-blocked-sites-field > .settings-field-error {
+    position: static;
+    width: auto;
+  }
+
+  .settings-blocked-sites-card .settings-blocked-sites-field > textarea {
+    height: 120px;
+    min-height: 120px;
+    margin-top: 2px;
+  }
+
+  .settings-blocked-sites-card .settings-blocked-sites-list {
+    padding-top: 18px;
   }
 
   .settings-double-click-row .settings-field-row__label {
@@ -1640,6 +1797,10 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   }
 
   .settings-drag-card {
+    padding: 0 18px 18px;
+  }
+
+  .settings-blocked-sites-card {
     padding: 0 18px 18px;
   }
 

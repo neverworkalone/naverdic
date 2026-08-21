@@ -77,16 +77,23 @@ test('maps the finalized Figma navigation to stable settings sections', () => {
   )
   const doubleClick = SETTINGS_NAVIGATION.find(item => item.id === 'double-click')
   const drag = SETTINGS_NAVIGATION.find(item => item.id === 'behavior')
+  const blockedSites = SETTINGS_NAVIGATION.find(item => item.id === 'blocked-sites')
   assert.equal(doubleClick.previewTitleKey, 'SETTINGS_PREVIEW_DOUBLE_CLICK_TITLE')
   assert.equal(doubleClick.previewDescriptionKey, 'SETTINGS_PREVIEW_DOUBLE_CLICK_DESCRIPTION')
   assert.equal(drag.previewTitleKey, 'SETTINGS_PREVIEW_DRAG_TITLE')
   assert.equal(drag.previewDescriptionKey, 'SETTINGS_PREVIEW_DRAG_DESCRIPTION')
+  assert.equal(blockedSites.kind, 'page')
+  assert.equal(blockedSites.pageId, SETTINGS_PAGE_IDS.SITES)
+  assert.equal(blockedSites.previewTitleKey, 'SETTINGS_PREVIEW_BLOCKED_SITES_TITLE')
+  assert.equal(blockedSites.previewDescriptionKey, 'SETTINGS_PREVIEW_BLOCKED_SITES_DESCRIPTION')
 
   const help = SETTINGS_NAVIGATION.find(item => item.id === 'help')
   const advanced = SETTINGS_NAVIGATION.find(item => item.id === 'advanced')
-  assert.equal(help.kind, 'page')
-  assert.equal(help.external, undefined)
-  assert.match(help.url, /^https:\/\//)
+  assert.equal(help.kind, 'external')
+  assert.equal(help.external, true)
+  assert.equal(help.pageId, undefined)
+  assert.equal(help.section, undefined)
+  assert.equal(help.url, 'https://neverworkalone.github.io/naverdic/')
   assert.deepEqual(advanced.actions, ['reset'])
 })
 
@@ -236,8 +243,11 @@ test('keeps the official Chrome Translator display name and translation panel bo
     'SETTINGS_SECTION_POPUP_APPEARANCE',
     'SETTINGS_SECTION_POPUP_APPEARANCE_DESCRIPTION',
     'SETTINGS_NAV_BEHAVIOR',
+    'SETTINGS_NAV_BLOCKED_SITES',
     'SETTINGS_PAGE_BEHAVIOR_TITLE',
     'SETTINGS_PAGE_BEHAVIOR_DESCRIPTION',
+    'SETTINGS_PAGE_BLOCKED_SITES_TITLE',
+    'SETTINGS_PAGE_BLOCKED_SITES_DESCRIPTION',
     'SETTINGS_SECTION_DOUBLE_CLICK',
     'SETTINGS_SECTION_DOUBLE_CLICK_DESCRIPTION',
     'SETTINGS_FIELD_DOUBLE_CLICK_ENABLED',
@@ -263,6 +273,22 @@ test('keeps the official Chrome Translator display name and translation panel bo
     'SETTINGS_SECTION_DRAG_DESCRIPTION',
     'SETTINGS_FIELD_DRAG_ENABLED',
     'SETTINGS_FIELD_DRAG_TRIGGER_HINT',
+    'SETTINGS_FIELD_BLOCKED_SITES_ENABLED',
+    'SETTINGS_FIELD_BLOCKED_SITES',
+    'SETTINGS_BLOCKED_SITES_HINT',
+    'SETTINGS_BLOCKED_SITES_PLACEHOLDER',
+    'SETTINGS_BLOCKED_SITES_INVALID',
+    'SETTINGS_BLOCKED_SITES_REGISTERED',
+    'SETTINGS_BLOCKED_SITES_EMPTY',
+    'SETTINGS_PREVIEW_BLOCKED_SITES_TITLE',
+    'SETTINGS_PREVIEW_BLOCKED_SITES_DESCRIPTION',
+    'SETTINGS_PREVIEW_BLOCKED_SITES_STEP_1',
+    'SETTINGS_PREVIEW_BLOCKED_SITES_STEP_1_DESCRIPTION',
+    'SETTINGS_PREVIEW_BLOCKED_SITES_STEP_2',
+    'SETTINGS_PREVIEW_BLOCKED_SITES_STEP_2_DESCRIPTION',
+    'SETTINGS_PREVIEW_BLOCKED_SITES_STEP_3',
+    'SETTINGS_PREVIEW_BLOCKED_SITES_STEP_3_DESCRIPTION',
+    'SETTINGS_PREVIEW_BLOCKED_SITES_NOTE',
     'SETTINGS_PREVIEW_DRAG_STEP_1',
     'SETTINGS_PREVIEW_DRAG_STEP_1_DESCRIPTION',
     'SETTINGS_PREVIEW_DRAG_STEP_2',
@@ -295,10 +321,18 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.equal(shell.includes('.settings-shell--double-click .settings-header'), false)
   assert.equal(shell.includes('.settings-shell--drag .settings-header'), false)
   assert.match(shell, /settings-content--drag/)
+  assert.match(shell, /settings-shell--blocked-sites/)
+  assert.match(shell, /settings-content--blocked-sites/)
   assert.match(shell, /currentNavigation\.previewTitleKey/)
   assert.match(shell, /currentNavigation\.previewDescriptionKey/)
   assert.match(shell, /grid-template-columns: 556px 300px;\s*gap: 28px/)
   assert.match(shell, /currentNavigation\.id !== 'translation-service'/)
+  assert.match(shell, /settings-navigation__item--external/)
+  assert.match(shell, /settings-navigation__item--help/)
+  assert.match(shell, /target="_blank"/)
+  assert.match(shell, /rel="noopener noreferrer"/)
+  assert.match(shell, /settings-navigation__external-icon/)
+  assert.match(shell, /aria-hidden="true"/)
 
   const appearancePage = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPage.vue'), 'utf8')
   assert.match(appearancePage, /settings-appearance-guidance/)
@@ -312,14 +346,30 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(appearancePage, /\.settings-double-click-divider--toggle \{\s*top: 149px/)
   assert.match(appearancePage, /\.settings-double-click-divider--trigger \{\s*top: 221px/)
   assert.match(appearancePage, /\.settings-double-click-divider--speed \{\s*top: 293px/)
+  assert.match(appearancePage, /\.settings-double-click-switch \.settings-switch__label \{\s*position: absolute;\s*top: 18px/)
+  assert.match(appearancePage, /\.settings-double-click-switch \.settings-switch__track \{\s*position: absolute;\s*top: 18px/)
   assert.match(appearancePage, /\.settings-double-click-select \{[\s\S]*width: 240px/)
   assert.match(appearancePage, /settings-drag-card/)
   assert.match(appearancePage, /\.settings-drag-card \{[\s\S]*height: 244px/)
   assert.match(appearancePage, /\.settings-drag-divider--heading \{\s*top: 89px/)
   assert.match(appearancePage, /\.settings-drag-divider--toggle \{\s*top: 149px/)
   assert.match(appearancePage, /\.settings-drag-divider--trigger \{\s*top: 221px/)
+  assert.match(appearancePage, /\.settings-drag-switch \.settings-switch__label \{\s*position: absolute;\s*top: 18px/)
+  assert.match(appearancePage, /\.settings-drag-switch \.settings-switch__track \{\s*position: absolute;\s*top: 18px/)
   assert.match(appearancePage, /\.settings-drag-select \{[\s\S]*width: 240px/)
   assert.equal(appearancePage.includes('settings-behavior-form'), false)
+  assert.match(appearancePage, /settings-blocked-sites-card/)
+  assert.match(appearancePage, /height: 390px/)
+  assert.match(appearancePage, /settings-blocked-sites-divider--toggle/)
+  assert.match(appearancePage, /settings-blocked-sites-divider--editor/)
+  assert.match(appearancePage, /settings-blocked-sites-field/)
+  assert.match(appearancePage, /settings-blocked-sites-card \.settings-blocked-sites-field > textarea/)
+  assert.match(appearancePage, /settings-blocked-sites-card \.settings-blocked-sites-field > textarea \{[\s\S]*resize: none/)
+  assert.match(appearancePage, /\.settings-blocked-sites-switch \.settings-switch__label \{\s*position: absolute;\s*top: 25px/)
+  assert.match(appearancePage, /\.settings-blocked-sites-switch \.settings-switch__track \{\s*position: absolute;\s*top: 25px/)
+  assert.match(appearancePage, /SETTINGS_BLOCKED_SITES_REGISTERED/)
+  assert.equal(appearancePage.includes("pageId === 'help'"), false)
+  assert.equal(appearancePage.includes('settings-help-page'), false)
 
   const preview = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPreview.vue'), 'utf8')
   assert.match(preview, /settings-live-preview--appearance/)
@@ -342,6 +392,15 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(preview, /\.settings-guide-preview--drag li:nth-child\(3\) \{ top: 139px; \}/)
   assert.match(preview, /\.settings-guide-preview--drag li:nth-child\(4\) \{ top: 199px; \}/)
   assert.equal(preview.includes('SETTINGS_PREVIEW_BEHAVIOR_STEP_'), false)
+  assert.match(preview, /settings-live-preview--blocked-sites/)
+  assert.match(preview, /\.settings-live-preview--blocked-sites \{ height: 264px; min-height: 264px; margin-top: 20px; box-shadow: none; \}/)
+  assert.match(preview, /\.settings-guide-preview--blocked-sites \{ position: relative; height: 262px; min-height: 262px; padding: 0; \}/)
+  assert.match(preview, /\.settings-guide-preview--blocked-sites li:nth-child\(1\) \{ top: 19px; \}/)
+  assert.match(preview, /\.settings-guide-preview--blocked-sites li:nth-child\(2\) \{ top: 79px; \}/)
+  assert.match(preview, /\.settings-guide-preview--blocked-sites li:nth-child\(3\) \{ top: 139px; \}/)
+  assert.match(preview, /settings-guide-preview__note/)
+  assert.equal(preview.includes("activePage.id === 'help'"), false)
+  assert.equal(preview.includes('settings-help-preview'), false)
 })
 
 test('rejects legacy custom provider definitions', () => {
