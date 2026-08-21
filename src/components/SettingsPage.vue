@@ -674,9 +674,8 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   width: 28px;
   height: 28px;
   flex: 0 0 28px;
-  border: 1px solid var(--naverdic-settings-border);
+  border: 1px solid var(--naverdic-settings-chip-border);
   border-radius: 50%;
-  box-shadow: inset 0 0 0 2px var(--naverdic-settings-surface);
   overflow: hidden;
 }
 

@@ -404,13 +404,15 @@ test('publishes the shared Figma-derived token categories', () => {
     '--naverdic-space-6',
     '--naverdic-input-border-focus',
     '--naverdic-button-background-disabled',
-    '--naverdic-card-background-selected'
+    '--naverdic-card-background-selected',
+    '--naverdic-settings-chip-border'
   ]) {
     assert.match(tokens, new RegExp(`${token}:`))
   }
 
   assert.match(tokens, /--naverdic-color-surface-page:\s*#F5F6F8/)
   assert.match(tokens, /--naverdic-color-border-popup:\s*#E2E6EC/)
+  assert.match(tokens, /--naverdic-settings-chip-border:\s*#CBD7E5/)
 })
 
 test('keeps the migration rule table complete with the v6.6 schema', () => {
