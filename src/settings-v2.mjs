@@ -129,7 +129,9 @@ export const SETTINGS_NAVIGATION = Object.freeze([
     order: 50,
     labelKey: 'SETTINGS_NAV_BLOCKED_SITES',
     titleKey: 'SETTINGS_PAGE_BLOCKED_SITES_TITLE',
-    descriptionKey: 'SETTINGS_PAGE_BLOCKED_SITES_DESCRIPTION'
+    descriptionKey: 'SETTINGS_PAGE_BLOCKED_SITES_DESCRIPTION',
+    previewTitleKey: 'SETTINGS_PREVIEW_BLOCKED_SITES_TITLE',
+    previewDescriptionKey: 'SETTINGS_PREVIEW_BLOCKED_SITES_DESCRIPTION'
   }),
   Object.freeze({
     id: 'advanced',
@@ -144,14 +146,11 @@ export const SETTINGS_NAVIGATION = Object.freeze([
   }),
   Object.freeze({
     id: 'help',
-    pageId: SETTINGS_PAGE_IDS.HELP,
-    section: 'help',
-    kind: 'page',
+    kind: 'external',
     order: 70,
     labelKey: 'SETTINGS_NAV_HELP',
-    titleKey: 'SETTINGS_PAGE_HELP_TITLE',
-    descriptionKey: 'SETTINGS_PAGE_HELP_DESCRIPTION',
-    url: SETTINGS_MENU.find(item => item.id === SETTINGS_PAGE_IDS.HELP).url
+    url: SETTINGS_MENU.find(item => item.id === SETTINGS_PAGE_IDS.HELP).url,
+    external: true
   })
 ])
 

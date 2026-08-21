@@ -29,6 +29,7 @@ let mount
 let flushPromises
 let SettingsPage
 let SettingsPreview
+let SettingsShell
 let makeReactive
 let koMessages
 
@@ -145,6 +146,26 @@ function mountDrag(draft = createDragDraft(), extraProps = {}) {
   })
 }
 
+function createBlockedSitesDraft(sites = {}) {
+  const draft = createDefaultSettingsV2()
+  Object.assign(draft.sites, sites)
+  return makeReactive(draft)
+}
+
+function mountBlockedSites(draft = createBlockedSitesDraft(), extraProps = {}) {
+  return mount(SettingsPage, {
+    props: {
+      activePage: {id: 'blocked-sites'},
+      draft,
+      draftSecrets: createDefaultSecretsV2(),
+      draftRevision: 0,
+      isLoading: false,
+      isSaving: false,
+      ...extraProps
+    }
+  })
+}
+
 before(async () => {
   installDom()
   tempRoot = await mkdtemp(path.join(projectRoot, '.tmp-naverdic-vue-tests-'))
@@ -165,9 +186,17 @@ before(async () => {
     'src/components/SettingsPreview.vue',
     {'/src/text.js': textModuleUrl}
   )
+  const settingsShellUrl = await compileVueModule(
+    'src/components/SettingsShell.vue',
+    {
+      '/src/text.js': textModuleUrl,
+      '/src/components/SettingsPreview.vue': settingsPreviewUrl
+    }
+  )
   makeReactive = (await import('vue')).reactive
   SettingsPage = (await import(settingsPageUrl + '?test=' + Date.now())).default
   SettingsPreview = (await import(settingsPreviewUrl + '?test=' + Date.now())).default
+  SettingsShell = (await import(settingsShellUrl + '?test=' + Date.now())).default
   const testUtils = await import('@vue/test-utils')
   mount = testUtils.mount
   flushPromises = testUtils.flushPromises
@@ -489,6 +518,66 @@ test('locks every drag control while loading or saving', async () => {
   wrapper.unmount()
 })
 
+test('renders the blocked-sites form without a duplicated page heading', async () => {
+  const wrapper = mountBlockedSites()
+  await flushPromises()
+
+  const form = wrapper.get('[data-testid="settings-blocked-sites-form"]')
+  const enabled = wrapper.get('[data-testid="settings-blocked-sites-enabled"]').element
+  const input = wrapper.get('[data-testid="settings-blocked-sites-input"]')
+
+  assert.equal(enabled.checked, false)
+  assert.equal(input.element.value, '')
+  assert.equal(form.get('label[for="settings-blocked-sites-input"]').text(), koText('SETTINGS_FIELD_BLOCKED_SITES'))
+  assert.equal(form.find('.settings-card__heading').exists(), false)
+  assert.equal(form.findAll('.settings-blocked-sites-divider').length, 2)
+  assert.equal(form.text().includes(koText('SETTINGS_BLOCKED_SITES_REGISTERED')), true)
+  assert.equal(koMessages.SETTINGS_BLOCKED_SITES_NORMALIZED, undefined)
+  wrapper.unmount()
+})
+
+test('updates the blocked-sites draft from newline, comma, and semicolon input', async () => {
+  const draft = createBlockedSitesDraft()
+  const persisted = createBlockedSitesDraft()
+  const wrapper = mountBlockedSites(draft)
+  await flushPromises()
+
+  const input = wrapper.get('[data-testid="settings-blocked-sites-input"]')
+  await input.setValue('https://www.Example.com/path, *.example.com;bad value')
+
+  assert.deepEqual(draft.sites.denyList, ['www.example.com', 'example.com'])
+  assert.equal(wrapper.findAll('[data-testid="settings-blocked-sites-normalized"] .settings-domain-chip').length, 2)
+  assert.equal(wrapper.get('[data-testid="settings-blocked-sites-error"]').exists(), true)
+  assert.equal(
+    hasPendingSettingsChanges(
+      {settings: persisted, secrets: createDefaultSecretsV2()},
+      {settings: draft, secrets: createDefaultSecretsV2()}
+    ),
+    true
+  )
+
+  draft.sites.denyList = ['saved.example.com']
+  await wrapper.setProps({draftRevision: 1})
+  await wrapper.vm.$nextTick()
+  assert.equal(input.element.value, 'saved.example.com')
+  assert.equal(wrapper.findAll('[data-testid="settings-blocked-sites-normalized"] .settings-domain-chip').length, 1)
+  wrapper.unmount()
+})
+
+test('locks blocked-sites controls while loading or saving', async () => {
+  const wrapper = mountBlockedSites()
+  await flushPromises()
+
+  await wrapper.setProps({isLoading: true})
+  assert.equal(wrapper.get('[data-testid="settings-blocked-sites-enabled"]').element.disabled, true)
+  assert.equal(wrapper.get('[data-testid="settings-blocked-sites-input"]').element.disabled, true)
+
+  await wrapper.setProps({isLoading: false, isSaving: true})
+  assert.equal(wrapper.get('[data-testid="settings-blocked-sites-enabled"]').element.disabled, true)
+  assert.equal(wrapper.get('[data-testid="settings-blocked-sites-input"]').element.disabled, true)
+  wrapper.unmount()
+})
+
 test('renders the double-click flow without leaking into other previews', () => {
   const doubleClick = createDoubleClickDraft()
   const wrapper = mount(SettingsPreview, {
@@ -531,4 +620,45 @@ test('renders the double-click flow without leaking into other previews', () => 
   assert.equal(behavior.text().includes(koText('SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1')), false)
   assert.equal(behavior.text().includes(koText('SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1_DESCRIPTION')), false)
   behavior.unmount()
+})
+
+test('renders the blocked-sites guide with locale-backed steps and note', () => {
+  const wrapper = mount(SettingsPreview, {
+    props: {activePage: {id: 'blocked-sites'}, draft: createBlockedSitesDraft({denyList: ['example.com']})}
+  })
+
+  assert.equal(wrapper.classes().includes('settings-live-preview--blocked-sites'), true)
+  assert.equal(wrapper.get('.settings-guide-preview').classes().includes('settings-guide-preview--blocked-sites'), true)
+  assert.equal(wrapper.findAll('.settings-guide-preview--blocked-sites li').length, 3)
+  assert.equal(wrapper.findAll('.settings-guide-preview--blocked-sites li p > strong').length, 3)
+  assert.equal(wrapper.findAll('.settings-guide-preview--blocked-sites li p > span').length, 3)
+  assert.equal(wrapper.find('.settings-guide-preview__note').exists(), true)
+  for (const step of [1, 2, 3]) {
+    assert.equal(wrapper.text().includes(koText(`SETTINGS_PREVIEW_BLOCKED_SITES_STEP_${step}`)), true)
+    assert.equal(
+      wrapper.text().includes(koText(`SETTINGS_PREVIEW_BLOCKED_SITES_STEP_${step}_DESCRIPTION`)),
+      true
+    )
+  }
+  assert.equal(wrapper.text().includes(koText('SETTINGS_PREVIEW_BLOCKED_SITES_NOTE')), true)
+  wrapper.unmount()
+})
+
+test('renders help as a bottom external link without changing the active page', async () => {
+  const wrapper = mount(SettingsShell)
+  await flushPromises()
+
+  const help = wrapper.get('[data-navigation-id="help"]')
+  assert.equal(help.element.tagName, 'A')
+  assert.equal(help.attributes('href'), 'https://neverworkalone.github.io/naverdic/')
+  assert.equal(help.attributes('target'), '_blank')
+  assert.equal(help.attributes('rel'), 'noopener noreferrer')
+  assert.equal(help.attributes('aria-current'), undefined)
+  assert.equal(help.classes().includes('settings-navigation__item--help'), true)
+  assert.equal(help.get('.settings-navigation__external-icon').attributes('aria-hidden'), 'true')
+  assert.equal(wrapper.vm.activeNavigationId, 'appearance')
+
+  await help.trigger('click')
+  assert.equal(wrapper.vm.activeNavigationId, 'appearance')
+  wrapper.unmount()
 })

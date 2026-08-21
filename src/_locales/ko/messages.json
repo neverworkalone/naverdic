@@ -206,12 +206,6 @@
   "SETTINGS_PAGE_TRANSLATION_DESCRIPTION": {
     "message": "번역 기능과 번역 제공자를 설정합니다."
   },
-  "SETTINGS_PAGE_HELP_TITLE": {
-    "message": "도움말"
-  },
-  "SETTINGS_PAGE_HELP_DESCRIPTION": {
-    "message": "NaverDic 사용법과 최신 안내를 확인합니다."
-  },
   "SETTINGS_PAGE_ADVANCED_TITLE": {
     "message": "고급 설정"
   },
@@ -220,15 +214,6 @@
   },
   "SETTINGS_ADVANCED_NOTICE": {
     "message": "고급 설정은 데이터 구조와 복구에 영향을 줄 수 있습니다. 변경 전 현재 설정을 저장해 두세요."
-  },
-  "SETTINGS_HELP_GUIDE_LINK": {
-    "message": "NaverDic 전체 사용 가이드"
-  },
-  "SETTINGS_HELP_DEEPL_LINK": {
-    "message": "DeepL API 키 발급 안내"
-  },
-  "SETTINGS_HELP_QUICK_GUIDE": {
-    "message": "번역 서비스에서 제공자를 선택하고, 외부 서비스는 API 키를 입력한 뒤 연결 테스트를 진행하세요."
   },
   "SETTINGS_SHELL_STATUS_SAVED": {
     "message": "저장됨"
@@ -368,12 +353,6 @@
   "SETTINGS_FIELD_DRAG_TRIGGER_HINT": {
     "message": "드래그할 때 사용할 보조 키를 선택하세요."
   },
-  "SETTINGS_SECTION_BLOCKED_SITES": {
-    "message": "중지 사이트"
-  },
-  "SETTINGS_SECTION_BLOCKED_SITES_DESCRIPTION": {
-    "message": "팝업 사전을 표시하지 않을 웹사이트를 관리합니다."
-  },
   "SETTINGS_FIELD_BLOCKED_SITES_ENABLED": {
     "message": "중지목록 사용"
   },
@@ -381,7 +360,7 @@
     "message": "사이트 목록"
   },
   "SETTINGS_BLOCKED_SITES_HINT": {
-    "message": "한 줄에 하나씩 입력하거나 쉼표(,)·세미콜론(;)으로 구분하세요."
+    "message": "사이트를 한 줄에 하나씩 입력하거나 쉼표(,)나 세미콜론(;)으로 구분하세요."
   },
   "SETTINGS_BLOCKED_SITES_PLACEHOLDER": {
     "message": "예: google.com\nnaver.com"
@@ -394,8 +373,8 @@
       }
     }
   },
-  "SETTINGS_BLOCKED_SITES_NORMALIZED": {
-    "message": "정규화된 도메인"
+  "SETTINGS_BLOCKED_SITES_REGISTERED": {
+    "message": "등록된 사이트"
   },
   "SETTINGS_BLOCKED_SITES_EMPTY": {
     "message": "등록된 사이트가 없습니다."
@@ -408,6 +387,12 @@
   },
   "SETTINGS_PREVIEW_HINT": {
     "message": "현재 팝업 설정"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_TITLE": {
+    "message": "중지목록 안내"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_DESCRIPTION": {
+    "message": "팝업이 표시되지 않는 범위를 확인합니다."
   },
   "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1": {
     "message": "단어 위에 포인터 이동"
@@ -458,13 +443,25 @@
     "message": "텍스트 근처에 결과가 나타납니다."
   },
   "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_1": {
-    "message": "팝업을 숨길 도메인을 한 줄씩 입력합니다."
+    "message": "사이트 주소 확인"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_1_DESCRIPTION": {
+    "message": "현재 페이지의 도메인을 확인합니다."
   },
   "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_2": {
-    "message": "중지목록을 켜면 등록한 사이트에서 동작하지 않습니다."
+    "message": "목록과 비교"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_2_DESCRIPTION": {
+    "message": "중지목록에 포함되어 있는지 찾습니다."
   },
   "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_3": {
-    "message": "정규화된 도메인 목록에서 적용 결과를 확인합니다."
+    "message": "팝업 표시 안 함"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_3_DESCRIPTION": {
+    "message": "더블클릭과 드래그 팝업을 숨깁니다."
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_NOTE": {
+    "message": "필요한 도메인만 추가하면 다른 사이트에는 계속 적용됩니다."
   },
   "SETTINGS_PREVIEW_ADVANCED_TITLE": {
     "message": "설정 데이터 관리"
@@ -474,15 +471,6 @@
   },
   "SETTINGS_PREVIEW_ADVANCED_WARNING": {
     "message": "초기화는 되돌릴 수 없으므로 필요한 설정을 먼저 기록하세요."
-  },
-  "SETTINGS_PREVIEW_HELP_TITLE": {
-    "message": "도움말과 빠른 안내"
-  },
-  "SETTINGS_PREVIEW_HELP_LINK": {
-    "message": "공식 사용 가이드 열기"
-  },
-  "SETTINGS_PREVIEW_HELP_QUICK_GUIDE": {
-    "message": "모양에서 팝업을 조정하고, 더블클릭·동작에서 검색 흐름을 설정한 다음 저장 버튼으로 반영합니다."
   },
   "SETTINGS_TRANSLATION_ENABLED": {
     "message": "문장 번역 사용"

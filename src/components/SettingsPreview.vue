@@ -31,7 +31,10 @@ const previewSteps = computed(() => {
         description: `SETTINGS_PREVIEW_DRAG_STEP_${step}_DESCRIPTION`
       }))
     case 'blocked-sites':
-      return ['SETTINGS_PREVIEW_BLOCKED_SITES_STEP_1', 'SETTINGS_PREVIEW_BLOCKED_SITES_STEP_2', 'SETTINGS_PREVIEW_BLOCKED_SITES_STEP_3']
+      return [1, 2, 3].map(step => ({
+        title: `SETTINGS_PREVIEW_BLOCKED_SITES_STEP_${step}`,
+        description: `SETTINGS_PREVIEW_BLOCKED_SITES_STEP_${step}_DESCRIPTION`
+      }))
     default:
       return []
   }
@@ -44,7 +47,8 @@ const previewSteps = computed(() => {
     :class="{
       'settings-live-preview--appearance': activePage.id === 'appearance',
       'settings-live-preview--double-click': activePage.id === 'double-click',
-      'settings-live-preview--drag': activePage.id === 'behavior'
+      'settings-live-preview--drag': activePage.id === 'behavior',
+      'settings-live-preview--blocked-sites': activePage.id === 'blocked-sites'
     }"
     :data-preview-page="activePage.id"
     data-testid="settings-live-preview"
@@ -61,7 +65,8 @@ const previewSteps = computed(() => {
       class="settings-guide-preview"
       :class="{
         'settings-guide-preview--double-click': activePage.id === 'double-click',
-        'settings-guide-preview--drag': activePage.id === 'behavior'
+        'settings-guide-preview--drag': activePage.id === 'behavior',
+        'settings-guide-preview--blocked-sites': activePage.id === 'blocked-sites'
       }"
     >
       <ol>
@@ -74,12 +79,13 @@ const previewSteps = computed(() => {
           <p v-else>{{ text(step) }}</p>
         </li>
       </ol>
+      <p
+        v-if="activePage.id === 'blocked-sites'"
+        class="settings-guide-preview__note"
+      >{{ text('SETTINGS_PREVIEW_BLOCKED_SITES_NOTE') }}</p>
     </div>
     <div v-else-if="activePage.id === 'advanced'" class="settings-notice-preview">
       <strong>{{ text('SETTINGS_PREVIEW_ADVANCED_TITLE') }}</strong><p>{{ text('SETTINGS_PREVIEW_ADVANCED_DESCRIPTION') }}</p><span>{{ text('SETTINGS_PREVIEW_ADVANCED_WARNING') }}</span>
-    </div>
-    <div v-else-if="activePage.id === 'help'" class="settings-help-preview">
-      <strong>{{ text('SETTINGS_PREVIEW_HELP_TITLE') }}</strong><a href="https://neverworkalone.github.io/naverdic/" target="_blank" rel="noopener noreferrer">{{ text('SETTINGS_PREVIEW_HELP_LINK') }}</a><p>{{ text('SETTINGS_PREVIEW_HELP_QUICK_GUIDE') }}</p>
     </div>
   </div>
 </template>
@@ -97,11 +103,13 @@ const previewSteps = computed(() => {
 .settings-live-preview__line--long { width: 76%; }.settings-live-preview__line--medium { width: 91%; }.settings-live-preview__line--short { width: 53%; }
 .settings-live-preview__popup { display: flex; width: min(100%, 220px); margin: 26px auto 0; padding: 16px; flex-direction: column; gap: 8px; border: 1px solid rgb(26 36 51 / 16%); border-radius: var(--naverdic-radius-sm); box-shadow: var(--naverdic-shadow-popup); }
 .settings-live-preview__popup strong { font-size: 1.15em; line-height: 1.3; }.settings-live-preview__popup span { font-size: .92em; line-height: 1.4; }.settings-live-preview__popup small { color: currentColor; opacity: .62; font-size: .78em; line-height: 1.4; }
-.settings-guide-preview, .settings-notice-preview, .settings-help-preview { min-height: 360px; padding: 28px 24px; color: var(--naverdic-settings-text); }
+.settings-guide-preview, .settings-notice-preview { min-height: 360px; padding: 28px 24px; color: var(--naverdic-settings-text); }
 .settings-guide-preview ol { display: flex; margin: 30px 0 0; padding: 0; flex-direction: column; gap: 22px; list-style: none; }.settings-guide-preview li { display: flex; align-items: flex-start; gap: 12px; }.settings-guide-preview li > span { display: grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); border-radius: 50%; font-size: 11px; font-weight: 700; }.settings-guide-preview p { margin: 2px 0 0; color: var(--naverdic-settings-text-muted); font-size: 12px; line-height: 20px; }
 .settings-guide-preview--double-click, .settings-guide-preview--drag { position: relative; padding: 0; }
 .settings-guide-preview--double-click { height: 258px; min-height: 258px; }
 .settings-guide-preview--drag { height: 258px; min-height: 258px; }
+.settings-live-preview--blocked-sites { height: 264px; min-height: 264px; margin-top: 20px; box-shadow: none; }
+.settings-guide-preview--blocked-sites { position: relative; height: 262px; min-height: 262px; padding: 0; }
 .settings-guide-preview--double-click ol { position: relative; display: block; width: 100%; height: 100%; margin: 0; }
 .settings-guide-preview--double-click li { position: absolute; left: 23px; display: flex; width: 252px; min-height: 24px; gap: 12px; }
 .settings-guide-preview--double-click li:nth-child(1) { top: 19px; }
@@ -122,17 +130,33 @@ const previewSteps = computed(() => {
 .settings-guide-preview--drag li p { display: flex; width: 216px; margin: -2px 0 0; flex-direction: column; gap: 2px; color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 18px; }
 .settings-guide-preview--drag li p strong { color: #344054; font-size: 13px; font-weight: 700; line-height: 20px; }
 .settings-guide-preview--drag li p span { color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 18px; }
-.settings-notice-preview strong, .settings-help-preview strong { display: block; font-size: 16px; line-height: 24px; }.settings-notice-preview p, .settings-help-preview p { margin: 12px 0 0; color: var(--naverdic-settings-text-muted); font-size: 12px; line-height: 20px; }.settings-notice-preview span { display: block; margin-top: 26px; padding: 12px; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); border-radius: 8px; font-size: 11px; line-height: 18px; }.settings-help-preview a { display: inline-block; margin-top: 24px; color: var(--naverdic-settings-primary-text); font-size: 12px; font-weight: 700; }
+.settings-guide-preview--blocked-sites ol { position: relative; display: block; width: 100%; height: 190px; margin: 0; }
+.settings-guide-preview--blocked-sites li { position: absolute; left: 23px; display: flex; width: 252px; min-height: 24px; gap: 12px; }
+.settings-guide-preview--blocked-sites li:nth-child(1) { top: 19px; }
+.settings-guide-preview--blocked-sites li:nth-child(2) { top: 79px; }
+.settings-guide-preview--blocked-sites li:nth-child(3) { top: 139px; }
+.settings-guide-preview--blocked-sites li > span { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
+.settings-guide-preview--blocked-sites li p { display: flex; width: 216px; margin: -2px 0 0; flex-direction: column; gap: 2px; color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 18px; }
+.settings-guide-preview--blocked-sites li p strong { color: #344054; font-size: 13px; font-weight: 700; line-height: 20px; }
+.settings-guide-preview--blocked-sites li p span { color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 18px; }
+.settings-guide-preview__note { position: absolute; top: 189px; left: 23px; width: 252px; margin: 0; padding-top: 19px; color: var(--naverdic-settings-text-muted); border-top: 1px solid var(--naverdic-settings-divider); font-size: 11px; line-height: 18px; }
+.settings-notice-preview strong { display: block; font-size: 16px; line-height: 24px; }.settings-notice-preview p { margin: 12px 0 0; color: var(--naverdic-settings-text-muted); font-size: 12px; line-height: 20px; }.settings-notice-preview span { display: block; margin-top: 26px; padding: 12px; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); border-radius: 8px; font-size: 11px; line-height: 18px; }
 
 @media (max-width: 600px) {
   .settings-guide-preview--double-click li,
-  .settings-guide-preview--drag li {
+  .settings-guide-preview--drag li,
+  .settings-guide-preview--blocked-sites li {
     width: calc(100% - 46px);
   }
 
   .settings-guide-preview--double-click li p,
-  .settings-guide-preview--drag li p {
+  .settings-guide-preview--drag li p,
+  .settings-guide-preview--blocked-sites li p {
     width: calc(100% - 36px);
+  }
+
+  .settings-guide-preview--blocked-sites .settings-guide-preview__note {
+    width: calc(100% - 46px);
   }
 }
 </style>

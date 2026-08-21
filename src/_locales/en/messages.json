@@ -206,12 +206,6 @@
   "SETTINGS_PAGE_TRANSLATION_DESCRIPTION": {
     "message": "Configure translation features and providers."
   },
-  "SETTINGS_PAGE_HELP_TITLE": {
-    "message": "Help"
-  },
-  "SETTINGS_PAGE_HELP_DESCRIPTION": {
-    "message": "Find NaverDic usage instructions and the latest guidance."
-  },
   "SETTINGS_PAGE_ADVANCED_TITLE": {
     "message": "Advanced"
   },
@@ -220,15 +214,6 @@
   },
   "SETTINGS_ADVANCED_NOTICE": {
     "message": "Advanced settings can affect stored data and recovery. Save your current settings before changing them."
-  },
-  "SETTINGS_HELP_GUIDE_LINK": {
-    "message": "Open the NaverDic user guide"
-  },
-  "SETTINGS_HELP_DEEPL_LINK": {
-    "message": "DeepL API key guide"
-  },
-  "SETTINGS_HELP_QUICK_GUIDE": {
-    "message": "Choose a provider in Translation service. For external services, enter an API key and run a connection test."
   },
   "SETTINGS_SHELL_STATUS_SAVED": {
     "message": "Saved"
@@ -368,12 +353,6 @@
   "SETTINGS_FIELD_DRAG_TRIGGER_HINT": {
     "message": "Choose the modifier key used while dragging."
   },
-  "SETTINGS_SECTION_BLOCKED_SITES": {
-    "message": "Blocked sites"
-  },
-  "SETTINGS_SECTION_BLOCKED_SITES_DESCRIPTION": {
-    "message": "Manage websites where the popup dictionary should not appear."
-  },
   "SETTINGS_FIELD_BLOCKED_SITES_ENABLED": {
     "message": "Enable blocked sites"
   },
@@ -381,7 +360,7 @@
     "message": "Site list"
   },
   "SETTINGS_BLOCKED_SITES_HINT": {
-    "message": "Enter one per line, or separate entries with commas or semicolons."
+    "message": "Enter sites one per line, or separate them with commas or semicolons."
   },
   "SETTINGS_BLOCKED_SITES_PLACEHOLDER": {
     "message": "Example: google.com\nnaver.com"
@@ -394,8 +373,8 @@
       }
     }
   },
-  "SETTINGS_BLOCKED_SITES_NORMALIZED": {
-    "message": "Normalized domains"
+  "SETTINGS_BLOCKED_SITES_REGISTERED": {
+    "message": "Registered sites"
   },
   "SETTINGS_BLOCKED_SITES_EMPTY": {
     "message": "No sites have been added."
@@ -408,6 +387,12 @@
   },
   "SETTINGS_PREVIEW_HINT": {
     "message": "Current popup settings"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_TITLE": {
+    "message": "Blocked-sites guide"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_DESCRIPTION": {
+    "message": "Check where the popup will stay hidden."
   },
   "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1": {
     "message": "Move the pointer over a word"
@@ -458,13 +443,25 @@
     "message": "The result appears near the text."
   },
   "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_1": {
-    "message": "Enter one domain per line for sites where the popup should stay hidden."
+    "message": "Check the site address"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_1_DESCRIPTION": {
+    "message": "Check the current page domain."
   },
   "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_2": {
-    "message": "Turn on the blocked-sites list to disable the extension on those sites."
+    "message": "Compare with the list"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_2_DESCRIPTION": {
+    "message": "Find out whether it is in the blocked-sites list."
   },
   "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_3": {
-    "message": "Check the normalized domains to confirm what will be applied."
+    "message": "Keep the popup hidden"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_3_DESCRIPTION": {
+    "message": "Hide the double-click and drag popups."
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_NOTE": {
+    "message": "Add only the domains you need; the popup will continue to work on other sites."
   },
   "SETTINGS_PREVIEW_ADVANCED_TITLE": {
     "message": "Settings data management"
@@ -474,15 +471,6 @@
   },
   "SETTINGS_PREVIEW_ADVANCED_WARNING": {
     "message": "Reset cannot be undone, so record anything you need first."
-  },
-  "SETTINGS_PREVIEW_HELP_TITLE": {
-    "message": "Help and quick guide"
-  },
-  "SETTINGS_PREVIEW_HELP_LINK": {
-    "message": "Open the official user guide"
-  },
-  "SETTINGS_PREVIEW_HELP_QUICK_GUIDE": {
-    "message": "Adjust the popup in Appearance, configure lookup flows in Double click and Behavior, then use Save to apply changes."
   },
   "SETTINGS_TRANSLATION_ENABLED": {
     "message": "Enable sentence translation"
