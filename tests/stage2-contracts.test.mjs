@@ -237,10 +237,14 @@ test('keeps the official Chrome Translator display name and translation panel bo
 
   const appearancePage = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPage.vue'), 'utf8')
   assert.match(appearancePage, /settings-appearance-guidance/)
-  assert.match(appearancePage, /\.settings-page\[data-page-id='appearance'\] \{[\s\S]*margin-top: 0/)
+  assert.match(appearancePage, /\.settings-page\[data-page-id='appearance'\] \{[\s\S]*margin-top: 18px/)
   assert.match(appearancePage, /\.settings-appearance-guidance \{[\s\S]*border: 1px solid var\(--naverdic-settings-border\)/)
   assert.match(appearancePage, /\.settings-inline-link:hover \.settings-inline-link__label \{[\s\S]*text-decoration: underline/)
   assert.equal(appearancePage.includes('.settings-inline-link:hover {'), false)
+
+  const preview = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPreview.vue'), 'utf8')
+  assert.match(preview, /settings-live-preview--appearance/)
+  assert.match(preview, /\.settings-live-preview--appearance \{ margin-top: 18px; \}/)
 })
 
 test('rejects legacy custom provider definitions', () => {

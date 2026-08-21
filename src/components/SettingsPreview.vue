@@ -33,7 +33,12 @@ const previewSteps = computed(() => {
 </script>
 
 <template>
-  <div class="settings-live-preview" :data-preview-page="activePage.id" data-testid="settings-live-preview">
+  <div
+    class="settings-live-preview"
+    :class="{'settings-live-preview--appearance': activePage.id === 'appearance'}"
+    :data-preview-page="activePage.id"
+    data-testid="settings-live-preview"
+  >
     <div v-if="activePage.id === 'appearance'" class="settings-live-preview__appearance">
       <div class="settings-live-preview__browser-bar"><span class="settings-live-preview__dot" /><span class="settings-live-preview__dot" /><span class="settings-live-preview__dot" /></div>
       <div class="settings-live-preview__content">
@@ -56,6 +61,7 @@ const previewSteps = computed(() => {
 
 <style scoped>
 .settings-live-preview { min-height: 360px; overflow: hidden; background: var(--naverdic-settings-preview-surface); border: 1px solid var(--naverdic-settings-border); border-radius: var(--naverdic-radius-md); box-shadow: var(--naverdic-card-shadow-default); }
+.settings-live-preview--appearance { margin-top: 18px; }
 .settings-live-preview__browser-bar { display: flex; align-items: center; gap: 5px; height: 32px; padding: 0 12px; background: var(--naverdic-settings-preview-bar); border-bottom: 1px solid var(--naverdic-settings-border); }
 .settings-live-preview__dot { width: 7px; height: 7px; background: var(--naverdic-settings-text-subtle); border-radius: 50%; }
 .settings-live-preview__content { position: relative; min-height: 328px; padding: 36px 18px 20px; background: var(--naverdic-settings-preview-window); }

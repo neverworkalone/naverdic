@@ -587,7 +587,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 }
 
 .settings-page[data-page-id='appearance'] {
-  margin-top: 0;
+  margin-top: 18px;
 }
 
 .settings-card {

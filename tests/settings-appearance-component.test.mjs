@@ -261,6 +261,7 @@ test('updates the live popup preview for appearance changes', async () => {
   const wrapper = mount(SettingsPreview, {
     props: {activePage: {id: 'appearance'}, draft}
   })
+  assert.equal(wrapper.classes().includes('settings-live-preview--appearance'), true)
   const popup = wrapper.get('.settings-live-preview__popup')
   assert.equal(popup.element.style.backgroundColor, 'rgb(255, 245, 157)')
   assert.equal(popup.element.style.color, 'rgb(0, 0, 0)')
