@@ -20,6 +20,7 @@ import {
   createDefaultSettingsV2,
   createInitialSettingsV2
 } from '../src/settings-v2.mjs'
+import {createSettingsBackup} from '../src/settings-backup.mjs'
 import {hasPendingSettingsChanges} from '../src/settings-v2-storage.mjs'
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -156,6 +157,24 @@ function mountBlockedSites(draft = createBlockedSitesDraft(), extraProps = {}) {
   return mount(SettingsPage, {
     props: {
       activePage: {id: 'blocked-sites'},
+      draft,
+      draftSecrets: createDefaultSecretsV2(),
+      draftRevision: 0,
+      isLoading: false,
+      isSaving: false,
+      ...extraProps
+    }
+  })
+}
+
+function createAdvancedDraft() {
+  return makeReactive(createInitialSettingsV2())
+}
+
+function mountAdvanced(draft = createAdvancedDraft(), extraProps = {}) {
+  return mount(SettingsPage, {
+    props: {
+      activePage: {id: 'advanced'},
       draft,
       draftSecrets: createDefaultSecretsV2(),
       draftRevision: 0,
@@ -578,6 +597,127 @@ test('locks blocked-sites controls while loading or saving', async () => {
   wrapper.unmount()
 })
 
+test('renders advanced data controls with Figma card rhythm and locale-backed labels', async () => {
+  const wrapper = mountAdvanced()
+  await flushPromises()
+
+  const card = wrapper.get('[data-testid="settings-advanced-data-card"]')
+  assert.equal(card.findAll('.settings-advanced-divider').length, 3)
+  assert.equal(card.find('.settings-advanced-divider--heading').exists(), true)
+  assert.equal(card.text().includes(koText('SETTINGS_ADVANCED_DATA_TITLE')), true)
+  assert.equal(card.text().includes(koText('SETTINGS_ADVANCED_EXPORT_TITLE')), true)
+  assert.equal(card.text().includes(koText('SETTINGS_ADVANCED_IMPORT_TITLE')), true)
+  assert.equal(wrapper.get('[data-testid="settings-advanced-export"]').text(), koText('SETTINGS_ADVANCED_EXPORT_BUTTON'))
+  assert.equal(wrapper.get('[data-testid="settings-advanced-import"]').text(), koText('SETTINGS_ADVANCED_IMPORT_BUTTON'))
+
+  const fileInput = wrapper.get('[data-testid="settings-advanced-file-input"]')
+  assert.equal(fileInput.attributes('type'), 'file')
+  assert.equal(card.get('label[for="settings-advanced-file-input"]').text(), koText('SETTINGS_ADVANCED_IMPORT_FILE_LABEL'))
+  wrapper.unmount()
+})
+
+test('exports persisted settings and imports into draft without committing storage', async () => {
+  const draft = createAdvancedDraft()
+  const draftSecrets = createDefaultSecretsV2()
+  const persisted = createInitialSettingsV2()
+  persisted.popup.backgroundColor = '#123456'
+  const persistedSecrets = createDefaultSecretsV2()
+  persistedSecrets.providers['deepl-free'] = {apiKey: 'persisted-local-key'}
+  let downloadedPayload = ''
+  let downloadedName = ''
+  const originalBlob = globalThis.Blob
+  const originalUrl = globalThis.URL
+  const originalAnchorClick = dom.window.HTMLAnchorElement.prototype.click
+
+  class MockBlob {
+    constructor(parts, options) {
+      downloadedPayload = parts.join('')
+      this.type = options.type
+    }
+  }
+
+  exposeDomGlobal('Blob', MockBlob)
+  exposeDomGlobal('URL', {
+    createObjectURL: () => 'blob:settings-backup',
+    revokeObjectURL: () => {}
+  })
+  dom.window.HTMLAnchorElement.prototype.click = function () {
+    downloadedName = this.download
+  }
+
+  const revisionCalls = []
+  const wrapper = mountAdvanced(draft, {
+    draftSecrets,
+    persistedSettings: persisted,
+    persistedSecrets,
+    onDraftRevision: () => revisionCalls.push(true)
+  })
+  await flushPromises()
+
+  await wrapper.get('[data-testid="settings-advanced-export"]').trigger('click')
+  const exported = JSON.parse(downloadedPayload)
+  assert.equal(downloadedName, 'naverdic-settings-backup.json')
+  assert.equal(exported.settings.popup.backgroundColor, '#123456')
+  assert.equal(exported.secrets.providers['deepl-free'].apiKey, 'persisted-local-key')
+
+  const importedSettings = createInitialSettingsV2()
+  importedSettings.popup.backgroundColor = '#654321'
+  importedSettings.dictionary.doubleClick.speedMs = 200
+  const importedSecrets = createDefaultSecretsV2()
+  importedSecrets.providers.gemini = {apiKey: 'imported-local-key'}
+  const input = wrapper.get('[data-testid="settings-advanced-file-input"]').element
+  Object.defineProperty(input, 'files', {
+    configurable: true,
+    value: [{text: async () => JSON.stringify(createSettingsBackup(importedSettings, importedSecrets))}]
+  })
+  input.dispatchEvent(new dom.window.Event('change', {bubbles: true}))
+  await flushPromises()
+
+  assert.equal(draft.popup.backgroundColor, '#654321')
+  assert.equal(draft.dictionary.doubleClick.speedMs, 200)
+  assert.equal(draftSecrets.providers.gemini.apiKey, 'imported-local-key')
+  assert.equal(revisionCalls.length, 1)
+  assert.equal(
+    hasPendingSettingsChanges(
+      {settings: persisted, secrets: persistedSecrets},
+      {settings: draft, secrets: draftSecrets}
+    ),
+    true
+  )
+  assert.equal(wrapper.find('[data-testid="settings-advanced-import-error"]').exists(), false)
+
+  dom.window.HTMLAnchorElement.prototype.click = originalAnchorClick
+  exposeDomGlobal('Blob', originalBlob)
+  exposeDomGlobal('URL', originalUrl)
+  wrapper.unmount()
+})
+
+test('rejects invalid imports, preserves draft values, and locks advanced controls', async () => {
+  const draft = createAdvancedDraft()
+  const wrapper = mountAdvanced(draft)
+  await flushPromises()
+
+  const input = wrapper.get('[data-testid="settings-advanced-file-input"]').element
+  Object.defineProperty(input, 'files', {
+    configurable: true,
+    value: [{text: async () => '{invalid'}]
+  })
+  input.dispatchEvent(new dom.window.Event('change', {bubbles: true}))
+  await flushPromises()
+
+  assert.equal(wrapper.get('[data-testid="settings-advanced-import-error"]').text(), koText('SETTINGS_ADVANCED_IMPORT_ERROR'))
+  assert.equal(draft.popup.backgroundColor, '#FFF59D')
+
+  await wrapper.setProps({isLoading: true})
+  assert.equal(wrapper.get('[data-testid="settings-advanced-export"]').element.disabled, true)
+  assert.equal(wrapper.get('[data-testid="settings-advanced-import"]').element.disabled, true)
+  assert.equal(wrapper.get('[data-testid="settings-advanced-file-input"]').element.disabled, true)
+  await wrapper.setProps({isLoading: false, isSaving: true})
+  assert.equal(wrapper.get('[data-testid="settings-advanced-export"]').element.disabled, true)
+  assert.equal(wrapper.get('[data-testid="settings-advanced-import"]').element.disabled, true)
+  wrapper.unmount()
+})
+
 test('renders the double-click flow without leaking into other previews', () => {
   const doubleClick = createDoubleClickDraft()
   const wrapper = mount(SettingsPreview, {
@@ -641,6 +781,28 @@ test('renders the blocked-sites guide with locale-backed steps and note', () => 
     )
   }
   assert.equal(wrapper.text().includes(koText('SETTINGS_PREVIEW_BLOCKED_SITES_NOTE')), true)
+  wrapper.unmount()
+})
+
+test('renders the advanced danger reset card and invokes the existing reset flow', async () => {
+  let resetCalls = 0
+  const wrapper = mount(SettingsPreview, {
+    props: {
+      activePage: {id: 'advanced'},
+      draft: createAdvancedDraft(),
+      resetDraft: () => { resetCalls += 1 }
+    }
+  })
+
+  assert.equal(wrapper.classes().includes('settings-live-preview--advanced'), true)
+  assert.equal(wrapper.get('[data-testid="settings-advanced-reset-card"]').text().includes(koText('SETTINGS_ADVANCED_DANGER_BADGE')), true)
+  assert.equal(wrapper.get('[data-testid="settings-advanced-reset-card"]').text().includes(koText('SETTINGS_ADVANCED_RESET_DESCRIPTION')), true)
+  const reset = wrapper.get('[data-testid="settings-advanced-reset"]')
+  assert.equal(reset.attributes('aria-label'), koText('SETTINGS_ADVANCED_RESET_BUTTON'))
+  await reset.trigger('click')
+  assert.equal(resetCalls, 1)
+  await wrapper.setProps({isSaving: true})
+  assert.equal(reset.element.disabled, true)
   wrapper.unmount()
 })
 

@@ -95,6 +95,8 @@ test('maps the finalized Figma navigation to stable settings sections', () => {
   assert.equal(help.section, undefined)
   assert.equal(help.url, 'https://neverworkalone.github.io/naverdic/')
   assert.deepEqual(advanced.actions, ['reset'])
+  assert.equal(advanced.previewTitleKey, 'SETTINGS_PREVIEW_ADVANCED_TITLE')
+  assert.equal(advanced.previewDescriptionKey, 'SETTINGS_PREVIEW_ADVANCED_DESCRIPTION')
 })
 
 test('defines the v2 storage split and nested settings defaults', () => {
@@ -296,7 +298,25 @@ test('keeps the official Chrome Translator display name and translation panel bo
     'SETTINGS_PREVIEW_DRAG_STEP_3',
     'SETTINGS_PREVIEW_DRAG_STEP_3_DESCRIPTION',
     'SETTINGS_PREVIEW_DRAG_STEP_4',
-    'SETTINGS_PREVIEW_DRAG_STEP_4_DESCRIPTION'
+    'SETTINGS_PREVIEW_DRAG_STEP_4_DESCRIPTION',
+    'SETTINGS_PAGE_ADVANCED_TITLE',
+    'SETTINGS_PAGE_ADVANCED_DESCRIPTION',
+    'SETTINGS_ADVANCED_DATA_TITLE',
+    'SETTINGS_ADVANCED_DATA_DESCRIPTION',
+    'SETTINGS_ADVANCED_EXPORT_TITLE',
+    'SETTINGS_ADVANCED_EXPORT_DESCRIPTION',
+    'SETTINGS_ADVANCED_EXPORT_BUTTON',
+    'SETTINGS_ADVANCED_IMPORT_TITLE',
+    'SETTINGS_ADVANCED_IMPORT_DESCRIPTION',
+    'SETTINGS_ADVANCED_IMPORT_BUTTON',
+    'SETTINGS_ADVANCED_IMPORT_FILE_LABEL',
+    'SETTINGS_ADVANCED_IMPORT_ERROR',
+    'SETTINGS_ADVANCED_DANGER_BADGE',
+    'SETTINGS_ADVANCED_RESET_TITLE',
+    'SETTINGS_ADVANCED_RESET_DESCRIPTION',
+    'SETTINGS_ADVANCED_RESET_BUTTON',
+    'SETTINGS_PREVIEW_ADVANCED_TITLE',
+    'SETTINGS_PREVIEW_ADVANCED_DESCRIPTION'
   ])
   assert.equal(en.SETTINGS_TRANSLATION_CHROME_NAME.message.includes('Translator API'), true)
   assert.equal(
@@ -323,6 +343,10 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(shell, /settings-content--drag/)
   assert.match(shell, /settings-shell--blocked-sites/)
   assert.match(shell, /settings-content--blocked-sites/)
+  assert.match(shell, /settings-shell--advanced/)
+  assert.match(shell, /settings-content--advanced/)
+  assert.match(shell, /persistedSettings/)
+  assert.match(shell, /on-draft-revision/)
   assert.match(shell, /currentNavigation\.previewTitleKey/)
   assert.match(shell, /currentNavigation\.previewDescriptionKey/)
   assert.match(shell, /grid-template-columns: 556px 300px;\s*gap: 28px/)
@@ -368,6 +392,14 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(appearancePage, /\.settings-blocked-sites-switch \.settings-switch__label \{\s*position: absolute;\s*top: 25px/)
   assert.match(appearancePage, /\.settings-blocked-sites-switch \.settings-switch__track \{\s*position: absolute;\s*top: 25px/)
   assert.match(appearancePage, /SETTINGS_BLOCKED_SITES_REGISTERED/)
+  assert.match(appearancePage, /settings-advanced-data-card/)
+  assert.match(appearancePage, /settings-advanced-divider--heading/)
+  assert.match(appearancePage, /settings-advanced-divider--export/)
+  assert.match(appearancePage, /settings-advanced-divider--import/)
+  assert.match(appearancePage, /SETTINGS_ADVANCED_EXPORT_BUTTON/)
+  assert.match(appearancePage, /SETTINGS_ADVANCED_IMPORT_BUTTON/)
+  assert.match(appearancePage, /parseSettingsBackup/)
+  assert.match(appearancePage, /serializeSettingsBackup/)
   assert.equal(appearancePage.includes("pageId === 'help'"), false)
   assert.equal(appearancePage.includes('settings-help-page'), false)
 
@@ -399,6 +431,9 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(preview, /\.settings-guide-preview--blocked-sites li:nth-child\(2\) \{ top: 79px; \}/)
   assert.match(preview, /\.settings-guide-preview--blocked-sites li:nth-child\(3\) \{ top: 139px; \}/)
   assert.match(preview, /settings-guide-preview__note/)
+  assert.match(preview, /settings-live-preview--advanced/)
+  assert.match(preview, /settings-reset-danger-card/)
+  assert.match(preview, /SETTINGS_ADVANCED_RESET_BUTTON/)
   assert.equal(preview.includes("activePage.id === 'help'"), false)
   assert.equal(preview.includes('settings-help-preview'), false)
 })

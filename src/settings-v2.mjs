@@ -142,6 +142,8 @@ export const SETTINGS_NAVIGATION = Object.freeze([
     labelKey: 'SETTINGS_NAV_ADVANCED',
     titleKey: 'SETTINGS_PAGE_ADVANCED_TITLE',
     descriptionKey: 'SETTINGS_PAGE_ADVANCED_DESCRIPTION',
+    previewTitleKey: 'SETTINGS_PREVIEW_ADVANCED_TITLE',
+    previewDescriptionKey: 'SETTINGS_PREVIEW_ADVANCED_DESCRIPTION',
     actions: Object.freeze(['reset'])
   }),
   Object.freeze({

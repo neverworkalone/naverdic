@@ -118,6 +118,10 @@ function resetDraft() {
   saveState.value = 'reset'
 }
 
+function bumpDraftRevision() {
+  draftRevision.value += 1
+}
+
 async function initializeSettings() {
   isLoading.value = true
   hasLoadError.value = false
@@ -267,7 +271,8 @@ onBeforeUnmount(() => {
     :class="{
       'settings-shell--double-click': currentNavigation.id === 'double-click',
       'settings-shell--drag': currentNavigation.id === 'behavior',
-      'settings-shell--blocked-sites': currentNavigation.id === 'blocked-sites'
+      'settings-shell--blocked-sites': currentNavigation.id === 'blocked-sites',
+      'settings-shell--advanced': currentNavigation.id === 'advanced'
     }"
     data-testid="settings-shell"
   >
@@ -371,7 +376,8 @@ onBeforeUnmount(() => {
           'settings-content--translation': currentNavigation.id === 'translation-service',
           'settings-content--double-click': currentNavigation.id === 'double-click',
           'settings-content--drag': currentNavigation.id === 'behavior',
-          'settings-content--blocked-sites': currentNavigation.id === 'blocked-sites'
+          'settings-content--blocked-sites': currentNavigation.id === 'blocked-sites',
+          'settings-content--advanced': currentNavigation.id === 'advanced'
         }"
         :aria-labelledby="`settings-page-title-${currentNavigation.id}`"
       >
@@ -388,11 +394,14 @@ onBeforeUnmount(() => {
             :active-page="currentNavigation"
             :draft="draftSettings"
             :draft-secrets="draftSecrets"
+            :persisted-settings="persistedSettings"
+            :persisted-secrets="persistedSecrets"
             :draft-revision="draftRevision"
             :draft-reset-revision="draftResetRevision"
             :is-loading="isLoading"
             :is-saving="isSaving"
             :reset-draft="resetDraft"
+            :on-draft-revision="bumpDraftRevision"
             :translation-pending-change="setTranslationEditorDirty"
           >
             <div class="settings-placeholder-card" data-testid="settings-page-placeholder">
@@ -400,20 +409,6 @@ onBeforeUnmount(() => {
               <p>{{ text('SETTINGS_SHELL_PLACEHOLDER_DESCRIPTION') }}</p>
               <div class="settings-placeholder-card__note">
                 {{ text('SETTINGS_SHELL_DRAFT_NOTE') }}
-              </div>
-              <div
-                v-if="currentNavigation.id === 'advanced'"
-                class="settings-placeholder-card__actions"
-              >
-                <button
-                  type="button"
-                  class="settings-placeholder-card__reset"
-                  data-testid="settings-reset-button"
-                  :disabled="isLoading || isSaving"
-                  @click="resetDraft"
-                >
-                  {{ text('RESET') }}
-                </button>
               </div>
             </div>
           </slot>
@@ -431,6 +426,9 @@ onBeforeUnmount(() => {
           <SettingsPreview
             :active-page="currentNavigation"
             :draft="draftSettings"
+            :is-loading="isLoading"
+            :is-saving="isSaving"
+            :reset-draft="resetDraft"
           />
         </aside>
       </section>
@@ -501,6 +499,15 @@ a {
   box-shadow: var(--naverdic-settings-shadow);
 }
 
+.settings-shell--advanced {
+  width: min(1200px, 100%);
+  min-height: min(860px, calc(100vh - 32px));
+  margin: 16px auto;
+  border: 1px solid var(--naverdic-settings-border);
+  border-radius: var(--naverdic-settings-radius);
+  box-shadow: var(--naverdic-settings-shadow);
+}
+
 .settings-shell--double-click .settings-body {
   min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
 }
@@ -510,6 +517,10 @@ a {
 }
 
 .settings-shell--blocked-sites .settings-body {
+  min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
+}
+
+.settings-shell--advanced .settings-body {
   min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
 }
 
@@ -712,6 +723,11 @@ a {
   gap: 28px;
 }
 
+.settings-content--advanced {
+  grid-template-columns: 556px 300px;
+  gap: 28px;
+}
+
 .settings-content--translation .settings-form-column {
   grid-column: 1 / -1;
 }
@@ -746,7 +762,9 @@ a {
 .settings-shell--double-click .settings-page-heading h2,
 .settings-shell--double-click .settings-preview-heading h2,
 .settings-shell--drag .settings-page-heading h2,
-.settings-shell--drag .settings-preview-heading h2 {
+.settings-shell--drag .settings-preview-heading h2,
+.settings-shell--advanced .settings-page-heading h2,
+.settings-shell--advanced .settings-preview-heading h2 {
   font-size: 24px;
 }
 
@@ -847,6 +865,14 @@ a {
   }
 
   .settings-content--blocked-sites .settings-preview-column {
+    display: block;
+  }
+
+  .settings-content--advanced {
+    grid-template-columns: minmax(0, 556px);
+  }
+
+  .settings-content--advanced .settings-preview-column {
     display: block;
   }
 }

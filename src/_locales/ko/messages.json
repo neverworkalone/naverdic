@@ -210,10 +210,49 @@
     "message": "고급 설정"
   },
   "SETTINGS_PAGE_ADVANCED_DESCRIPTION": {
-    "message": "설정 데이터와 초기화 같은 고급 기능을 관리합니다."
+    "message": "설정 데이터를 백업하거나 모든 설정을 초기화합니다."
   },
-  "SETTINGS_ADVANCED_NOTICE": {
-    "message": "고급 설정은 데이터 구조와 복구에 영향을 줄 수 있습니다. 변경 전 현재 설정을 저장해 두세요."
+  "SETTINGS_ADVANCED_DATA_TITLE": {
+    "message": "설정 데이터"
+  },
+  "SETTINGS_ADVANCED_DATA_DESCRIPTION": {
+    "message": "다른 환경으로 옮길 때 설정을 파일로 저장할 수 있습니다."
+  },
+  "SETTINGS_ADVANCED_EXPORT_TITLE": {
+    "message": "설정 내보내기"
+  },
+  "SETTINGS_ADVANCED_EXPORT_DESCRIPTION": {
+    "message": "현재 설정을 JSON 파일로 저장합니다."
+  },
+  "SETTINGS_ADVANCED_EXPORT_BUTTON": {
+    "message": "내보내기"
+  },
+  "SETTINGS_ADVANCED_IMPORT_TITLE": {
+    "message": "설정 가져오기"
+  },
+  "SETTINGS_ADVANCED_IMPORT_DESCRIPTION": {
+    "message": "백업한 JSON 파일을 불러옵니다."
+  },
+  "SETTINGS_ADVANCED_IMPORT_BUTTON": {
+    "message": "가져오기"
+  },
+  "SETTINGS_ADVANCED_IMPORT_FILE_LABEL": {
+    "message": "설정 백업 JSON 파일"
+  },
+  "SETTINGS_ADVANCED_IMPORT_ERROR": {
+    "message": "올바른 NaverDic 설정 백업 파일을 선택하세요."
+  },
+  "SETTINGS_ADVANCED_DANGER_BADGE": {
+    "message": "위험 작업"
+  },
+  "SETTINGS_ADVANCED_RESET_TITLE": {
+    "message": "모든 설정 초기화"
+  },
+  "SETTINGS_ADVANCED_RESET_DESCRIPTION": {
+    "message": "저장된 모양, 동작, 서비스 설정이 모두 삭제됩니다. 이 작업은 되돌릴 수 없습니다."
+  },
+  "SETTINGS_ADVANCED_RESET_BUTTON": {
+    "message": "모든 설정 초기화"
   },
   "SETTINGS_SHELL_STATUS_SAVED": {
     "message": "저장됨"
@@ -270,7 +309,7 @@
     "message": "초기화 준비됨"
   },
   "SETTINGS_SHELL_RESET_CONFIRM": {
-    "message": "모든 설정을 기본값으로 초기화할까요? 저장하기 전까지는 실제 설정에 반영되지 않습니다."
+    "message": "모든 설정 초기화\n저장된 모양, 동작, 서비스 설정이 모두 삭제됩니다. 이 작업은 되돌릴 수 없습니다.\n계속하시겠습니까?"
   },
   "SETTINGS_SECTION_POPUP_APPEARANCE": {
     "message": "팝업 사전"
@@ -464,13 +503,10 @@
     "message": "필요한 도메인만 추가하면 다른 사이트에는 계속 적용됩니다."
   },
   "SETTINGS_PREVIEW_ADVANCED_TITLE": {
-    "message": "설정 데이터 관리"
+    "message": "완전 초기화"
   },
   "SETTINGS_PREVIEW_ADVANCED_DESCRIPTION": {
-    "message": "초기화는 저장된 설정과 API 키를 기본값으로 되돌립니다."
-  },
-  "SETTINGS_PREVIEW_ADVANCED_WARNING": {
-    "message": "초기화는 되돌릴 수 없으므로 필요한 설정을 먼저 기록하세요."
+    "message": "삭제 전 내용을 꼭 확인하세요."
   },
   "SETTINGS_TRANSLATION_ENABLED": {
     "message": "문장 번역 사용"
