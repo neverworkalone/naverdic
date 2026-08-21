@@ -751,7 +751,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   min-height: 120px;
   margin-top: 0;
   padding: 10px 12px;
-  resize: vertical;
+  resize: none;
   vertical-align: top;
 }
 
