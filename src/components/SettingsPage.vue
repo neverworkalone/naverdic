@@ -1706,29 +1706,29 @@ watch(() => props.draftRevision, () => {
 
 .settings-advanced-row__label {
   position: absolute;
-  top: 15px;
+  top: 20px;
   left: 0;
   display: flex;
   width: 330px;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .settings-advanced-row--import .settings-advanced-row__label {
-  top: 22px;
+  top: 18px;
 }
 
 .settings-advanced-row__label strong {
   color: var(--naverdic-settings-text);
   font-size: 13px;
   font-weight: 600;
-  line-height: 20px;
+  line-height: 22px;
 }
 
 .settings-advanced-row__label span {
   color: var(--naverdic-settings-text-muted);
   font-size: 11px;
-  line-height: 17px;
+  line-height: 20px;
 }
 
 .settings-advanced-action {
