@@ -409,9 +409,6 @@
   "SETTINGS_PREVIEW_HINT": {
     "message": "현재 팝업 설정"
   },
-  "SETTINGS_PREVIEW_FLOW_LABEL": {
-    "message": "사용 흐름"
-  },
   "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1": {
     "message": "단어 위에 포인터 이동"
   },
@@ -429,6 +426,12 @@
   },
   "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3_DESCRIPTION": {
     "message": "선택한 단어 근처에 결과가 나타납니다."
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_4": {
+    "message": "팝업 닫기"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_4_DESCRIPTION": {
+    "message": "팝업 바깥을 클릭하면 닫힙니다."
   },
   "SETTINGS_PREVIEW_DRAG_STEP_1": {
     "message": "텍스트를 선택"

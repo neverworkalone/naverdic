@@ -21,7 +21,7 @@ const popupStyle = computed(() => ({
 const previewSteps = computed(() => {
   switch (props.activePage.id) {
     case 'double-click':
-      return [1, 2, 3].map(step => ({
+      return [1, 2, 3, 4].map(step => ({
         title: `SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_${step}`,
         description: `SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_${step}_DESCRIPTION`
       }))
@@ -64,12 +64,6 @@ const previewSteps = computed(() => {
         'settings-guide-preview--drag': activePage.id === 'behavior'
       }"
     >
-      <div
-        v-if="activePage.id !== 'behavior'"
-        class="settings-guide-preview__eyebrow"
-      >
-        {{ text('SETTINGS_PREVIEW_FLOW_LABEL') }}
-      </div>
       <ol>
         <li v-for="(step, index) in previewSteps" :key="step.title || step">
           <span>{{ index + 1 }}</span>
@@ -104,17 +98,16 @@ const previewSteps = computed(() => {
 .settings-live-preview__popup { display: flex; width: min(100%, 220px); margin: 26px auto 0; padding: 16px; flex-direction: column; gap: 8px; border: 1px solid rgb(26 36 51 / 16%); border-radius: var(--naverdic-radius-sm); box-shadow: var(--naverdic-shadow-popup); }
 .settings-live-preview__popup strong { font-size: 1.15em; line-height: 1.3; }.settings-live-preview__popup span { font-size: .92em; line-height: 1.4; }.settings-live-preview__popup small { color: currentColor; opacity: .62; font-size: .78em; line-height: 1.4; }
 .settings-guide-preview, .settings-notice-preview, .settings-help-preview { min-height: 360px; padding: 28px 24px; color: var(--naverdic-settings-text); }
-.settings-guide-preview__eyebrow { color: var(--naverdic-settings-text-muted); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .settings-guide-preview ol { display: flex; margin: 30px 0 0; padding: 0; flex-direction: column; gap: 22px; list-style: none; }.settings-guide-preview li { display: flex; align-items: flex-start; gap: 12px; }.settings-guide-preview li > span { display: grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); border-radius: 50%; font-size: 11px; font-weight: 700; }.settings-guide-preview p { margin: 2px 0 0; color: var(--naverdic-settings-text-muted); font-size: 12px; line-height: 20px; }
 .settings-guide-preview--double-click, .settings-guide-preview--drag { position: relative; padding: 0; }
 .settings-guide-preview--double-click { height: 258px; min-height: 258px; }
 .settings-guide-preview--drag { height: 306px; min-height: 306px; }
-.settings-guide-preview--double-click .settings-guide-preview__eyebrow { position: absolute; top: 27px; left: 23px; color: #344054; font-size: 15px; letter-spacing: normal; line-height: 20px; text-transform: none; }
 .settings-guide-preview--double-click ol { position: relative; display: block; width: 100%; height: 100%; margin: 0; }
 .settings-guide-preview--double-click li { position: absolute; left: 23px; display: flex; width: 252px; min-height: 24px; gap: 12px; }
-.settings-guide-preview--double-click li:nth-child(1) { top: 75px; }
-.settings-guide-preview--double-click li:nth-child(2) { top: 135px; }
-.settings-guide-preview--double-click li:nth-child(3) { top: 195px; }
+.settings-guide-preview--double-click li:nth-child(1) { top: 19px; }
+.settings-guide-preview--double-click li:nth-child(2) { top: 79px; }
+.settings-guide-preview--double-click li:nth-child(3) { top: 139px; }
+.settings-guide-preview--double-click li:nth-child(4) { top: 199px; }
 .settings-guide-preview--double-click li > span { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
 .settings-guide-preview--double-click li p { display: flex; width: 216px; margin: -2px 0 0; flex-direction: column; gap: 2px; color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 18px; }
 .settings-guide-preview--double-click li p strong { color: #344054; font-size: 13px; font-weight: 700; line-height: 20px; }

@@ -409,9 +409,6 @@
   "SETTINGS_PREVIEW_HINT": {
     "message": "Current popup settings"
   },
-  "SETTINGS_PREVIEW_FLOW_LABEL": {
-    "message": "How it works"
-  },
   "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1": {
     "message": "Move the pointer over a word"
   },
@@ -429,6 +426,12 @@
   },
   "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3_DESCRIPTION": {
     "message": "See the result near the selected word."
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_4": {
+    "message": "Close the popup"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_4_DESCRIPTION": {
+    "message": "Click outside the popup to close it."
   },
   "SETTINGS_PREVIEW_DRAG_STEP_1": {
     "message": "Select the text"

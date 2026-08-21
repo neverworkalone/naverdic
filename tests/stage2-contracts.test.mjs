@@ -251,13 +251,14 @@ test('keeps the official Chrome Translator display name and translation panel bo
     'SETTINGS_PREVIEW_DOUBLE_CLICK_DESCRIPTION',
     'SETTINGS_PREVIEW_DRAG_TITLE',
     'SETTINGS_PREVIEW_DRAG_DESCRIPTION',
-    'SETTINGS_PREVIEW_FLOW_LABEL',
     'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1',
     'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_2',
     'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3',
+    'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_4',
     'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1_DESCRIPTION',
     'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_2_DESCRIPTION',
     'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3_DESCRIPTION',
+    'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_4_DESCRIPTION',
     'SETTINGS_SECTION_DRAG',
     'SETTINGS_SECTION_DRAG_DESCRIPTION',
     'SETTINGS_FIELD_DRAG_ENABLED',
@@ -326,9 +327,11 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(preview, /settings-live-preview--double-click/)
   assert.match(preview, /\.settings-live-preview--double-click \{ height: 260px; min-height: 260px; \}/)
   assert.match(preview, /\.settings-guide-preview--double-click \{ height: 258px; min-height: 258px; \}/)
-  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(1\) \{ top: 75px; \}/)
-  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(2\) \{ top: 135px; \}/)
-  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(3\) \{ top: 195px; \}/)
+  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(1\) \{ top: 19px; \}/)
+  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(2\) \{ top: 79px; \}/)
+  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(3\) \{ top: 139px; \}/)
+  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(4\) \{ top: 199px; \}/)
+  assert.equal(preview.includes('settings-guide-preview__eyebrow'), false)
   assert.match(preview, /\.settings-guide-preview--double-click li p strong \{ color: #344054; font-size: 13px; font-weight: 700; line-height: 20px; \}/)
   assert.match(preview, /\.settings-guide-preview--double-click li p span \{ color: var\(--naverdic-settings-text-muted\); font-size: 11px; line-height: 18px; \}/)
   assert.match(preview, /settings-live-preview--drag/)
