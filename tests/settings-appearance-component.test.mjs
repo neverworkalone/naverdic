@@ -396,12 +396,12 @@ test('renders the double-click flow without leaking into other previews', () => 
   assert.equal(wrapper.classes().includes('settings-live-preview--double-click'), true)
   assert.equal(wrapper.get('.settings-guide-preview').classes().includes('settings-guide-preview--double-click'), true)
   assert.equal(wrapper.findAll('.settings-guide-preview li').length, 3)
-  for (const key of [
-    'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1',
-    'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_2',
-    'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3'
-  ]) {
-    assert.equal(wrapper.text().includes(koText(key)), true)
+  for (const step of [1, 2, 3]) {
+    assert.equal(wrapper.text().includes(koText(`SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_${step}`)), true)
+    assert.equal(
+      wrapper.text().includes(koText(`SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_${step}_DESCRIPTION`)),
+      true
+    )
   }
   wrapper.unmount()
 
@@ -411,5 +411,6 @@ test('renders the double-click flow without leaking into other previews', () => 
   assert.equal(behavior.classes().includes('settings-live-preview--double-click'), false)
   assert.equal(behavior.get('.settings-guide-preview').classes().includes('settings-guide-preview--double-click'), false)
   assert.equal(behavior.text().includes(koText('SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1')), false)
+  assert.equal(behavior.text().includes(koText('SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1_DESCRIPTION')), false)
   behavior.unmount()
 })

@@ -21,7 +21,10 @@ const popupStyle = computed(() => ({
 const previewSteps = computed(() => {
   switch (props.activePage.id) {
     case 'double-click':
-      return ['SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1', 'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_2', 'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3']
+      return [1, 2, 3].map(step => ({
+        title: `SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_${step}`,
+        description: `SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_${step}_DESCRIPTION`
+      }))
     case 'behavior':
       return ['SETTINGS_PREVIEW_BEHAVIOR_STEP_1', 'SETTINGS_PREVIEW_BEHAVIOR_STEP_2', 'SETTINGS_PREVIEW_BEHAVIOR_STEP_3']
     case 'blocked-sites':
@@ -55,7 +58,16 @@ const previewSteps = computed(() => {
       :class="{'settings-guide-preview--double-click': activePage.id === 'double-click'}"
     >
       <div class="settings-guide-preview__eyebrow">{{ text('SETTINGS_PREVIEW_FLOW_LABEL') }}</div>
-      <ol><li v-for="(step, index) in previewSteps" :key="step"><span>{{ index + 1 }}</span><p>{{ text(step) }}</p></li></ol>
+      <ol>
+        <li v-for="(step, index) in previewSteps" :key="step.title || step">
+          <span>{{ index + 1 }}</span>
+          <p v-if="step.title">
+            <strong>{{ text(step.title) }}</strong>
+            <span>{{ text(step.description) }}</span>
+          </p>
+          <p v-else>{{ text(step) }}</p>
+        </li>
+      </ol>
     </div>
     <div v-else-if="activePage.id === 'advanced'" class="settings-notice-preview">
       <strong>{{ text('SETTINGS_PREVIEW_ADVANCED_TITLE') }}</strong><p>{{ text('SETTINGS_PREVIEW_ADVANCED_DESCRIPTION') }}</p><span>{{ text('SETTINGS_PREVIEW_ADVANCED_WARNING') }}</span>
@@ -88,6 +100,8 @@ const previewSteps = computed(() => {
 .settings-guide-preview--double-click li:nth-child(2) { top: 181px; }
 .settings-guide-preview--double-click li:nth-child(3) { top: 255px; }
 .settings-guide-preview--double-click li > span { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
-.settings-guide-preview--double-click li p { width: 216px; margin: 3px 0 0; color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 18px; }
+.settings-guide-preview--double-click li p { display: flex; width: 216px; margin: 1px 0 0; flex-direction: column; gap: 2px; color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 16px; }
+.settings-guide-preview--double-click li p strong { color: #344054; font-size: 11px; font-weight: 600; line-height: 16px; }
+.settings-guide-preview--double-click li p span { color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 16px; }
 .settings-notice-preview strong, .settings-help-preview strong { display: block; font-size: 16px; line-height: 24px; }.settings-notice-preview p, .settings-help-preview p { margin: 12px 0 0; color: var(--naverdic-settings-text-muted); font-size: 12px; line-height: 20px; }.settings-notice-preview span { display: block; margin-top: 26px; padding: 12px; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); border-radius: 8px; font-size: 11px; line-height: 18px; }.settings-help-preview a { display: inline-block; margin-top: 24px; color: var(--naverdic-settings-primary-text); font-size: 12px; font-weight: 700; }
 </style>
