@@ -292,7 +292,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
         target="_blank"
         rel="noopener noreferrer"
       >
-        {{ text('SETTINGS_POPUP_THEME_GUIDE') }}
+        <span class="settings-inline-link__label">{{ text('SETTINGS_POPUP_THEME_GUIDE') }}</span>
         <span class="settings-inline-link__icon" aria-hidden="true">↗</span>
       </a>
     </section>
@@ -814,7 +814,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   line-height: 1;
 }
 
-.settings-inline-link:hover {
+.settings-inline-link:hover .settings-inline-link__label {
   text-decoration: underline;
 }
 
