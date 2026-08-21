@@ -228,6 +228,7 @@ test('keeps the official Chrome Translator display name and translation panel bo
 
   const appearancePage = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPage.vue'), 'utf8')
   assert.match(appearancePage, /settings-appearance-guidance/)
+  assert.match(appearancePage, /\.settings-page\[data-page-id='appearance'\] \{[\s\S]*margin-top: 0/)
   assert.match(appearancePage, /\.settings-appearance-guidance \{[\s\S]*border: 1px solid var\(--naverdic-settings-border\)/)
   assert.match(appearancePage, /\.settings-inline-link:hover \.settings-inline-link__label \{[\s\S]*text-decoration: underline/)
   assert.equal(appearancePage.includes('.settings-inline-link:hover {'), false)

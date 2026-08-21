@@ -586,6 +586,10 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   margin-top: 12px;
 }
 
+.settings-page[data-page-id='appearance'] {
+  margin-top: 0;
+}
+
 .settings-card {
   padding: 24px;
   background: var(--naverdic-settings-surface);
