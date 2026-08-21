@@ -26,6 +26,11 @@ let flushPromises
 let SettingsPage
 let SettingsPreview
 let makeReactive
+let koMessages
+
+function koText(key) {
+  return koMessages[key].message
+}
 
 async function createTextModule() {
   const modulePath = path.join(tempRoot, 'text.mjs')
@@ -99,6 +104,7 @@ function mountAppearance(draft = createAppearanceDraft(), extraProps = {}) {
 before(async () => {
   installDom()
   tempRoot = await mkdtemp(path.join(projectRoot, '.tmp-naverdic-vue-tests-'))
+  koMessages = JSON.parse(await readFile(path.join(projectRoot, 'src/_locales/ko/messages.json'), 'utf8'))
   const textModuleUrl = await createTextModule()
   const translationSettingsUrl = await compileVueModule(
     'src/components/TranslationSettings.vue',
@@ -156,15 +162,15 @@ test('renders the appearance defaults, scope guidance, and theme link', async ()
     wrapper.get('[data-testid="settings-popup-font-color-picker"]').element.parentElement.classList.contains('settings-color-control__picker-shell'),
     true
   )
-  assert.match(wrapper.get('[data-testid="settings-appearance-scope"]').text(), /적용 범위/)
-  assert.match(wrapper.get('[data-testid="settings-appearance-scope"]').text(), /설정은 페이지 내 더블클릭 사전 팝업에 적용됩니다\./)
-  assert.equal(wrapper.text().includes('사전 팝업과 번역 결과 팝업은 같은 너비로 표시됩니다.'), false)
+  const scopeText = wrapper.get('[data-testid="settings-appearance-scope"]').text()
+  assert.equal(scopeText.includes(koText('SETTINGS_APPEARANCE_SCOPE_TITLE')), true)
+  assert.equal(scopeText.includes(koText('SETTINGS_APPEARANCE_SCOPE_DESCRIPTION')), true)
 
   const link = wrapper.get('.settings-inline-link')
   assert.equal(link.attributes('href'), 'https://neverworkalone.github.io/naverdic/themes.html')
   assert.equal(link.attributes('target'), '_blank')
   assert.equal(link.attributes('rel'), 'noopener noreferrer')
-  assert.equal(link.get('.settings-inline-link__label').text(), '테마 가이드 보기')
+  assert.equal(link.get('.settings-inline-link__label').text(), koText('SETTINGS_POPUP_THEME_GUIDE'))
   assert.equal(link.get('.settings-inline-link__icon').attributes('aria-hidden'), 'true')
   wrapper.unmount()
 })
@@ -224,8 +230,8 @@ test('steps font size by one point, respects bounds, and locks while saving', as
 
   const decrease = wrapper.get('[data-testid="settings-popup-font-size-decrease"]')
   const increase = wrapper.get('[data-testid="settings-popup-font-size-increase"]')
-  assert.equal(decrease.attributes('aria-label'), '글자 크기 줄이기')
-  assert.equal(increase.attributes('aria-label'), '글자 크기 늘리기')
+  assert.equal(decrease.attributes('aria-label'), koText('SETTINGS_FIELD_FONT_SIZE_DECREASE'))
+  assert.equal(increase.attributes('aria-label'), koText('SETTINGS_FIELD_FONT_SIZE_INCREASE'))
 
   await increase.trigger('click')
   assert.equal(draft.popup.fontSizePt, 12)
