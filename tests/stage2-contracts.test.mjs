@@ -36,6 +36,13 @@ import {
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
+function assertLocaleMessages(locale, keys) {
+  for (const key of keys) {
+    assert.equal(typeof locale[key]?.message, 'string')
+    assert.notEqual(locale[key].message.trim(), '')
+  }
+}
+
 test('defines stable settings pages, ordering, and advanced actions', () => {
   assert.deepEqual(
     SETTINGS_MENU.map(item => item.id),
@@ -215,12 +222,29 @@ test('represents Chrome built-in Translator with a content-page execution bounda
 test('keeps the official Chrome Translator display name and translation panel boundary', () => {
   const ko = JSON.parse(fs.readFileSync(path.join(projectRoot, 'src/_locales/ko/messages.json'), 'utf8'))
   const en = JSON.parse(fs.readFileSync(path.join(projectRoot, 'src/_locales/en/messages.json'), 'utf8'))
-  assert.equal(ko.SETTINGS_TRANSLATION_CHROME_NAME.message, 'Chrome 내장 번역 (Translator API)')
+  assertLocaleMessages(ko, [
+    'SETTINGS_TRANSLATION_CHROME_NAME',
+    'SETTINGS_SECTION_POPUP_APPEARANCE',
+    'SETTINGS_SECTION_POPUP_APPEARANCE_DESCRIPTION',
+    'SETTINGS_SHELL_PREVIEW_TITLE',
+    'SETTINGS_SHELL_PREVIEW_DESCRIPTION'
+  ])
   assert.equal(en.SETTINGS_TRANSLATION_CHROME_NAME.message.includes('Translator API'), true)
 
   const shell = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsShell.vue'), 'utf8')
   assert.match(shell, /settings-content--translation/)
   assert.match(shell, /currentNavigation\.id !== 'translation-service'/)
+
+  const appearancePage = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPage.vue'), 'utf8')
+  assert.match(appearancePage, /settings-appearance-guidance/)
+  assert.match(appearancePage, /\.settings-page\[data-page-id='appearance'\] \{[\s\S]*margin-top: 18px/)
+  assert.match(appearancePage, /\.settings-appearance-guidance \{[\s\S]*border: 1px solid var\(--naverdic-settings-border\)/)
+  assert.match(appearancePage, /\.settings-inline-link:hover \.settings-inline-link__label \{[\s\S]*text-decoration: underline/)
+  assert.equal(appearancePage.includes('.settings-inline-link:hover {'), false)
+
+  const preview = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPreview.vue'), 'utf8')
+  assert.match(preview, /settings-live-preview--appearance/)
+  assert.match(preview, /\.settings-live-preview--appearance \{ margin-top: 18px; \}/)
 })
 
 test('rejects legacy custom provider definitions', () => {
@@ -396,13 +420,15 @@ test('publishes the shared Figma-derived token categories', () => {
     '--naverdic-space-6',
     '--naverdic-input-border-focus',
     '--naverdic-button-background-disabled',
-    '--naverdic-card-background-selected'
+    '--naverdic-card-background-selected',
+    '--naverdic-settings-chip-border'
   ]) {
     assert.match(tokens, new RegExp(`${token}:`))
   }
 
   assert.match(tokens, /--naverdic-color-surface-page:\s*#F5F6F8/)
   assert.match(tokens, /--naverdic-color-border-popup:\s*#E2E6EC/)
+  assert.match(tokens, /--naverdic-settings-chip-border:\s*#CBD7E5/)
 })
 
 test('keeps the migration rule table complete with the v6.6 schema', () => {

@@ -276,10 +276,10 @@
     "message": "모든 설정을 기본값으로 초기화할까요? 저장하기 전까지는 실제 설정에 반영되지 않습니다."
   },
   "SETTINGS_SECTION_POPUP_APPEARANCE": {
-    "message": "팝업 모양"
+    "message": "팝업 사전"
   },
   "SETTINGS_SECTION_POPUP_APPEARANCE_DESCRIPTION": {
-    "message": "팝업 사전의 색상과 글자 모양을 조정합니다."
+    "message": "페이지에서 단어를 더블클릭했을 때 표시되는 팝업의 스타일을 설정합니다."
   },
   "SETTINGS_FIELD_BACKGROUND_COLOR": {
     "message": "배경색"
@@ -287,17 +287,38 @@
   "SETTINGS_FIELD_BACKGROUND_COLOR_HINT": {
     "message": "팝업 사전의 배경색"
   },
+  "SETTINGS_FIELD_BACKGROUND_COLOR_PICKER": {
+    "message": "팝업 배경색 선택"
+  },
   "SETTINGS_FIELD_FONT_COLOR": {
     "message": "글자색"
   },
   "SETTINGS_FIELD_FONT_COLOR_HINT": {
     "message": "검색 결과에 사용할 글자색"
   },
+  "SETTINGS_FIELD_FONT_COLOR_PICKER": {
+    "message": "팝업 글자색 선택"
+  },
   "SETTINGS_FIELD_FONT_SIZE": {
     "message": "글자 크기"
   },
   "SETTINGS_FIELD_FONT_SIZE_HINT": {
     "message": "검색 결과의 글자 크기"
+  },
+  "SETTINGS_FIELD_FONT_SIZE_DECREASE": {
+    "message": "글자 크기 줄이기"
+  },
+  "SETTINGS_FIELD_FONT_SIZE_INCREASE": {
+    "message": "글자 크기 늘리기"
+  },
+  "SETTINGS_FIELD_INVALID_HEX": {
+    "message": "6자리 HEX 색상 코드를 입력하세요."
+  },
+  "SETTINGS_APPEARANCE_SCOPE_TITLE": {
+    "message": "적용 범위"
+  },
+  "SETTINGS_APPEARANCE_SCOPE_DESCRIPTION": {
+    "message": "설정은 페이지 내 더블클릭 사전 팝업에 적용됩니다. 오른쪽에서 해당 팝업을 미리 볼 수 있습니다."
   },
   "SETTINGS_POPUP_THEME_GUIDE": {
     "message": "테마 가이드 보기"

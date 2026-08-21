@@ -276,10 +276,10 @@
     "message": "Reset all settings to their defaults? The reset will not affect stored settings until you save."
   },
   "SETTINGS_SECTION_POPUP_APPEARANCE": {
-    "message": "Popup appearance"
+    "message": "Popup dictionary"
   },
   "SETTINGS_SECTION_POPUP_APPEARANCE_DESCRIPTION": {
-    "message": "Adjust the popup dictionary colors and typography."
+    "message": "Set the style of the popup shown when you double-click a word on a page."
   },
   "SETTINGS_FIELD_BACKGROUND_COLOR": {
     "message": "Background color"
@@ -287,17 +287,38 @@
   "SETTINGS_FIELD_BACKGROUND_COLOR_HINT": {
     "message": "Popup dictionary background"
   },
+  "SETTINGS_FIELD_BACKGROUND_COLOR_PICKER": {
+    "message": "Choose popup background color"
+  },
   "SETTINGS_FIELD_FONT_COLOR": {
     "message": "Text color"
   },
   "SETTINGS_FIELD_FONT_COLOR_HINT": {
     "message": "Text color used for results"
   },
+  "SETTINGS_FIELD_FONT_COLOR_PICKER": {
+    "message": "Choose popup text color"
+  },
   "SETTINGS_FIELD_FONT_SIZE": {
     "message": "Text size"
   },
   "SETTINGS_FIELD_FONT_SIZE_HINT": {
     "message": "Result text size"
+  },
+  "SETTINGS_FIELD_FONT_SIZE_DECREASE": {
+    "message": "Decrease text size"
+  },
+  "SETTINGS_FIELD_FONT_SIZE_INCREASE": {
+    "message": "Increase text size"
+  },
+  "SETTINGS_FIELD_INVALID_HEX": {
+    "message": "Enter a 6-digit HEX color."
+  },
+  "SETTINGS_APPEARANCE_SCOPE_TITLE": {
+    "message": "Applies to"
+  },
+  "SETTINGS_APPEARANCE_SCOPE_DESCRIPTION": {
+    "message": "These settings apply to the dictionary popup opened by double-clicking on a page. You can preview that popup on the right."
   },
   "SETTINGS_POPUP_THEME_GUIDE": {
     "message": "View theme guide"
