@@ -95,7 +95,9 @@ export const SETTINGS_NAVIGATION = Object.freeze([
     order: 20,
     labelKey: 'SETTINGS_NAV_DOUBLE_CLICK',
     titleKey: 'SETTINGS_PAGE_DOUBLE_CLICK_TITLE',
-    descriptionKey: 'SETTINGS_PAGE_DOUBLE_CLICK_DESCRIPTION'
+    descriptionKey: 'SETTINGS_PAGE_DOUBLE_CLICK_DESCRIPTION',
+    previewTitleKey: 'SETTINGS_PREVIEW_DOUBLE_CLICK_TITLE',
+    previewDescriptionKey: 'SETTINGS_PREVIEW_DOUBLE_CLICK_DESCRIPTION'
   }),
   Object.freeze({
     id: 'behavior',
@@ -105,7 +107,9 @@ export const SETTINGS_NAVIGATION = Object.freeze([
     order: 30,
     labelKey: 'SETTINGS_NAV_BEHAVIOR',
     titleKey: 'SETTINGS_PAGE_BEHAVIOR_TITLE',
-    descriptionKey: 'SETTINGS_PAGE_BEHAVIOR_DESCRIPTION'
+    descriptionKey: 'SETTINGS_PAGE_BEHAVIOR_DESCRIPTION',
+    previewTitleKey: 'SETTINGS_PREVIEW_DRAG_TITLE',
+    previewDescriptionKey: 'SETTINGS_PREVIEW_DRAG_DESCRIPTION'
   }),
   Object.freeze({
     id: 'translation-service',

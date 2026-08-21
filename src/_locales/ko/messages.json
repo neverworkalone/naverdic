@@ -165,7 +165,7 @@
     "message": "중지목록"
   },
   "SETTINGS_NAV_BEHAVIOR": {
-    "message": "동작"
+    "message": "드래그"
   },
   "SETTINGS_NAV_TRANSLATION": {
     "message": "번역 서비스"
@@ -195,10 +195,10 @@
     "message": "팝업 사전을 표시하지 않을 웹사이트를 관리합니다."
   },
   "SETTINGS_PAGE_BEHAVIOR_TITLE": {
-    "message": "동작"
+    "message": "드래그"
   },
   "SETTINGS_PAGE_BEHAVIOR_DESCRIPTION": {
-    "message": "드래그 검색과 페이지 상호작용 방식을 설정합니다."
+    "message": "단어나 짧은 구문을 드래그해 사전에서 검색하는 방식을 설정합니다."
   },
   "SETTINGS_PAGE_TRANSLATION_TITLE": {
     "message": "번역 서비스"
@@ -253,6 +253,18 @@
   },
   "SETTINGS_SHELL_PREVIEW_DESCRIPTION": {
     "message": "현재 화면의 변경 결과를 미리 볼 수 있습니다."
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_TITLE": {
+    "message": "더블클릭 안내"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_DESCRIPTION": {
+    "message": "더블클릭한 단어로 사전 결과를 확인합니다."
+  },
+  "SETTINGS_PREVIEW_DRAG_TITLE": {
+    "message": "드래그 안내"
+  },
+  "SETTINGS_PREVIEW_DRAG_DESCRIPTION": {
+    "message": "드래그한 텍스트로 사전 결과를 확인합니다."
   },
   "SETTINGS_SHELL_STATUS_LOADING": {
     "message": "불러오는 중…"
@@ -348,7 +360,7 @@
     "message": "드래그 검색"
   },
   "SETTINGS_SECTION_DRAG_DESCRIPTION": {
-    "message": "문장이나 단어를 드래그해 사전을 검색하는 방법을 설정합니다."
+    "message": "단어나 짧은 구문을 드래그해 사전에서 검색합니다."
   },
   "SETTINGS_FIELD_DRAG_ENABLED": {
     "message": "드래그 검색 사용"
@@ -418,14 +430,29 @@
   "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3_DESCRIPTION": {
     "message": "선택한 단어 근처에 결과가 나타납니다."
   },
-  "SETTINGS_PREVIEW_BEHAVIOR_STEP_1": {
-    "message": "문장을 드래그해 선택합니다."
+  "SETTINGS_PREVIEW_DRAG_STEP_1": {
+    "message": "텍스트를 선택"
   },
-  "SETTINGS_PREVIEW_BEHAVIOR_STEP_2": {
-    "message": "설정한 보조키와 함께 놓으면 검색이 실행됩니다."
+  "SETTINGS_PREVIEW_DRAG_STEP_1_DESCRIPTION": {
+    "message": "단어나 짧은 구문을 드래그합니다."
   },
-  "SETTINGS_PREVIEW_BEHAVIOR_STEP_3": {
-    "message": "선택한 텍스트의 사전 결과를 확인합니다."
+  "SETTINGS_PREVIEW_DRAG_STEP_2": {
+    "message": "검색 실행"
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_2_DESCRIPTION": {
+    "message": "설정한 방식으로 검색합니다."
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_3": {
+    "message": "사전 검색"
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_3_DESCRIPTION": {
+    "message": "선택한 내용을 사전에서 찾습니다."
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_4": {
+    "message": "결과 팝업 표시"
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_4_DESCRIPTION": {
+    "message": "텍스트 근처에 결과가 나타납니다."
   },
   "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_1": {
     "message": "팝업을 숨길 도메인을 한 줄씩 입력합니다."

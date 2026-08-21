@@ -165,7 +165,7 @@
     "message": "Blocked sites"
   },
   "SETTINGS_NAV_BEHAVIOR": {
-    "message": "Behavior"
+    "message": "Drag"
   },
   "SETTINGS_NAV_TRANSLATION": {
     "message": "Translation service"
@@ -195,10 +195,10 @@
     "message": "Manage websites where the popup dictionary should not appear."
   },
   "SETTINGS_PAGE_BEHAVIOR_TITLE": {
-    "message": "Behavior"
+    "message": "Drag"
   },
   "SETTINGS_PAGE_BEHAVIOR_DESCRIPTION": {
-    "message": "Configure drag search and page interaction behavior."
+    "message": "Configure dictionary search for words or short phrases selected by dragging."
   },
   "SETTINGS_PAGE_TRANSLATION_TITLE": {
     "message": "Translation service"
@@ -253,6 +253,18 @@
   },
   "SETTINGS_SHELL_PREVIEW_DESCRIPTION": {
     "message": "Preview the result of changes on the current screen."
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_TITLE": {
+    "message": "Double-click guide"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_DESCRIPTION": {
+    "message": "See dictionary results for the double-clicked word."
+  },
+  "SETTINGS_PREVIEW_DRAG_TITLE": {
+    "message": "Drag guide"
+  },
+  "SETTINGS_PREVIEW_DRAG_DESCRIPTION": {
+    "message": "See dictionary results for the dragged text."
   },
   "SETTINGS_SHELL_STATUS_LOADING": {
     "message": "Loading…"
@@ -348,7 +360,7 @@
     "message": "Drag search"
   },
   "SETTINGS_SECTION_DRAG_DESCRIPTION": {
-    "message": "Configure dictionary search for selected words or sentences."
+    "message": "Search the dictionary for words or short phrases selected by dragging."
   },
   "SETTINGS_FIELD_DRAG_ENABLED": {
     "message": "Enable drag search"
@@ -418,14 +430,29 @@
   "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3_DESCRIPTION": {
     "message": "See the result near the selected word."
   },
-  "SETTINGS_PREVIEW_BEHAVIOR_STEP_1": {
-    "message": "Select a phrase by dragging across the page."
+  "SETTINGS_PREVIEW_DRAG_STEP_1": {
+    "message": "Select the text"
   },
-  "SETTINGS_PREVIEW_BEHAVIOR_STEP_2": {
-    "message": "Release it with the configured modifier to start the lookup."
+  "SETTINGS_PREVIEW_DRAG_STEP_1_DESCRIPTION": {
+    "message": "Drag across a word or short phrase."
   },
-  "SETTINGS_PREVIEW_BEHAVIOR_STEP_3": {
-    "message": "Review the dictionary result for the selected text."
+  "SETTINGS_PREVIEW_DRAG_STEP_2": {
+    "message": "Run the search"
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_2_DESCRIPTION": {
+    "message": "Search with the configured method."
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_3": {
+    "message": "Search the dictionary"
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_3_DESCRIPTION": {
+    "message": "Look up the selected text in the dictionary."
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_4": {
+    "message": "Show the result popup"
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_4_DESCRIPTION": {
+    "message": "The result appears near the text."
   },
   "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_1": {
     "message": "Enter one domain per line for sites where the popup should stay hidden."

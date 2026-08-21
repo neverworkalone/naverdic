@@ -121,6 +121,26 @@ function mountDoubleClick(draft = createDoubleClickDraft(), extraProps = {}) {
   })
 }
 
+function createDragDraft(drag = {}) {
+  const draft = createDefaultSettingsV2()
+  Object.assign(draft.dictionary.drag, drag)
+  return makeReactive(draft)
+}
+
+function mountDrag(draft = createDragDraft(), extraProps = {}) {
+  return mount(SettingsPage, {
+    props: {
+      activePage: {id: 'behavior'},
+      draft,
+      draftSecrets: createDefaultSecretsV2(),
+      draftRevision: 0,
+      isLoading: false,
+      isSaving: false,
+      ...extraProps
+    }
+  })
+}
+
 before(async () => {
   installDom()
   tempRoot = await mkdtemp(path.join(projectRoot, '.tmp-naverdic-vue-tests-'))
@@ -388,6 +408,83 @@ test('locks every double-click control while loading or saving', async () => {
   wrapper.unmount()
 })
 
+test('renders drag defaults, locale-backed controls, and only drag settings', async () => {
+  const wrapper = mountDrag()
+  await flushPromises()
+
+  const form = wrapper.get('[data-testid="settings-drag-form"]')
+  const enabled = wrapper.get('[data-testid="settings-drag-enabled"]').element
+  const trigger = wrapper.get('[data-testid="settings-drag-trigger"]').element
+
+  assert.equal(enabled.checked, true)
+  assert.equal(trigger.value, 'ctrl')
+  assert.deepEqual(
+    [...trigger.options].map(option => option.value),
+    ['none', 'ctrl', 'alt', 'ctrlalt']
+  )
+  assert.equal(trigger.options[0].textContent, koText('DRAG'))
+  assert.equal(
+    form.get('label[for="settings-drag-trigger"]').text(),
+    koText('SETTINGS_FIELD_TRIGGER_KEY')
+  )
+  assert.equal(form.text().includes(koText('SETTINGS_FIELD_DRAG_TRIGGER_HINT')), true)
+  assert.equal(form.findAll('.settings-drag-divider').length, 3)
+  assert.equal(form.find('[data-testid="settings-double-click-enabled"]').exists(), false)
+  assert.equal(form.find('[data-testid="settings-double-click-speed"]').exists(), false)
+  wrapper.unmount()
+})
+
+test('updates drag draft values, reports dirty state, and resets from the revision', async () => {
+  const draft = createDragDraft()
+  const persisted = createDragDraft()
+  const wrapper = mountDrag(draft)
+  await flushPromises()
+
+  assert.equal(
+    hasPendingSettingsChanges(
+      {settings: persisted, secrets: createDefaultSecretsV2()},
+      {settings: draft, secrets: createDefaultSecretsV2()}
+    ),
+    false
+  )
+
+  await wrapper.get('[data-testid="settings-drag-enabled"]').setValue(false)
+  for (const triggerKey of ['none', 'ctrl', 'alt', 'ctrlalt']) {
+    await wrapper.get('[data-testid="settings-drag-trigger"]').setValue(triggerKey)
+    assert.equal(draft.dictionary.drag.triggerKey, triggerKey)
+  }
+
+  assert.equal(draft.dictionary.drag.enabled, false)
+  assert.equal(
+    hasPendingSettingsChanges(
+      {settings: persisted, secrets: createDefaultSecretsV2()},
+      {settings: draft, secrets: createDefaultSecretsV2()}
+    ),
+    true
+  )
+
+  Object.assign(draft.dictionary.drag, createDefaultSettingsV2().dictionary.drag)
+  await wrapper.setProps({draftRevision: 1})
+  await wrapper.vm.$nextTick()
+  assert.equal(wrapper.get('[data-testid="settings-drag-enabled"]').element.checked, true)
+  assert.equal(wrapper.get('[data-testid="settings-drag-trigger"]').element.value, 'ctrl')
+  wrapper.unmount()
+})
+
+test('locks every drag control while loading or saving', async () => {
+  const wrapper = mountDrag()
+  await flushPromises()
+
+  await wrapper.setProps({isLoading: true})
+  assert.equal(wrapper.get('[data-testid="settings-drag-enabled"]').element.disabled, true)
+  assert.equal(wrapper.get('[data-testid="settings-drag-trigger"]').element.disabled, true)
+
+  await wrapper.setProps({isLoading: false, isSaving: true})
+  assert.equal(wrapper.get('[data-testid="settings-drag-enabled"]').element.disabled, true)
+  assert.equal(wrapper.get('[data-testid="settings-drag-trigger"]').element.disabled, true)
+  wrapper.unmount()
+})
+
 test('renders the double-click flow without leaking into other previews', () => {
   const doubleClick = createDoubleClickDraft()
   const wrapper = mount(SettingsPreview, {
@@ -412,7 +509,20 @@ test('renders the double-click flow without leaking into other previews', () => 
     props: {activePage: {id: 'behavior'}, draft: createDoubleClickDraft()}
   })
   assert.equal(behavior.classes().includes('settings-live-preview--double-click'), false)
+  assert.equal(behavior.classes().includes('settings-live-preview--drag'), true)
   assert.equal(behavior.get('.settings-guide-preview').classes().includes('settings-guide-preview--double-click'), false)
+  assert.equal(behavior.get('.settings-guide-preview').classes().includes('settings-guide-preview--drag'), true)
+  assert.equal(behavior.find('.settings-guide-preview__eyebrow').exists(), false)
+  assert.equal(behavior.findAll('.settings-guide-preview li').length, 4)
+  assert.equal(behavior.findAll('.settings-guide-preview--drag li p > strong').length, 4)
+  assert.equal(behavior.findAll('.settings-guide-preview--drag li p > span').length, 4)
+  for (const step of [1, 2, 3, 4]) {
+    assert.equal(behavior.text().includes(koText(`SETTINGS_PREVIEW_DRAG_STEP_${step}`)), true)
+    assert.equal(
+      behavior.text().includes(koText(`SETTINGS_PREVIEW_DRAG_STEP_${step}_DESCRIPTION`)),
+      true
+    )
+  }
   assert.equal(behavior.text().includes(koText('SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1')), false)
   assert.equal(behavior.text().includes(koText('SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1_DESCRIPTION')), false)
   behavior.unmount()

@@ -74,6 +74,12 @@ test('maps the finalized Figma navigation to stable settings sections', () => {
     SETTINGS_NAVIGATION.find(item => item.id === 'behavior').pageId,
     SETTINGS_PAGE_IDS.DICTIONARY
   )
+  const doubleClick = SETTINGS_NAVIGATION.find(item => item.id === 'double-click')
+  const drag = SETTINGS_NAVIGATION.find(item => item.id === 'behavior')
+  assert.equal(doubleClick.previewTitleKey, 'SETTINGS_PREVIEW_DOUBLE_CLICK_TITLE')
+  assert.equal(doubleClick.previewDescriptionKey, 'SETTINGS_PREVIEW_DOUBLE_CLICK_DESCRIPTION')
+  assert.equal(drag.previewTitleKey, 'SETTINGS_PREVIEW_DRAG_TITLE')
+  assert.equal(drag.previewDescriptionKey, 'SETTINGS_PREVIEW_DRAG_DESCRIPTION')
 
   const help = SETTINGS_NAVIGATION.find(item => item.id === 'help')
   const advanced = SETTINGS_NAVIGATION.find(item => item.id === 'advanced')
@@ -226,6 +232,9 @@ test('keeps the official Chrome Translator display name and translation panel bo
     'SETTINGS_TRANSLATION_CHROME_NAME',
     'SETTINGS_SECTION_POPUP_APPEARANCE',
     'SETTINGS_SECTION_POPUP_APPEARANCE_DESCRIPTION',
+    'SETTINGS_NAV_BEHAVIOR',
+    'SETTINGS_PAGE_BEHAVIOR_TITLE',
+    'SETTINGS_PAGE_BEHAVIOR_DESCRIPTION',
     'SETTINGS_SECTION_DOUBLE_CLICK',
     'SETTINGS_SECTION_DOUBLE_CLICK_DESCRIPTION',
     'SETTINGS_FIELD_DOUBLE_CLICK_ENABLED',
@@ -235,13 +244,29 @@ test('keeps the official Chrome Translator display name and translation panel bo
     'SETTINGS_FIELD_DOUBLE_CLICK_SPEED_HINT',
     'SETTINGS_SHELL_PREVIEW_TITLE',
     'SETTINGS_SHELL_PREVIEW_DESCRIPTION',
+    'SETTINGS_PREVIEW_DOUBLE_CLICK_TITLE',
+    'SETTINGS_PREVIEW_DOUBLE_CLICK_DESCRIPTION',
+    'SETTINGS_PREVIEW_DRAG_TITLE',
+    'SETTINGS_PREVIEW_DRAG_DESCRIPTION',
     'SETTINGS_PREVIEW_FLOW_LABEL',
     'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1',
     'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_2',
     'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3',
     'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1_DESCRIPTION',
     'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_2_DESCRIPTION',
-    'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3_DESCRIPTION'
+    'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3_DESCRIPTION',
+    'SETTINGS_SECTION_DRAG',
+    'SETTINGS_SECTION_DRAG_DESCRIPTION',
+    'SETTINGS_FIELD_DRAG_ENABLED',
+    'SETTINGS_FIELD_DRAG_TRIGGER_HINT',
+    'SETTINGS_PREVIEW_DRAG_STEP_1',
+    'SETTINGS_PREVIEW_DRAG_STEP_1_DESCRIPTION',
+    'SETTINGS_PREVIEW_DRAG_STEP_2',
+    'SETTINGS_PREVIEW_DRAG_STEP_2_DESCRIPTION',
+    'SETTINGS_PREVIEW_DRAG_STEP_3',
+    'SETTINGS_PREVIEW_DRAG_STEP_3_DESCRIPTION',
+    'SETTINGS_PREVIEW_DRAG_STEP_4',
+    'SETTINGS_PREVIEW_DRAG_STEP_4_DESCRIPTION'
   ])
   assert.equal(en.SETTINGS_TRANSLATION_CHROME_NAME.message.includes('Translator API'), true)
   assert.equal(
@@ -254,6 +279,10 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(shell, /\.settings-shell--double-click \{[\s\S]*width: min\(1200px, 100%\)/)
   assert.match(shell, /settings-content--translation/)
   assert.match(shell, /settings-content--double-click/)
+  assert.match(shell, /settings-shell--drag/)
+  assert.match(shell, /settings-content--drag/)
+  assert.match(shell, /currentNavigation\.previewTitleKey/)
+  assert.match(shell, /currentNavigation\.previewDescriptionKey/)
   assert.match(shell, /grid-template-columns: 556px 300px;\s*gap: 28px/)
   assert.match(shell, /currentNavigation\.id !== 'translation-service'/)
 
@@ -270,17 +299,31 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(appearancePage, /\.settings-double-click-divider--trigger \{\s*top: 221px/)
   assert.match(appearancePage, /\.settings-double-click-divider--speed \{\s*top: 293px/)
   assert.match(appearancePage, /\.settings-double-click-select \{[\s\S]*width: 240px/)
+  assert.match(appearancePage, /settings-drag-card/)
+  assert.match(appearancePage, /\.settings-drag-card \{[\s\S]*height: 244px/)
+  assert.match(appearancePage, /\.settings-drag-divider--heading \{\s*top: 89px/)
+  assert.match(appearancePage, /\.settings-drag-divider--toggle \{\s*top: 149px/)
+  assert.match(appearancePage, /\.settings-drag-divider--trigger \{\s*top: 221px/)
+  assert.match(appearancePage, /\.settings-drag-select \{[\s\S]*width: 240px/)
+  assert.equal(appearancePage.includes('settings-behavior-form'), false)
 
   const preview = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPreview.vue'), 'utf8')
   assert.match(preview, /settings-live-preview--appearance/)
   assert.match(preview, /\.settings-live-preview--appearance \{ margin-top: 18px; \}/)
   assert.match(preview, /settings-live-preview--double-click/)
-  assert.match(preview, /\.settings-live-preview--double-click \{ height: 332px; min-height: 332px; margin-top: 20px/)
-  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(1\) \{ top: 107px; \}/)
-  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(2\) \{ top: 181px; \}/)
-  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(3\) \{ top: 255px; \}/)
+  assert.match(preview, /\.settings-live-preview--double-click \{ height: 260px; min-height: 260px; \}/)
+  assert.match(preview, /\.settings-guide-preview--double-click \{ height: 258px; min-height: 258px; \}/)
+  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(1\) \{ top: 75px; \}/)
+  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(2\) \{ top: 135px; \}/)
+  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(3\) \{ top: 195px; \}/)
   assert.match(preview, /\.settings-guide-preview--double-click li p strong \{ color: #344054; font-size: 13px; font-weight: 700; line-height: 20px; \}/)
   assert.match(preview, /\.settings-guide-preview--double-click li p span \{ color: var\(--naverdic-settings-text-muted\); font-size: 11px; line-height: 18px; \}/)
+  assert.match(preview, /settings-live-preview--drag/)
+  assert.match(preview, /\.settings-live-preview--drag \{ height: 308px; min-height: 308px; \}/)
+  assert.match(preview, /\.settings-guide-preview--drag \{ height: 306px; min-height: 306px; \}/)
+  assert.match(preview, /\.settings-guide-preview--drag li:nth-child\(1\) \{ top: 23px; \}/)
+  assert.match(preview, /\.settings-guide-preview--drag li:nth-child\(4\) \{ top: 245px; \}/)
+  assert.equal(preview.includes('SETTINGS_PREVIEW_BEHAVIOR_STEP_'), false)
 })
 
 test('rejects legacy custom provider definitions', () => {
