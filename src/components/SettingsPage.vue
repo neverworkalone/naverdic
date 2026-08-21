@@ -162,16 +162,21 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
           <span>{{ text('SETTINGS_FIELD_BACKGROUND_COLOR_HINT') }}</span>
         </div>
         <div class="settings-color-control">
-          <input
-            id="settings-popup-background-color-picker"
-            class="settings-color-control__picker"
-            :value="colorInputValue(draft.popup.backgroundColor, APPEARANCE_DEFAULTS.backgroundColor)"
-            type="color"
-            :aria-label="text('SETTINGS_FIELD_BACKGROUND_COLOR_PICKER')"
-            :disabled="controlsDisabled"
-            data-testid="settings-popup-background-color-picker"
-            @input="updateColorPicker('backgroundColor', $event)"
+          <div
+            class="settings-color-control__picker-shell"
+            :style="{backgroundColor: colorInputValue(draft.popup.backgroundColor, APPEARANCE_DEFAULTS.backgroundColor)}"
           >
+            <input
+              id="settings-popup-background-color-picker"
+              class="settings-color-control__picker"
+              :value="colorInputValue(draft.popup.backgroundColor, APPEARANCE_DEFAULTS.backgroundColor)"
+              type="color"
+              :aria-label="text('SETTINGS_FIELD_BACKGROUND_COLOR_PICKER')"
+              :disabled="controlsDisabled"
+              data-testid="settings-popup-background-color-picker"
+              @input="updateColorPicker('backgroundColor', $event)"
+            >
+          </div>
           <div class="settings-color-control__hex">
             <input
               id="settings-popup-background-color"
@@ -205,16 +210,21 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
           <span>{{ text('SETTINGS_FIELD_FONT_COLOR_HINT') }}</span>
         </div>
         <div class="settings-color-control">
-          <input
-            id="settings-popup-font-color-picker"
-            class="settings-color-control__picker"
-            :value="colorInputValue(draft.popup.fontColor, APPEARANCE_DEFAULTS.fontColor)"
-            type="color"
-            :aria-label="text('SETTINGS_FIELD_FONT_COLOR_PICKER')"
-            :disabled="controlsDisabled"
-            data-testid="settings-popup-font-color-picker"
-            @input="updateColorPicker('fontColor', $event)"
+          <div
+            class="settings-color-control__picker-shell"
+            :style="{backgroundColor: colorInputValue(draft.popup.fontColor, APPEARANCE_DEFAULTS.fontColor)}"
           >
+            <input
+              id="settings-popup-font-color-picker"
+              class="settings-color-control__picker"
+              :value="colorInputValue(draft.popup.fontColor, APPEARANCE_DEFAULTS.fontColor)"
+              type="color"
+              :aria-label="text('SETTINGS_FIELD_FONT_COLOR_PICKER')"
+              :disabled="controlsDisabled"
+              data-testid="settings-popup-font-color-picker"
+              @input="updateColorPicker('fontColor', $event)"
+            >
+          </div>
           <div class="settings-color-control__hex">
             <input
               id="settings-popup-font-color"
@@ -659,25 +669,34 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   gap: 8px;
 }
 
-.settings-color-control__picker {
+.settings-color-control__picker-shell {
+  position: relative;
   width: 28px;
   height: 28px;
   flex: 0 0 28px;
-  padding: 2px;
   border: 1px solid var(--naverdic-settings-border);
   border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--naverdic-settings-surface);
+  overflow: hidden;
+}
+
+.settings-color-control__picker {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  opacity: 0;
   cursor: pointer;
   appearance: none;
 }
 
-.settings-color-control__picker::-webkit-color-swatch-wrapper {
-  padding: 0;
-}
-
-.settings-color-control__picker::-webkit-color-swatch,
-.settings-color-control__picker::-moz-color-swatch {
-  border: 0;
-  border-radius: 50%;
+.settings-color-control__picker-shell:focus-within {
+  outline: 2px solid var(--naverdic-color-focus);
+  outline-offset: 2px;
+  box-shadow: var(--naverdic-input-focus-ring);
 }
 
 .settings-color-control__hex input,
@@ -705,7 +724,6 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   font-size: 12px;
 }
 
-.settings-color-control__picker:focus-visible,
 .settings-color-control__hex input:focus-visible,
 .settings-number-control__button:focus-visible,
 .settings-field-row select:focus-visible,
@@ -727,7 +745,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   font-size: 12px;
 }
 
-.settings-color-control__picker:hover,
+.settings-color-control__picker-shell:hover,
 .settings-color-control__hex input:hover,
 .settings-field-row select:hover,
 .settings-textarea-field textarea:hover {

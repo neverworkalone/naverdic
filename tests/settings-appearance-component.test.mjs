@@ -148,6 +148,14 @@ test('renders the appearance defaults, scope guidance, and theme link', async ()
   assert.equal(wrapper.get('[data-testid="settings-popup-background-color"]').element.value, '#FFF59D')
   assert.equal(wrapper.get('[data-testid="settings-popup-font-color"]').element.value, '#000000')
   assert.equal(wrapper.get('[data-testid="settings-popup-font-size"]').text(), '11 pt')
+  assert.equal(
+    wrapper.get('[data-testid="settings-popup-background-color-picker"]').element.parentElement.classList.contains('settings-color-control__picker-shell'),
+    true
+  )
+  assert.equal(
+    wrapper.get('[data-testid="settings-popup-font-color-picker"]').element.parentElement.classList.contains('settings-color-control__picker-shell'),
+    true
+  )
   assert.match(wrapper.get('[data-testid="settings-appearance-scope"]').text(), /적용 범위/)
   assert.match(wrapper.get('[data-testid="settings-appearance-scope"]').text(), /설정은 페이지 내 더블클릭 사전 팝업에 적용됩니다\./)
   assert.equal(wrapper.text().includes('사전 팝업과 번역 결과 팝업은 같은 너비로 표시됩니다.'), false)
