@@ -218,6 +218,18 @@
   "SETTINGS_PAGE_ADVANCED_DESCRIPTION": {
     "message": "Manage advanced features such as settings data and reset."
   },
+  "SETTINGS_ADVANCED_NOTICE": {
+    "message": "Advanced settings can affect stored data and recovery. Save your current settings before changing them."
+  },
+  "SETTINGS_HELP_GUIDE_LINK": {
+    "message": "Open the NaverDic user guide"
+  },
+  "SETTINGS_HELP_DEEPL_LINK": {
+    "message": "DeepL API key guide"
+  },
+  "SETTINGS_HELP_QUICK_GUIDE": {
+    "message": "Choose a provider in Translation service. For external services, enter an API key and run a connection test."
+  },
   "SETTINGS_SHELL_STATUS_SAVED": {
     "message": "Saved"
   },
@@ -364,6 +376,54 @@
   "SETTINGS_PREVIEW_HINT": {
     "message": "Current popup settings"
   },
+  "SETTINGS_PREVIEW_FLOW_LABEL": {
+    "message": "How it works"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1": {
+    "message": "Double-click a word you want to look up on a page."
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_2": {
+    "message": "Adjust the trigger key and double-click speed when needed."
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3": {
+    "message": "Review the dictionary result in the popup."
+  },
+  "SETTINGS_PREVIEW_BEHAVIOR_STEP_1": {
+    "message": "Select a phrase by dragging across the page."
+  },
+  "SETTINGS_PREVIEW_BEHAVIOR_STEP_2": {
+    "message": "Release it with the configured modifier to start the lookup."
+  },
+  "SETTINGS_PREVIEW_BEHAVIOR_STEP_3": {
+    "message": "Review the dictionary result for the selected text."
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_1": {
+    "message": "Enter one domain per line for sites where the popup should stay hidden."
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_2": {
+    "message": "Turn on the blocked-sites list to disable the extension on those sites."
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_3": {
+    "message": "Check the normalized domains to confirm what will be applied."
+  },
+  "SETTINGS_PREVIEW_ADVANCED_TITLE": {
+    "message": "Settings data management"
+  },
+  "SETTINGS_PREVIEW_ADVANCED_DESCRIPTION": {
+    "message": "Reset returns saved settings and API keys to their defaults."
+  },
+  "SETTINGS_PREVIEW_ADVANCED_WARNING": {
+    "message": "Reset cannot be undone, so record anything you need first."
+  },
+  "SETTINGS_PREVIEW_HELP_TITLE": {
+    "message": "Help and quick guide"
+  },
+  "SETTINGS_PREVIEW_HELP_LINK": {
+    "message": "Open the official user guide"
+  },
+  "SETTINGS_PREVIEW_HELP_QUICK_GUIDE": {
+    "message": "Adjust the popup in Appearance, configure lookup flows in Double click and Behavior, then use Save to apply changes."
+  },
   "SETTINGS_TRANSLATION_ENABLED": {
     "message": "Enable sentence translation"
   },
@@ -415,11 +475,11 @@
   "SETTINGS_TRANSLATION_GEMINI_DESCRIPTION": {
     "message": "Natural sentence translation and summarization"
   },
-  "SETTINGS_TRANSLATION_CUSTOM_NAME": {
-    "message": "Custom API"
+  "SETTINGS_TRANSLATION_GEMINI_MODEL": {
+    "message": "Model"
   },
-  "SETTINGS_TRANSLATION_CUSTOM_DESCRIPTION": {
-    "message": "A translation API connected directly by you"
+  "SETTINGS_TRANSLATION_GEMINI_MODEL_HINT": {
+    "message": "The only currently supported model is gemini-3.5-flash."
   },
   "SETTINGS_TRANSLATION_DEFAULT_BADGE": {
     "message": "Free built-in"
@@ -441,12 +501,6 @@
   },
   "SETTINGS_TRANSLATION_EXTERNAL_NOTE": {
     "message": "External services become available after you save an API key."
-  },
-  "SETTINGS_TRANSLATION_PERMISSION_REQUESTING": {
-    "message": "Checking permission to access the Custom API domain."
-  },
-  "SETTINGS_TRANSLATION_PERMISSION_REQUIRED": {
-    "message": "Permission to access the Custom API domain is required."
   },
   "SETTINGS_TRANSLATION_PRESET_DESCRIPTION": {
     "message": "Enter a credential and verify the connection."
@@ -505,120 +559,6 @@
   "SETTINGS_TRANSLATION_SERVICE_SETTINGS": {
     "message": "Service settings"
   },
-  "SETTINGS_TRANSLATION_CUSTOM_TITLE": {
-    "message": "Add Custom API"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_ADD": {
-    "message": "Add Custom API"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_EDIT": {
-    "message": "Custom API settings"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_NAME_LABEL": {
-    "message": "Service name"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_NAME_HINT": {
-    "message": "The name shown in the settings screen."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_URL": {
-    "message": "URL"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_URL_HINT": {
-    "message": "Only HTTP or HTTPS addresses are supported."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_METHOD": {
-    "message": "Method"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_AUTH_MODE": {
-    "message": "Authentication"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_AUTH_LOCATION": {
-    "message": "Auth location"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_AUTH_HEADER": {
-    "message": "Auth name"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_AUTH_PREFIX": {
-    "message": "Auth prefix"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_HEADERS": {
-    "message": "Headers"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_HEADERS_HINT": {
-    "message": "Enter one Name: valueTemplate per line."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_BODY": {
-    "message": "Body template"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_BODY_HINT": {
-    "message": "Use JSON and the {{text}} or {{targetLanguage}} placeholders."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH": {
-    "message": "Response text path"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH_HINT": {
-    "message": "For example: result.text or candidates[0].text"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_SAVE": {
-    "message": "Save"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_CANCEL": {
-    "message": "Cancel"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_DELETE": {
-    "message": "Delete"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_DELETE_CONFIRM": {
-    "message": "Delete this Custom API and its stored credential? It will not affect stored settings until you save."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_CLEAR_KEY": {
-    "message": "Clear stored API key"
-  },
-  "SETTINGS_TRANSLATION_AUTH_NONE": {
-    "message": "None"
-  },
-  "SETTINGS_TRANSLATION_AUTH_API_KEY": {
-    "message": "API key"
-  },
-  "SETTINGS_TRANSLATION_AUTH_BEARER": {
-    "message": "Bearer token"
-  },
-  "SETTINGS_TRANSLATION_AUTH_CUSTOM": {
-    "message": "Custom"
-  },
-  "SETTINGS_TRANSLATION_AUTH_HEADER": {
-    "message": "Header"
-  },
-  "SETTINGS_TRANSLATION_AUTH_QUERY": {
-    "message": "Query"
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_NAME": {
-    "message": "Enter a service name."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_DUPLICATE": {
-    "message": "A Custom API with the same name already exists."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_URL": {
-    "message": "Enter an HTTP or HTTPS URL without a username or password."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_METHOD": {
-    "message": "Choose POST, PUT, or PATCH."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_HEADERS": {
-    "message": "Check Headers in Name: valueTemplate format."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_BODY": {
-    "message": "The Body template must be valid JSON."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_AUTH": {
-    "message": "Check the authentication mode and auth name."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_RESPONSE": {
-    "message": "Enter a response text path."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_INVALID": {
-    "message": "Check the Custom API settings."
-  },
   "SETTINGS_TRANSLATION_SELECTOR_TITLE": {
     "message": "Translation services"
   },
@@ -645,6 +585,12 @@
   },
   "SETTINGS_TRANSLATION_STATUS_SETUP": {
     "message": "Setup needed"
+  },
+  "SETTINGS_TRANSLATION_STATUS_CONFIGURED": {
+    "message": "Configured"
+  },
+  "SETTINGS_TRANSLATION_STATUS_UNCONFIGURED": {
+    "message": "Not configured"
   },
   "SETTINGS_TRANSLATION_STATUS_CONNECTED": {
     "message": "Connected"
@@ -732,26 +678,5 @@
   },
   "SETTINGS_TRANSLATION_CHROME_NOTE": {
     "message": "No API key is needed. Translation runs through Chrome's Translator API in this page."
-  },
-  "SETTINGS_TRANSLATION_PERMISSION_BADGE": {
-    "message": "Permission needed"
-  },
-  "SETTINGS_TRANSLATION_PERMISSION_ALLOWED_BADGE": {
-    "message": "Permission allowed"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_TITLE": {
-    "message": "Host permission"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_HINT": {
-    "message": "Access to the API host is required for testing and use."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_GRANTED": {
-    "message": "API host access has been allowed."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_REQUEST": {
-    "message": "Request permission"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_TEST_REQUIRED": {
-    "message": "Allow host permission and pass a connection test before activating this service."
   }
 }

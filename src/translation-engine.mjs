@@ -4,20 +4,14 @@ import {
   PROVIDER_AUTH_MODES,
   PROVIDER_EXECUTION_CONTEXTS,
   PROVIDER_KINDS,
-  PROVIDER_SOURCES,
   getProviderPreset,
   isProviderDefinition,
   normalizeProviderDefinition
 } from './translation-provider.mjs'
-import {
-  getProviderOriginPattern,
-  isProviderOriginAllowed
-} from './provider-permissions.mjs'
 
 export const PROVIDER_ERROR_CODES = Object.freeze({
   INVALID_PROVIDER: 'INVALID_PROVIDER',
   INVALID_ENDPOINT: 'INVALID_ENDPOINT',
-  PERMISSION_REQUIRED: 'PERMISSION_REQUIRED',
   AUTH_REQUIRED: 'AUTH_REQUIRED',
   UNSUPPORTED_CONTEXT: 'UNSUPPORTED_CONTEXT',
   HTTP_ERROR: 'HTTP_ERROR',
@@ -299,39 +293,15 @@ export function normalizeProviderResponse(providerInput, payload) {
   }
 }
 
-async function hasPermission(provider, {allowedOrigins = [], permissionChecker} = {}) {
-  if (provider.source === PROVIDER_SOURCES.PRESET) {
-    const preset = getProviderPreset(provider.presetId)
-    if (!preset || preset.endpoint?.url !== provider.endpoint?.url) {
-      throw providerError(
-        PROVIDER_ERROR_CODES.INVALID_ENDPOINT,
-        'The preset translation provider endpoint is invalid.'
-      )
-    }
-    return true
-  }
-
-  const pattern = getProviderOriginPattern(provider.endpoint.url)
-  if (!pattern) {
+function validatePresetEndpoint(provider) {
+  const preset = getProviderPreset(provider.presetId)
+  if (!preset || preset.endpoint?.url !== provider.endpoint?.url) {
     throw providerError(
       PROVIDER_ERROR_CODES.INVALID_ENDPOINT,
-      'The translation provider endpoint must use HTTP or HTTPS.'
+      'The preset translation provider endpoint is invalid.'
     )
   }
-
-  if (isProviderOriginAllowed(provider.endpoint.url, allowedOrigins)) {
-    return true
-  }
-
-  if (typeof permissionChecker === 'function' &&
-      await permissionChecker(pattern, provider.endpoint.url)) {
-    return true
-  }
-
-  throw providerError(
-    PROVIDER_ERROR_CODES.PERMISSION_REQUIRED,
-    'Permission for the translation provider domain is required.'
-  )
+  return true
 }
 
 function effectiveTimeout(timeoutMs) {
@@ -581,8 +551,6 @@ export async function executeProviderTranslation(providerInput, {
   targetLanguage,
   sourceLanguage = '',
   secrets = {},
-  allowedOrigins = [],
-  permissionChecker,
   fetchFn = globalThis.fetch,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   translatorRuntime
@@ -613,7 +581,7 @@ export async function executeProviderTranslation(providerInput, {
       })
     }
 
-    await hasPermission(provider, {allowedOrigins, permissionChecker})
+    validatePresetEndpoint(provider)
     const request = adapter.buildRequest(provider, {
       text,
       targetLanguage,

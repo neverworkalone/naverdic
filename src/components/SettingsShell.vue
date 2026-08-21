@@ -165,10 +165,6 @@ async function saveDraft() {
     replaceReactive(draftSettings, saved.settings)
     replaceReactive(draftSecrets, saved.secrets)
     draftRevision.value += 1
-    // A Custom provider editor only reports dirty until its own validated
-    // form save commits the provider into draftSettings/draftSecrets. Keep
-    // this flag intact here so a top-level save cannot silently discard an
-    // editor that has not been committed yet.
     migrationPending.value = false
     hasLoadError.value = false
     saveState.value = 'success'
@@ -313,7 +309,10 @@ onBeforeUnmount(() => {
               :ref="element => setNavigationRef(element, index)"
               type="button"
               class="settings-navigation__item"
-              :class="{ 'settings-navigation__item--active': activeNavigationId === item.id }"
+              :class="{
+                'settings-navigation__item--active': activeNavigationId === item.id,
+                'settings-navigation__item--help': item.id === 'help'
+              }"
               :data-navigation-id="item.id"
               :aria-current="activeNavigationId === item.id ? 'page' : undefined"
               @click="selectNavigation(item)"
@@ -412,7 +411,6 @@ onBeforeUnmount(() => {
           <SettingsPreview
             :active-page="currentNavigation"
             :draft="draftSettings"
-            :draft-secrets="draftSecrets"
           />
         </aside>
       </section>
@@ -544,9 +542,18 @@ a {
 
 .settings-navigation {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-height: 0;
   gap: 8px;
   padding: 0 16px;
+}
+
+.settings-navigation__item--help {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--naverdic-settings-divider);
+  border-radius: 0;
 }
 
 .settings-navigation__item {
@@ -784,6 +791,7 @@ a {
   }
 
   .settings-navigation {
+    flex: 0 0 auto;
     flex-direction: row;
     gap: 4px;
     padding: 0 12px;
@@ -795,6 +803,13 @@ a {
     width: auto;
     min-width: max-content;
     padding: 0 14px;
+  }
+
+  .settings-navigation__item--help {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+    border-radius: 8px;
   }
 
   .settings-navigation__indicator {

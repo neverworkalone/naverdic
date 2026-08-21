@@ -218,6 +218,18 @@
   "SETTINGS_PAGE_ADVANCED_DESCRIPTION": {
     "message": "설정 데이터와 초기화 같은 고급 기능을 관리합니다."
   },
+  "SETTINGS_ADVANCED_NOTICE": {
+    "message": "고급 설정은 데이터 구조와 복구에 영향을 줄 수 있습니다. 변경 전 현재 설정을 저장해 두세요."
+  },
+  "SETTINGS_HELP_GUIDE_LINK": {
+    "message": "NaverDic 전체 사용 가이드"
+  },
+  "SETTINGS_HELP_DEEPL_LINK": {
+    "message": "DeepL API 키 발급 안내"
+  },
+  "SETTINGS_HELP_QUICK_GUIDE": {
+    "message": "번역 서비스에서 제공자를 선택하고, 외부 서비스는 API 키를 입력한 뒤 연결 테스트를 진행하세요."
+  },
   "SETTINGS_SHELL_STATUS_SAVED": {
     "message": "저장됨"
   },
@@ -364,6 +376,54 @@
   "SETTINGS_PREVIEW_HINT": {
     "message": "현재 팝업 설정"
   },
+  "SETTINGS_PREVIEW_FLOW_LABEL": {
+    "message": "사용 흐름"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1": {
+    "message": "페이지에서 찾고 싶은 단어를 더블클릭합니다."
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_2": {
+    "message": "필요하면 트리거 키와 더블클릭 속도를 조정합니다."
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3": {
+    "message": "팝업에서 사전 결과를 확인합니다."
+  },
+  "SETTINGS_PREVIEW_BEHAVIOR_STEP_1": {
+    "message": "문장을 드래그해 선택합니다."
+  },
+  "SETTINGS_PREVIEW_BEHAVIOR_STEP_2": {
+    "message": "설정한 보조키와 함께 놓으면 검색이 실행됩니다."
+  },
+  "SETTINGS_PREVIEW_BEHAVIOR_STEP_3": {
+    "message": "선택한 텍스트의 사전 결과를 확인합니다."
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_1": {
+    "message": "팝업을 숨길 도메인을 한 줄씩 입력합니다."
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_2": {
+    "message": "중지목록을 켜면 등록한 사이트에서 동작하지 않습니다."
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_3": {
+    "message": "정규화된 도메인 목록에서 적용 결과를 확인합니다."
+  },
+  "SETTINGS_PREVIEW_ADVANCED_TITLE": {
+    "message": "설정 데이터 관리"
+  },
+  "SETTINGS_PREVIEW_ADVANCED_DESCRIPTION": {
+    "message": "초기화는 저장된 설정과 API 키를 기본값으로 되돌립니다."
+  },
+  "SETTINGS_PREVIEW_ADVANCED_WARNING": {
+    "message": "초기화는 되돌릴 수 없으므로 필요한 설정을 먼저 기록하세요."
+  },
+  "SETTINGS_PREVIEW_HELP_TITLE": {
+    "message": "도움말과 빠른 안내"
+  },
+  "SETTINGS_PREVIEW_HELP_LINK": {
+    "message": "공식 사용 가이드 열기"
+  },
+  "SETTINGS_PREVIEW_HELP_QUICK_GUIDE": {
+    "message": "모양에서 팝업을 조정하고, 더블클릭·동작에서 검색 흐름을 설정한 다음 저장 버튼으로 반영합니다."
+  },
   "SETTINGS_TRANSLATION_ENABLED": {
     "message": "문장 번역 사용"
   },
@@ -415,11 +475,11 @@
   "SETTINGS_TRANSLATION_GEMINI_DESCRIPTION": {
     "message": "자연스러운 문장 번역과 요약"
   },
-  "SETTINGS_TRANSLATION_CUSTOM_NAME": {
-    "message": "Custom API"
+  "SETTINGS_TRANSLATION_GEMINI_MODEL": {
+    "message": "모델"
   },
-  "SETTINGS_TRANSLATION_CUSTOM_DESCRIPTION": {
-    "message": "직접 연결하는 번역 API"
+  "SETTINGS_TRANSLATION_GEMINI_MODEL_HINT": {
+    "message": "현재 지원하는 모델은 gemini-3.5-flash입니다."
   },
   "SETTINGS_TRANSLATION_DEFAULT_BADGE": {
     "message": "무료 기본 제공"
@@ -441,12 +501,6 @@
   },
   "SETTINGS_TRANSLATION_EXTERNAL_NOTE": {
     "message": "외부 서비스는 API 키를 저장한 뒤 사용할 수 있습니다."
-  },
-  "SETTINGS_TRANSLATION_PERMISSION_REQUESTING": {
-    "message": "Custom API 도메인 접근 권한을 확인하는 중입니다."
-  },
-  "SETTINGS_TRANSLATION_PERMISSION_REQUIRED": {
-    "message": "Custom API를 사용하려면 해당 도메인 접근 권한이 필요합니다."
   },
   "SETTINGS_TRANSLATION_PRESET_DESCRIPTION": {
     "message": "인증키를 입력하고 연결 상태를 확인합니다."
@@ -505,120 +559,6 @@
   "SETTINGS_TRANSLATION_SERVICE_SETTINGS": {
     "message": "서비스 설정"
   },
-  "SETTINGS_TRANSLATION_CUSTOM_TITLE": {
-    "message": "Custom API 추가"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_ADD": {
-    "message": "Custom API 추가"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_EDIT": {
-    "message": "Custom API 설정"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_NAME_LABEL": {
-    "message": "서비스 이름"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_NAME_HINT": {
-    "message": "설정 화면에 표시할 이름입니다."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_URL": {
-    "message": "URL"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_URL_HINT": {
-    "message": "HTTP 또는 HTTPS 주소만 사용할 수 있습니다."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_METHOD": {
-    "message": "Method"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_AUTH_MODE": {
-    "message": "인증 방식"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_AUTH_LOCATION": {
-    "message": "인증 위치"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_AUTH_HEADER": {
-    "message": "인증 이름"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_AUTH_PREFIX": {
-    "message": "인증 접두사"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_HEADERS": {
-    "message": "Headers"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_HEADERS_HINT": {
-    "message": "한 줄에 하나씩 Name: valueTemplate 형식으로 입력하세요."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_BODY": {
-    "message": "Body template"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_BODY_HINT": {
-    "message": "JSON 형식으로 입력하고 {{text}}, {{targetLanguage}}를 사용할 수 있습니다."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH": {
-    "message": "응답 텍스트 경로"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_RESPONSE_PATH_HINT": {
-    "message": "예: result.text 또는 candidates[0].text"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_SAVE": {
-    "message": "저장"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_CANCEL": {
-    "message": "취소"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_DELETE": {
-    "message": "삭제"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_DELETE_CONFIRM": {
-    "message": "이 Custom API와 저장된 인증키를 삭제할까요? 저장 버튼을 눌러야 실제 설정에 반영됩니다."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_CLEAR_KEY": {
-    "message": "저장된 API 키 지우기"
-  },
-  "SETTINGS_TRANSLATION_AUTH_NONE": {
-    "message": "없음"
-  },
-  "SETTINGS_TRANSLATION_AUTH_API_KEY": {
-    "message": "API 키"
-  },
-  "SETTINGS_TRANSLATION_AUTH_BEARER": {
-    "message": "Bearer 토큰"
-  },
-  "SETTINGS_TRANSLATION_AUTH_CUSTOM": {
-    "message": "사용자 지정"
-  },
-  "SETTINGS_TRANSLATION_AUTH_HEADER": {
-    "message": "Header"
-  },
-  "SETTINGS_TRANSLATION_AUTH_QUERY": {
-    "message": "Query"
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_NAME": {
-    "message": "서비스 이름을 입력하세요."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_DUPLICATE": {
-    "message": "같은 이름의 Custom API가 이미 있습니다."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_URL": {
-    "message": "HTTP 또는 HTTPS URL을 입력하세요. URL에 사용자 이름이나 비밀번호를 넣을 수 없습니다."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_METHOD": {
-    "message": "POST, PUT, PATCH 중 하나를 선택하세요."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_HEADERS": {
-    "message": "Headers를 Name: valueTemplate 형식으로 확인하세요."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_BODY": {
-    "message": "Body template은 올바른 JSON이어야 합니다."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_AUTH": {
-    "message": "인증 방식과 인증 이름을 확인하세요."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_RESPONSE": {
-    "message": "응답 텍스트 경로를 입력하세요."
-  },
-  "SETTINGS_TRANSLATION_VALIDATION_INVALID": {
-    "message": "Custom API 설정을 확인하세요."
-  },
   "SETTINGS_TRANSLATION_SELECTOR_TITLE": {
     "message": "번역 서비스"
   },
@@ -645,6 +585,12 @@
   },
   "SETTINGS_TRANSLATION_STATUS_SETUP": {
     "message": "설정 필요"
+  },
+  "SETTINGS_TRANSLATION_STATUS_CONFIGURED": {
+    "message": "설정됨"
+  },
+  "SETTINGS_TRANSLATION_STATUS_UNCONFIGURED": {
+    "message": "미설정"
   },
   "SETTINGS_TRANSLATION_STATUS_CONNECTED": {
     "message": "연결됨"
@@ -732,26 +678,5 @@
   },
   "SETTINGS_TRANSLATION_CHROME_NOTE": {
     "message": "API 키가 필요하지 않습니다. 번역은 이 페이지의 Chrome Translator API에서 처리됩니다."
-  },
-  "SETTINGS_TRANSLATION_PERMISSION_BADGE": {
-    "message": "권한 필요"
-  },
-  "SETTINGS_TRANSLATION_PERMISSION_ALLOWED_BADGE": {
-    "message": "권한 허용됨"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_TITLE": {
-    "message": "호스트 권한"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_HINT": {
-    "message": "연결 테스트와 사용을 위해 API 호스트 접근 권한이 필요합니다."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_GRANTED": {
-    "message": "API 호스트 접근 권한이 허용되었습니다."
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_PERMISSION_REQUEST": {
-    "message": "권한 요청"
-  },
-  "SETTINGS_TRANSLATION_CUSTOM_TEST_REQUIRED": {
-    "message": "활성화하려면 호스트 권한을 허용하고 연결 테스트를 성공시켜야 합니다."
   }
 }

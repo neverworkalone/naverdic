@@ -376,7 +376,52 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
     </KeepAlive>
 
     <section
-      v-if="!['appearance', 'double-click', 'behavior', 'blocked-sites', 'translation-service'].includes(pageId)"
+      v-if="pageId === 'advanced'"
+      class="settings-card settings-card--advanced"
+      data-testid="settings-advanced-page"
+    >
+      <div class="settings-card__heading">
+        <h3>{{ text('SETTINGS_PAGE_ADVANCED_TITLE') }}</h3>
+        <p>{{ text('SETTINGS_PAGE_ADVANCED_DESCRIPTION') }}</p>
+      </div>
+      <div class="settings-page-notice">
+        {{ text('SETTINGS_ADVANCED_NOTICE') }}
+      </div>
+      <div class="settings-placeholder-card__actions">
+        <button
+          type="button"
+          class="settings-placeholder-card__reset"
+          data-testid="settings-reset-button"
+          :disabled="isLoading || isSaving"
+          @click="resetDraft"
+        >
+          {{ text('RESET') }}
+        </button>
+      </div>
+    </section>
+
+    <section
+      v-if="pageId === 'help'"
+      class="settings-card settings-card--help"
+      data-testid="settings-help-page"
+    >
+      <div class="settings-card__heading">
+        <h3>{{ text('SETTINGS_PAGE_HELP_TITLE') }}</h3>
+        <p>{{ text('SETTINGS_PAGE_HELP_DESCRIPTION') }}</p>
+      </div>
+      <div class="settings-help-links">
+        <a href="https://neverworkalone.github.io/naverdic/" target="_blank" rel="noopener noreferrer">
+          {{ text('SETTINGS_HELP_GUIDE_LINK') }}
+        </a>
+        <a href="https://www.deepl.com/pro-api" target="_blank" rel="noopener noreferrer">
+          {{ text('SETTINGS_HELP_DEEPL_LINK') }}
+        </a>
+      </div>
+      <p class="settings-help-quick-guide">{{ text('SETTINGS_HELP_QUICK_GUIDE') }}</p>
+    </section>
+
+    <section
+      v-if="!['appearance', 'double-click', 'behavior', 'blocked-sites', 'translation-service', 'advanced', 'help'].includes(pageId)"
       class="settings-card settings-card--placeholder"
     >
       <h3>{{ text('SETTINGS_SHELL_PLACEHOLDER_TITLE') }}</h3>
@@ -663,6 +708,44 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
 
 .settings-card--placeholder {
   min-height: 220px;
+}
+
+.settings-page-notice {
+  margin-top: 20px;
+  padding: 14px 16px;
+  color: var(--naverdic-settings-primary-text);
+  background: var(--naverdic-settings-info);
+  border-radius: var(--naverdic-radius-sm);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.settings-help-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.settings-help-links a {
+  color: var(--naverdic-settings-primary-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  text-decoration: none;
+}
+
+.settings-help-links a:hover {
+  text-decoration: underline;
+}
+
+.settings-help-quick-guide {
+  margin: 22px 0 0;
+  padding-top: 18px;
+  color: var(--naverdic-settings-text-muted);
+  border-top: 1px solid var(--naverdic-settings-divider);
+  font-size: 12px;
+  line-height: 20px;
 }
 
 .settings-placeholder-card__note {

@@ -39,10 +39,6 @@ export default defineConfig({
           dest: '.'
         },
         {
-          src: 'src/provider-permissions.mjs',
-          dest: '.'
-        },
-        {
           src: 'src/translation-provider.mjs',
           dest: '.'
         },

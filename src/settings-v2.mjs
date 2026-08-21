@@ -1,8 +1,6 @@
 import {
   DEFAULT_PROVIDER_ID,
-  PROVIDER_PRESETS,
-  PROVIDER_SOURCES,
-  normalizeProviderDefinition
+  PROVIDER_PRESETS
 } from './translation-provider.mjs'
 
 export const SETTINGS_SCHEMA_VERSION = 2
@@ -100,21 +98,11 @@ export const SETTINGS_NAVIGATION = Object.freeze([
     descriptionKey: 'SETTINGS_PAGE_DOUBLE_CLICK_DESCRIPTION'
   }),
   Object.freeze({
-    id: 'blocked-sites',
-    pageId: SETTINGS_PAGE_IDS.SITES,
-    section: 'sites',
-    kind: 'page',
-    order: 30,
-    labelKey: 'SETTINGS_NAV_BLOCKED_SITES',
-    titleKey: 'SETTINGS_PAGE_BLOCKED_SITES_TITLE',
-    descriptionKey: 'SETTINGS_PAGE_BLOCKED_SITES_DESCRIPTION'
-  }),
-  Object.freeze({
     id: 'behavior',
     pageId: SETTINGS_PAGE_IDS.DICTIONARY,
     section: 'behavior',
     kind: 'page',
-    order: 40,
+    order: 30,
     labelKey: 'SETTINGS_NAV_BEHAVIOR',
     titleKey: 'SETTINGS_PAGE_BEHAVIOR_TITLE',
     descriptionKey: 'SETTINGS_PAGE_BEHAVIOR_DESCRIPTION'
@@ -124,33 +112,42 @@ export const SETTINGS_NAVIGATION = Object.freeze([
     pageId: SETTINGS_PAGE_IDS.TRANSLATION,
     section: 'translation',
     kind: 'page',
-    order: 50,
+    order: 40,
     labelKey: 'SETTINGS_NAV_TRANSLATION',
     titleKey: 'SETTINGS_PAGE_TRANSLATION_TITLE',
     descriptionKey: 'SETTINGS_PAGE_TRANSLATION_DESCRIPTION'
   }),
   Object.freeze({
-    id: 'help',
-    pageId: SETTINGS_PAGE_IDS.HELP,
-    section: 'help',
-    kind: 'external',
-    order: 60,
-    labelKey: 'SETTINGS_NAV_HELP',
-    titleKey: 'SETTINGS_PAGE_HELP_TITLE',
-    descriptionKey: 'SETTINGS_PAGE_HELP_DESCRIPTION',
-    url: SETTINGS_MENU.find(item => item.id === SETTINGS_PAGE_IDS.HELP).url,
-    external: true
+    id: 'blocked-sites',
+    pageId: SETTINGS_PAGE_IDS.SITES,
+    section: 'sites',
+    kind: 'page',
+    order: 50,
+    labelKey: 'SETTINGS_NAV_BLOCKED_SITES',
+    titleKey: 'SETTINGS_PAGE_BLOCKED_SITES_TITLE',
+    descriptionKey: 'SETTINGS_PAGE_BLOCKED_SITES_DESCRIPTION'
   }),
   Object.freeze({
     id: 'advanced',
     pageId: SETTINGS_PAGE_IDS.ADVANCED,
     section: 'advanced',
     kind: 'page',
-    order: 70,
+    order: 60,
     labelKey: 'SETTINGS_NAV_ADVANCED',
     titleKey: 'SETTINGS_PAGE_ADVANCED_TITLE',
     descriptionKey: 'SETTINGS_PAGE_ADVANCED_DESCRIPTION',
     actions: Object.freeze(['reset'])
+  }),
+  Object.freeze({
+    id: 'help',
+    pageId: SETTINGS_PAGE_IDS.HELP,
+    section: 'help',
+    kind: 'page',
+    order: 70,
+    labelKey: 'SETTINGS_NAV_HELP',
+    titleKey: 'SETTINGS_PAGE_HELP_TITLE',
+    descriptionKey: 'SETTINGS_PAGE_HELP_DESCRIPTION',
+    url: SETTINGS_MENU.find(item => item.id === SETTINGS_PAGE_IDS.HELP).url
   })
 ])
 
@@ -297,8 +294,7 @@ export const SETTINGS_SCHEMA_V2 = Object.freeze([
   Object.freeze({path: 'translation.enabled', type: 'boolean', storage: 'sync', defaultValue: false}),
   Object.freeze({path: 'translation.triggerKey', type: 'trigger', storage: 'sync', defaultValue: 'ctrlalt', values: TRIGGER_KEYS}),
   Object.freeze({path: 'translation.providerId', type: 'provider-id', storage: 'sync', defaultValue: DEFAULT_PROVIDER_ID}),
-  Object.freeze({path: 'translation.targetLanguage', type: 'language-code', storage: 'sync', defaultValue: 'ko'}),
-  Object.freeze({path: 'customProviders', type: 'provider-map', storage: 'sync', defaultValue: {}})
+  Object.freeze({path: 'translation.targetLanguage', type: 'language-code', storage: 'sync', defaultValue: 'ko'})
 ])
 
 export const SETTINGS_V2_DEFAULTS = deepFreeze({
@@ -331,31 +327,13 @@ export const SETTINGS_V2_DEFAULTS = deepFreeze({
     triggerKey: 'ctrlalt',
     providerId: DEFAULT_PROVIDER_ID,
     targetLanguage: 'ko'
-  },
-  customProviders: {}
+  }
 })
 
 export const SECRETS_V2_DEFAULTS = deepFreeze({
   schemaVersion: SETTINGS_SCHEMA_VERSION,
   providers: {}
 })
-
-function normalizeCustomProviders(value) {
-  if (!isRecord(value)) {
-    return {}
-  }
-
-  const normalized = {}
-  Object.entries(value).forEach(([id, definition]) => {
-    const provider = normalizeProviderDefinition(definition, {id})
-    if (provider &&
-        provider.source === PROVIDER_SOURCES.CUSTOM &&
-        !PROVIDER_PRESETS[provider.id]) {
-      normalized[provider.id] = provider
-    }
-  })
-  return normalized
-}
 
 export function createDefaultSettingsV2() {
   return cloneValue(SETTINGS_V2_DEFAULTS)
@@ -368,15 +346,11 @@ export function createDefaultSecretsV2() {
 export function normalizeSettingsV2(values) {
   const source = isRecord(values) ? values : {}
   const defaults = createDefaultSettingsV2()
-  const customProviders = normalizeCustomProviders(source.customProviders)
   const requestedProviderId = normalizeProviderId(
     source.translation?.providerId,
     defaults.translation.providerId
   )
-  const knownProviderIds = new Set([
-    ...Object.keys(PROVIDER_PRESETS),
-    ...Object.keys(customProviders)
-  ])
+  const knownProviderIds = new Set(Object.keys(PROVIDER_PRESETS))
   const providerId = knownProviderIds.has(requestedProviderId)
     ? requestedProviderId
     : defaults.translation.providerId
@@ -447,8 +421,7 @@ export function normalizeSettingsV2(values) {
         source.translation?.targetLanguage,
         defaults.translation.targetLanguage
       )
-    },
-    customProviders
+    }
   }
 }
 
@@ -460,6 +433,9 @@ export function normalizeSecretsV2(values) {
   Object.entries(providers).forEach(([id, credentials]) => {
     const providerId = normalizeProviderId(id, '')
     if (!providerId || !isRecord(credentials)) {
+      return
+    }
+    if (!PROVIDER_PRESETS[providerId]) {
       return
     }
 

@@ -11,7 +11,6 @@ import {
   PROVIDER_ERROR_CODES
 } from './translation-engine.mjs'
 import {getProviderPreset, normalizeProviderDefinition} from './translation-provider.mjs'
-import {hasProviderOriginPermission} from './provider-permissions.mjs'
 
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -310,8 +309,7 @@ function providerErrorResponse(error) {
     )
   }
 
-  if (code === PROVIDER_ERROR_CODES.PERMISSION_REQUIRED ||
-      code === PROVIDER_ERROR_CODES.INVALID_PROVIDER ||
+  if (code === PROVIDER_ERROR_CODES.INVALID_PROVIDER ||
       code === PROVIDER_ERROR_CODES.INVALID_ENDPOINT ||
       code === PROVIDER_ERROR_CODES.UNSUPPORTED_CONTEXT) {
     return createErrorResponse(
@@ -348,13 +346,7 @@ function providerErrorResponse(error) {
   )
 }
 
-async function handleProviderTranslation(request, {
-  fetchFn,
-  timeoutMs,
-  permissionApi,
-  allowedOrigins = [],
-  permissionChecker
-} = {}) {
+async function handleProviderTranslation(request, {fetchFn, timeoutMs} = {}) {
   const provider = request.provider
     ? normalizeProviderDefinition(request.provider, {id: request.provider.id})
     : getProviderPreset('deepl-free')
@@ -367,17 +359,11 @@ async function handleProviderTranslation(request, {
   }
 
   const targetLanguage = request.data.targetLanguage ?? request.data.target_lang
-  const checker = permissionChecker || (async (_pattern, endpointUrl) => (
-    hasProviderOriginPermission(permissionApi, endpointUrl)
-  ))
-
   try {
     const result = await executeProviderTranslation(provider, {
       text: request.data.text,
       targetLanguage,
       secrets: providerSecrets(provider, request),
-      allowedOrigins,
-      permissionChecker: checker,
       fetchFn,
       timeoutMs
     })
@@ -397,10 +383,7 @@ export async function handleBackgroundMessage(
   request,
   {
     fetchFn = globalThis.fetch,
-    timeoutMs = DEFAULT_MESSAGE_TIMEOUT_MS,
-    permissionApi = globalThis.chrome?.permissions,
-    allowedOrigins = [],
-    permissionChecker
+    timeoutMs = DEFAULT_MESSAGE_TIMEOUT_MS
   } = {}
 ) {
   const validationError = validateMessageRequest(request)
@@ -411,10 +394,7 @@ export async function handleBackgroundMessage(
   if (request.action === MESSAGE_ACTIONS.TRANSLATION) {
     return handleProviderTranslation(request, {
       fetchFn,
-      timeoutMs,
-      permissionApi,
-      allowedOrigins,
-      permissionChecker
+      timeoutMs
     })
   }
 

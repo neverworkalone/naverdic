@@ -57,7 +57,7 @@ test('defines stable settings pages, ordering, and advanced actions', () => {
 test('maps the finalized Figma navigation to stable settings sections', () => {
   assert.deepEqual(
     SETTINGS_NAVIGATION.map(item => item.id),
-    ['appearance', 'double-click', 'blocked-sites', 'behavior', 'translation-service', 'help', 'advanced']
+    ['appearance', 'double-click', 'behavior', 'translation-service', 'blocked-sites', 'advanced', 'help']
   )
   assert.equal(
     SETTINGS_NAVIGATION.find(item => item.id === 'double-click').pageId,
@@ -70,8 +70,8 @@ test('maps the finalized Figma navigation to stable settings sections', () => {
 
   const help = SETTINGS_NAVIGATION.find(item => item.id === 'help')
   const advanced = SETTINGS_NAVIGATION.find(item => item.id === 'advanced')
-  assert.equal(help.kind, 'external')
-  assert.equal(help.external, true)
+  assert.equal(help.kind, 'page')
+  assert.equal(help.external, undefined)
   assert.match(help.url, /^https:\/\//)
   assert.deepEqual(advanced.actions, ['reset'])
 })
@@ -85,7 +85,7 @@ test('defines the v2 storage split and nested settings defaults', () => {
   assert.equal(SETTINGS_V2_DEFAULTS.translation.providerId, DEFAULT_PROVIDER_ID)
   assert.equal(SETTINGS_V2_DEFAULTS.translation.targetLanguage, 'ko')
   assert.equal(SETTINGS_V2_DEFAULTS.popup.fontSizePt, 11)
-  assert.ok(SETTINGS_SCHEMA_V2.some(field => field.path === 'customProviders'))
+  assert.equal(SETTINGS_SCHEMA_V2.some(field => field.path === 'customProviders'), false)
   assert.ok(SETTINGS_SCHEMA_V2.some(field => field.path === 'translation.targetLanguage'))
 })
 
@@ -142,17 +142,22 @@ test('normalizes v2 values without accepting invalid enums or provider secrets',
   assert.equal(normalized.translation.enabled, true)
   assert.equal(normalized.translation.providerId, 'deepl-free')
   assert.equal(normalized.translation.targetLanguage, 'ja')
-  assert.equal(normalized.customProviders.sample.endpoint.method, 'POST')
-  assert.equal(normalized.customProviders.sample.source, PROVIDER_SOURCES.CUSTOM)
-  assert.equal(normalized.customProviders.sample.auth.secretRef, 'providers.sample.token')
-  assert.equal('apiKey' in normalized.customProviders.sample, false)
-  assert.equal('key' in normalized.customProviders.sample, false)
-
-  const knownCustom = normalizeSettingsV2({
-    translation: {providerId: 'sample'},
-    customProviders: normalized.customProviders
+  assert.equal('customProviders' in normalized, false)
+  assert.deepEqual(normalizeSecretsV2({
+    providers: {
+      sample: {token: 'legacy-custom-secret'},
+      'deepl-free': {apiKey: 'deepl-secret'}
+    }
+  }), {
+    schemaVersion: 2,
+    providers: {'deepl-free': {apiKey: 'deepl-secret'}}
   })
-  assert.equal(knownCustom.translation.providerId, 'sample')
+
+  const legacyCustom = normalizeSettingsV2({
+    translation: {providerId: 'sample'},
+    customProviders: {sample: {id: 'sample', source: 'custom'}}
+  })
+  assert.equal(legacyCustom.translation.providerId, 'deepl-free')
   assert.equal(
     normalizeSettingsV2({
       translation: {providerId: 'missing-provider'}
@@ -218,7 +223,7 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(shell, /currentNavigation\.id !== 'translation-service'/)
 })
 
-test('normalizes a custom provider and drops credential-shaped input fields', () => {
+test('rejects legacy custom provider definitions', () => {
   const provider = normalizeProviderDefinition({
     id: 'Custom API',
     name: 'Custom API',
@@ -289,19 +294,7 @@ test('normalizes a custom provider and drops credential-shaped input fields', ()
     authorization: 'do-not-persist'
   })
 
-  assert.equal(isProviderDefinition(validProvider), true)
-  assert.equal(validProvider.endpoint.method, 'PATCH')
-  assert.equal(validProvider.auth.secretRef, 'providers.custom-api.apiKey')
-  assert.equal(validProvider.request.headers[0].valueTemplate, 'application/json')
-  assert.deepEqual(validProvider.request.headers[1], {
-    name: 'Authorization',
-    valueTemplate: '{{secret}}',
-    secretRef: 'providers.custom-api.apiKey'
-  })
-  assert.deepEqual(validProvider.request.bodyTemplate, {input: '{{text}}'})
-  assert.equal('apiKey' in validProvider, false)
-  assert.equal('key' in validProvider, false)
-  assert.equal('authorization' in validProvider, false)
+  assert.equal(validProvider, null)
 })
 
 test('migrates every v6.6 setting and moves the DeepL key to local secrets', () => {
