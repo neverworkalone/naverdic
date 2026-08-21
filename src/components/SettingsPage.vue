@@ -745,7 +745,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   top: 45px;
 }
 
-.settings-blocked-sites-field > textarea {
+.settings-blocked-sites-card .settings-blocked-sites-field > textarea {
   top: 70px;
   height: 120px;
   min-height: 120px;
@@ -1734,7 +1734,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
     width: auto;
   }
 
-  .settings-blocked-sites-field > textarea {
+  .settings-blocked-sites-card .settings-blocked-sites-field > textarea {
     height: 120px;
     min-height: 120px;
     margin-top: 2px;
