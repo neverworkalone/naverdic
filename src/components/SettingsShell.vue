@@ -487,18 +487,8 @@ a {
   min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
 }
 
-.settings-shell--double-click .settings-header {
-  height: var(--naverdic-settings-header-height);
-  min-height: var(--naverdic-settings-header-height);
-}
-
 .settings-shell--drag .settings-body {
   min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
-}
-
-.settings-shell--drag .settings-header {
-  height: var(--naverdic-settings-header-height);
-  min-height: var(--naverdic-settings-header-height);
 }
 
 .settings-header {

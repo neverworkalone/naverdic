@@ -291,6 +291,8 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(shell, /\.settings-shell--drag \{[\s\S]*border: 1px solid var\(--naverdic-settings-border\)/)
   assert.match(shell, /\.settings-shell--drag \{[\s\S]*border-radius: var\(--naverdic-settings-radius\)/)
   assert.match(shell, /\.settings-shell--drag \{[\s\S]*box-shadow: var\(--naverdic-settings-shadow\)/)
+  assert.equal(shell.includes('.settings-shell--double-click .settings-header'), false)
+  assert.equal(shell.includes('.settings-shell--drag .settings-header'), false)
   assert.match(shell, /settings-content--drag/)
   assert.match(shell, /currentNavigation\.previewTitleKey/)
   assert.match(shell, /currentNavigation\.previewDescriptionKey/)
