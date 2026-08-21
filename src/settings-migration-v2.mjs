@@ -10,7 +10,7 @@ import {
   SETTINGS_SCHEMA_VERSION,
   SETTINGS_STORAGE,
   createDefaultSecretsV2,
-  createDefaultSettingsV2,
+  createInitialSettingsV2,
   normalizeDomainList,
   normalizeSecretsV2,
   normalizeSettingsV2
@@ -72,7 +72,7 @@ function finiteNumber(value, fallback) {
 export function migrateV66ToV2(values) {
   const source = isRecord(values) ? values : {}
   const legacy = normalizeSettings(source)
-  const settings = createDefaultSettingsV2()
+  const settings = createInitialSettingsV2()
   const secrets = createDefaultSecretsV2()
 
   settings.dictionary.doubleClick.enabled = legacy.dclick
@@ -82,7 +82,9 @@ export function migrateV66ToV2(values) {
     settings.dictionary.doubleClick.speedMs
   )
   settings.dictionary.drag.enabled = legacy.drag
-  settings.dictionary.drag.triggerKey = legacy.drag_trigger_key
+  if (hasOwn(source, 'drag_trigger_key')) {
+    settings.dictionary.drag.triggerKey = legacy.drag_trigger_key
+  }
   settings.translation.enabled = legacy.translate
   settings.translation.triggerKey = legacy.translate_trigger_key
   settings.translation.providerId = DEFAULT_PROVIDER_ID

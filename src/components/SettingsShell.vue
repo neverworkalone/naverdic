@@ -4,7 +4,7 @@ import { getText } from '/src/text.js'
 import SettingsPreview from '/src/components/SettingsPreview.vue'
 import {
   createDefaultSecretsV2,
-  createDefaultSettingsV2,
+  createInitialSettingsV2,
   SETTINGS_NAVIGATION
 } from '/src/settings-v2.mjs'
 import {
@@ -19,11 +19,11 @@ const navigation = SETTINGS_NAVIGATION
 const activeNavigationId = ref(navigation[0].id)
 const storage = globalThis.chrome?.storage || null
 
-const defaultSettings = createDefaultSettingsV2()
+const defaultSettings = createInitialSettingsV2()
 const defaultSecrets = createDefaultSecretsV2()
-const persistedSettings = reactive(createDefaultSettingsV2())
+const persistedSettings = reactive(createInitialSettingsV2())
 const persistedSecrets = reactive(createDefaultSecretsV2())
-const draftSettings = reactive(createDefaultSettingsV2())
+const draftSettings = reactive(createInitialSettingsV2())
 const draftSecrets = reactive(createDefaultSecretsV2())
 const navButtonRefs = ref([])
 const isLoading = ref(true)
@@ -264,7 +264,10 @@ onBeforeUnmount(() => {
 <template>
   <main
     class="settings-shell"
-    :class="{'settings-shell--double-click': currentNavigation.id === 'double-click'}"
+    :class="{
+      'settings-shell--double-click': currentNavigation.id === 'double-click',
+      'settings-shell--drag': currentNavigation.id === 'behavior'
+    }"
     data-testid="settings-shell"
   >
     <header class="settings-header">
@@ -358,7 +361,8 @@ onBeforeUnmount(() => {
         class="settings-content"
         :class="{
           'settings-content--translation': currentNavigation.id === 'translation-service',
-          'settings-content--double-click': currentNavigation.id === 'double-click'
+          'settings-content--double-click': currentNavigation.id === 'double-click',
+          'settings-content--drag': currentNavigation.id === 'behavior'
         }"
         :aria-labelledby="`settings-page-title-${currentNavigation.id}`"
       >
@@ -409,11 +413,11 @@ onBeforeUnmount(() => {
         <aside
           v-if="currentNavigation.id !== 'translation-service'"
           class="settings-preview-column"
-          :aria-label="text('SETTINGS_SHELL_PREVIEW_TITLE')"
+          :aria-label="text(currentNavigation.previewTitleKey || 'SETTINGS_SHELL_PREVIEW_TITLE')"
         >
           <div class="settings-preview-heading">
-            <h2>{{ text('SETTINGS_SHELL_PREVIEW_TITLE') }}</h2>
-            <p>{{ text('SETTINGS_SHELL_PREVIEW_DESCRIPTION') }}</p>
+            <h2>{{ text(currentNavigation.previewTitleKey || 'SETTINGS_SHELL_PREVIEW_TITLE') }}</h2>
+            <p>{{ text(currentNavigation.previewDescriptionKey || 'SETTINGS_SHELL_PREVIEW_DESCRIPTION') }}</p>
           </div>
           <SettingsPreview
             :active-page="currentNavigation"
@@ -463,20 +467,28 @@ a {
 
 .settings-shell--double-click {
   width: min(1200px, 100%);
-  min-height: min(860px, 100vh);
-  margin: 0 auto;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
+  min-height: min(860px, calc(100vh - 32px));
+  margin: 16px auto;
+  border: 1px solid var(--naverdic-settings-border);
+  border-radius: var(--naverdic-settings-radius);
+  box-shadow: var(--naverdic-settings-shadow);
+}
+
+.settings-shell--drag {
+  width: min(1200px, 100%);
+  min-height: min(860px, calc(100vh - 32px));
+  margin: 16px auto;
+  border: 1px solid var(--naverdic-settings-border);
+  border-radius: var(--naverdic-settings-radius);
+  box-shadow: var(--naverdic-settings-shadow);
 }
 
 .settings-shell--double-click .settings-body {
-  min-height: calc(min(860px, 100vh) - var(--naverdic-settings-header-height));
+  min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
 }
 
-.settings-shell--double-click .settings-header {
-  height: var(--naverdic-settings-header-height);
-  min-height: var(--naverdic-settings-header-height);
+.settings-shell--drag .settings-body {
+  min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
 }
 
 .settings-header {
@@ -659,6 +671,11 @@ a {
   gap: 28px;
 }
 
+.settings-content--drag {
+  grid-template-columns: 556px 300px;
+  gap: 28px;
+}
+
 .settings-content--translation .settings-form-column {
   grid-column: 1 / -1;
 }
@@ -688,6 +705,13 @@ a {
   color: var(--naverdic-settings-text-muted);
   font-size: 13px;
   line-height: 20px;
+}
+
+.settings-shell--double-click .settings-page-heading h2,
+.settings-shell--double-click .settings-preview-heading h2,
+.settings-shell--drag .settings-page-heading h2,
+.settings-shell--drag .settings-preview-heading h2 {
+  font-size: 24px;
 }
 
 .settings-placeholder-card {
@@ -771,6 +795,14 @@ a {
   }
 
   .settings-content--double-click .settings-preview-column {
+    display: block;
+  }
+
+  .settings-content--drag {
+    grid-template-columns: minmax(0, 556px);
+  }
+
+  .settings-content--drag .settings-preview-column {
     display: block;
   }
 }

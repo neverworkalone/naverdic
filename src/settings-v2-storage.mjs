@@ -1,7 +1,7 @@
 import {
   SETTINGS_STORAGE,
   createDefaultSecretsV2,
-  createDefaultSettingsV2,
+  createInitialSettingsV2,
   hasSettingsV2Envelope,
   hasSecretsV2Envelope,
   normalizeSecretsV2,
@@ -180,9 +180,21 @@ function getStorageAreas(storage) {
   }
 }
 
+function normalizeLoadedSettingsV2(values) {
+  const normalized = normalizeSettingsV2(values)
+  const drag = isRecord(values?.dictionary?.drag) ? values.dictionary.drag : null
+
+  if (!drag || !hasOwn(drag, 'triggerKey')) {
+    normalized.dictionary.drag.triggerKey = createInitialSettingsV2().dictionary.drag.triggerKey
+  }
+
+  return normalized
+}
+
 /**
  * Read v7 envelopes and legacy v6.6 keys without changing either storage
- * area. Individual invalid v2 fields are normalized to their own defaults.
+ * area. Invalid v2 fields use compatibility defaults, while a missing drag
+ * trigger follows the new-install Figma policy.
  */
 export async function loadSettingsV2(storage) {
   const areas = getStorageAreas(storage)
@@ -196,7 +208,7 @@ export async function loadSettingsV2(storage) {
   const hasV2Settings = hasSettingsV2Envelope(storedSettings)
   const legacyMigration = migrateV66ToV2(syncValues)
   const settings = hasV2Settings
-    ? normalizeSettingsV2(storedSettings)
+    ? normalizeLoadedSettingsV2(storedSettings)
     : legacyMigration.settings
   const storedSecrets = localValues[SETTINGS_STORAGE.secrets.key]
   const hasV2Secrets = hasSecretsV2Envelope(storedSecrets)
@@ -269,7 +281,7 @@ export async function migrateAndPersistSettingsV2(storage) {
 
 export function createEmptySettingsV2State() {
   return {
-    settings: createDefaultSettingsV2(),
+    settings: createInitialSettingsV2(),
     secrets: createDefaultSecretsV2()
   }
 }

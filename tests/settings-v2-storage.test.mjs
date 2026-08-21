@@ -104,6 +104,33 @@ test('loads v6.6 values into a draft without writing during the read', async () 
   assert.equal(storage.local.setCalls.length, 0)
 })
 
+test('uses the Figma drag trigger for a new install without stored settings', async () => {
+  const loaded = await loadSettingsV2(createStorage())
+
+  assert.equal(loaded.hasV2Settings, false)
+  assert.equal(loaded.settings.dictionary.drag.triggerKey, 'none')
+  assert.equal(loaded.migrationNeeded, true)
+})
+
+test('preserves an explicitly stored drag trigger during normalization', async () => {
+  const settingsKey = SETTINGS_STORAGE.settings.key
+  const secretsKey = SETTINGS_STORAGE.secrets.key
+  const storage = createStorage({
+    [settingsKey]: SETTINGS_V2_DEFAULTS
+  }, {
+    [secretsKey]: {
+      schemaVersion: 2,
+      providers: {}
+    }
+  })
+
+  const loaded = await loadSettingsV2(storage)
+
+  assert.equal(loaded.hasV2Settings, true)
+  assert.equal(loaded.settings.dictionary.drag.triggerKey, 'ctrl')
+  assert.equal(loaded.migrationNeeded, false)
+})
+
 test('persists the v6.6 migration into separate v2 sync and local envelopes', async () => {
   const storage = createStorage({
     ...legacyValues,
@@ -220,6 +247,7 @@ test('normalizes only invalid v2 fields and schedules the corrected envelope', a
   assert.equal(loaded.settings.popup.backgroundColor, 'red')
   assert.equal(loaded.settings.popup.fontColor, SETTINGS_V2_DEFAULTS.popup.fontColor)
   assert.equal(loaded.settings.popup.fontSizePt, SETTINGS_V2_DEFAULTS.popup.fontSizePt)
+  assert.equal(loaded.settings.dictionary.drag.triggerKey, 'none')
   assert.equal(loaded.settings.translation.providerId, 'deepl-free')
   assert.equal(loaded.settings.translation.targetLanguage, 'ja')
   assert.equal(loaded.migrationNeeded, true)

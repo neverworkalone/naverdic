@@ -399,15 +399,20 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
     <section
       v-if="pageId === 'behavior'"
-      class="settings-card"
-      data-testid="settings-behavior-form"
+      class="settings-card settings-drag-card"
+      data-testid="settings-drag-form"
     >
       <div class="settings-card__heading">
         <h3>{{ text('SETTINGS_SECTION_DRAG') }}</h3>
         <p>{{ text('SETTINGS_SECTION_DRAG_DESCRIPTION') }}</p>
       </div>
 
-      <label class="settings-switch" for="settings-drag-enabled">
+      <div
+        class="settings-drag-divider settings-drag-divider--heading"
+        aria-hidden="true"
+      />
+
+      <label class="settings-switch settings-drag-switch" for="settings-drag-enabled">
         <input
           id="settings-drag-enabled"
           v-model="draft.dictionary.drag.enabled"
@@ -423,25 +428,37 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
         </span>
       </label>
 
-      <div class="settings-field-row">
+      <div
+        class="settings-drag-divider settings-drag-divider--toggle"
+        aria-hidden="true"
+      />
+
+      <div class="settings-field-row settings-drag-row">
         <div class="settings-field-row__label">
           <label for="settings-drag-trigger">
             {{ text('SETTINGS_FIELD_TRIGGER_KEY') }}
           </label>
           <span>{{ text('SETTINGS_FIELD_DRAG_TRIGGER_HINT') }}</span>
         </div>
-        <select
-          id="settings-drag-trigger"
-          v-model="draft.dictionary.drag.triggerKey"
-          :disabled="controlsDisabled"
-          data-testid="settings-drag-trigger"
-        >
-          <option value="none">{{ text('DRAG') }}</option>
-          <option value="ctrl">{{ text('CTRL_DRAG', [ctrl]) }}</option>
-          <option value="alt">{{ text('ALT_DRAG', [alt]) }}</option>
-          <option value="ctrlalt">{{ text('CTRL_ALT_DRAG', [ctrl, alt]) }}</option>
-        </select>
+        <div class="settings-drag-select">
+          <select
+            id="settings-drag-trigger"
+            v-model="draft.dictionary.drag.triggerKey"
+            :disabled="controlsDisabled"
+            data-testid="settings-drag-trigger"
+          >
+            <option value="none">{{ text('DRAG') }}</option>
+            <option value="ctrl">{{ text('CTRL_DRAG', [ctrl]) }}</option>
+            <option value="alt">{{ text('ALT_DRAG', [alt]) }}</option>
+            <option value="ctrlalt">{{ text('CTRL_ALT_DRAG', [ctrl, alt]) }}</option>
+          </select>
+        </div>
       </div>
+
+      <div
+        class="settings-drag-divider settings-drag-divider--trigger"
+        aria-hidden="true"
+      />
     </section>
 
     <section
@@ -618,6 +635,10 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   margin-top: 20px;
 }
 
+.settings-page[data-page-id='behavior'] {
+  margin-top: 20px;
+}
+
 .settings-card {
   padding: 24px;
   background: var(--naverdic-settings-surface);
@@ -629,6 +650,13 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 .settings-double-click-card {
   position: relative;
   height: 316px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.settings-drag-card {
+  position: relative;
+  height: 244px;
   padding: 0;
   overflow: hidden;
 }
@@ -667,6 +695,40 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   line-height: 17px;
 }
 
+.settings-drag-card .settings-card__heading {
+  position: absolute;
+  top: 0;
+  left: 23px;
+  width: 508px;
+  height: 90px;
+  padding: 0;
+  border-bottom: 0;
+}
+
+.settings-drag-card .settings-card__heading h3 {
+  position: absolute;
+  top: 21px;
+  left: 0;
+  display: flex;
+  width: 508px;
+  height: 24px;
+  align-items: center;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.settings-drag-card .settings-card__heading p {
+  position: absolute;
+  top: 51px;
+  left: 0;
+  display: flex;
+  width: 508px;
+  height: 34px;
+  align-items: center;
+  margin: 0;
+  line-height: 17px;
+}
+
 .settings-double-click-divider {
   position: absolute;
   left: 23px;
@@ -689,6 +751,26 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
 .settings-double-click-divider--speed {
   top: 293px;
+}
+
+.settings-drag-divider {
+  position: absolute;
+  left: 23px;
+  width: 508px;
+  height: 1px;
+  background: var(--naverdic-settings-divider);
+}
+
+.settings-drag-divider--heading {
+  top: 89px;
+}
+
+.settings-drag-divider--toggle {
+  top: 149px;
+}
+
+.settings-drag-divider--trigger {
+  top: 221px;
 }
 
 .settings-double-click-switch {
@@ -735,6 +817,54 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 }
 
 .settings-double-click-switch input:disabled + .settings-switch__track {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.settings-drag-switch {
+  position: absolute;
+  top: 90px;
+  left: 23px;
+  display: flex;
+  width: 508px;
+  height: 60px;
+  min-height: 60px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 0;
+}
+
+.settings-drag-switch .settings-switch__label {
+  position: absolute;
+  top: 25px;
+  left: 0;
+  height: 22px;
+  align-items: center;
+  color: #344054;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.settings-drag-switch .settings-switch__track {
+  position: absolute;
+  top: 26px;
+  right: 0;
+  width: 40px;
+  height: 22px;
+  padding: 2px;
+}
+
+.settings-drag-switch .settings-switch__thumb {
+  width: 18px;
+  height: 18px;
+}
+
+.settings-drag-switch input:checked + .settings-switch__track .settings-switch__thumb {
+  transform: translateX(18px);
+}
+
+.settings-drag-switch input:disabled + .settings-switch__track {
   cursor: not-allowed;
   opacity: 0.55;
 }
@@ -806,6 +936,75 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 }
 
 .settings-double-click-select select {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 36px 0 13px;
+  background: #f8fafc;
+  appearance: none;
+}
+
+.settings-drag-row {
+  position: absolute;
+  top: 150px;
+  left: 23px;
+  display: block;
+  width: 508px;
+  height: 72px;
+  min-height: 72px;
+  border-bottom: 0;
+}
+
+.settings-drag-row .settings-field-row__label {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  width: 250px;
+  gap: 0;
+}
+
+.settings-drag-row .settings-field-row__label label {
+  display: flex;
+  height: 20px;
+  align-items: center;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.settings-drag-row .settings-field-row__label span {
+  display: flex;
+  height: 18px;
+  align-items: center;
+  margin-top: 3px;
+  line-height: 18px;
+}
+
+.settings-drag-select {
+  position: absolute;
+  top: 15px;
+  right: 0;
+  width: 240px;
+  height: 40px;
+}
+
+.settings-drag-select::after {
+  position: absolute;
+  top: 0;
+  right: 13px;
+  display: grid;
+  width: 16px;
+  height: 40px;
+  color: var(--naverdic-settings-text-muted);
+  content: 'v';
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  place-items: center;
+}
+
+.settings-drag-select select {
   width: 100%;
   min-width: 0;
   height: 40px;
@@ -1273,6 +1472,13 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
     overflow: visible;
   }
 
+  .settings-drag-card {
+    height: auto;
+    min-height: 0;
+    padding: 0 18px 18px;
+    overflow: visible;
+  }
+
   .settings-double-click-card .settings-card__heading {
     position: relative;
     top: auto;
@@ -1289,6 +1495,22 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
     height: auto;
   }
 
+  .settings-drag-card .settings-card__heading {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    height: 90px;
+  }
+
+  .settings-drag-card .settings-card__heading h3,
+  .settings-drag-card .settings-card__heading p {
+    position: static;
+    display: block;
+    width: auto;
+    height: auto;
+  }
+
   .settings-double-click-card .settings-card__heading h3 {
     padding-top: 20px;
   }
@@ -1297,7 +1519,22 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
     margin-top: 4px;
   }
 
+  .settings-drag-card .settings-card__heading h3 {
+    padding-top: 20px;
+  }
+
+  .settings-drag-card .settings-card__heading p {
+    margin-top: 4px;
+  }
+
   .settings-double-click-divider {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+  }
+
+  .settings-drag-divider {
     position: relative;
     top: auto;
     left: auto;
@@ -1312,12 +1549,35 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
     width: auto;
   }
 
+  .settings-drag-switch,
+  .settings-drag-row {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+  }
+
   .settings-double-click-switch {
     height: 60px;
     min-height: 60px;
   }
 
+  .settings-drag-switch {
+    height: 60px;
+    min-height: 60px;
+  }
+
   .settings-double-click-row {
+    display: flex;
+    height: auto;
+    min-height: 0;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 0;
+  }
+
+  .settings-drag-row {
     display: flex;
     height: auto;
     min-height: 0;
@@ -1333,6 +1593,12 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
     gap: 4px;
   }
 
+  .settings-drag-row .settings-field-row__label {
+    position: static;
+    width: auto;
+    gap: 4px;
+  }
+
   .settings-double-click-row .settings-field-row__label label,
   .settings-double-click-row .settings-field-row__label span {
     display: block;
@@ -1340,7 +1606,22 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
     margin-top: 0;
   }
 
+  .settings-drag-row .settings-field-row__label label,
+  .settings-drag-row .settings-field-row__label span {
+    display: block;
+    height: auto;
+    margin-top: 0;
+  }
+
   .settings-double-click-select {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    height: 40px;
+  }
+
+  .settings-drag-select {
     position: relative;
     top: auto;
     right: auto;
@@ -1355,6 +1636,10 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   }
 
   .settings-double-click-card {
+    padding: 0 18px 18px;
+  }
+
+  .settings-drag-card {
     padding: 0 18px 18px;
   }
 
