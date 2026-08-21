@@ -24,6 +24,7 @@ import {
   migrateV66ToV2
 } from '../src/settings-migration-v2.mjs'
 import {
+  CHROME_TRANSLATOR_PROVIDER_ID,
   DEFAULT_PROVIDER_ID,
   PROVIDER_ADAPTERS,
   PROVIDER_AUTH_MODES,
@@ -95,6 +96,8 @@ test('maps the finalized Figma navigation to stable settings sections', () => {
   assert.equal(help.section, undefined)
   assert.equal(help.url, 'https://neverworkalone.github.io/naverdic/')
   assert.deepEqual(advanced.actions, ['reset'])
+  assert.equal(advanced.previewTitleKey, 'SETTINGS_PREVIEW_ADVANCED_TITLE')
+  assert.equal(advanced.previewDescriptionKey, 'SETTINGS_PREVIEW_ADVANCED_DESCRIPTION')
 })
 
 test('defines the v2 storage split and nested settings defaults', () => {
@@ -107,6 +110,7 @@ test('defines the v2 storage split and nested settings defaults', () => {
   assert.equal(SETTINGS_V2_DEFAULTS.translation.targetLanguage, 'ko')
   assert.equal(SETTINGS_V2_DEFAULTS.popup.fontSizePt, 11)
   assert.equal(SETTINGS_V2_DEFAULTS.dictionary.drag.triggerKey, 'ctrl')
+  assert.equal(createInitialSettingsV2().translation.providerId, CHROME_TRANSLATOR_PROVIDER_ID)
   assert.equal(createInitialSettingsV2().dictionary.drag.triggerKey, 'none')
   assert.equal(SETTINGS_SCHEMA_V2.some(field => field.path === 'customProviders'), false)
   assert.ok(SETTINGS_SCHEMA_V2.some(field => field.path === 'translation.targetLanguage'))
@@ -296,7 +300,25 @@ test('keeps the official Chrome Translator display name and translation panel bo
     'SETTINGS_PREVIEW_DRAG_STEP_3',
     'SETTINGS_PREVIEW_DRAG_STEP_3_DESCRIPTION',
     'SETTINGS_PREVIEW_DRAG_STEP_4',
-    'SETTINGS_PREVIEW_DRAG_STEP_4_DESCRIPTION'
+    'SETTINGS_PREVIEW_DRAG_STEP_4_DESCRIPTION',
+    'SETTINGS_PAGE_ADVANCED_TITLE',
+    'SETTINGS_PAGE_ADVANCED_DESCRIPTION',
+    'SETTINGS_ADVANCED_DATA_TITLE',
+    'SETTINGS_ADVANCED_DATA_DESCRIPTION',
+    'SETTINGS_ADVANCED_EXPORT_TITLE',
+    'SETTINGS_ADVANCED_EXPORT_DESCRIPTION',
+    'SETTINGS_ADVANCED_EXPORT_BUTTON',
+    'SETTINGS_ADVANCED_IMPORT_TITLE',
+    'SETTINGS_ADVANCED_IMPORT_DESCRIPTION',
+    'SETTINGS_ADVANCED_IMPORT_BUTTON',
+    'SETTINGS_ADVANCED_IMPORT_FILE_LABEL',
+    'SETTINGS_ADVANCED_IMPORT_ERROR',
+    'SETTINGS_ADVANCED_DANGER_BADGE',
+    'SETTINGS_ADVANCED_RESET_TITLE',
+    'SETTINGS_ADVANCED_RESET_DESCRIPTION',
+    'SETTINGS_ADVANCED_RESET_BUTTON',
+    'SETTINGS_PREVIEW_ADVANCED_TITLE',
+    'SETTINGS_PREVIEW_ADVANCED_DESCRIPTION'
   ])
   assert.equal(en.SETTINGS_TRANSLATION_CHROME_NAME.message.includes('Translator API'), true)
   assert.equal(
@@ -323,6 +345,10 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(shell, /settings-content--drag/)
   assert.match(shell, /settings-shell--blocked-sites/)
   assert.match(shell, /settings-content--blocked-sites/)
+  assert.match(shell, /settings-shell--advanced/)
+  assert.match(shell, /settings-content--advanced/)
+  assert.match(shell, /persistedSettings/)
+  assert.match(shell, /on-draft-revision/)
   assert.match(shell, /currentNavigation\.previewTitleKey/)
   assert.match(shell, /currentNavigation\.previewDescriptionKey/)
   assert.match(shell, /grid-template-columns: 556px 300px;\s*gap: 28px/)
@@ -368,6 +394,21 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(appearancePage, /\.settings-blocked-sites-switch \.settings-switch__label \{\s*position: absolute;\s*top: 25px/)
   assert.match(appearancePage, /\.settings-blocked-sites-switch \.settings-switch__track \{\s*position: absolute;\s*top: 25px/)
   assert.match(appearancePage, /SETTINGS_BLOCKED_SITES_REGISTERED/)
+  assert.match(appearancePage, /settings-advanced-data-card/)
+  assert.match(appearancePage, /settings-advanced-divider--heading/)
+  assert.match(appearancePage, /settings-advanced-divider--export/)
+  assert.match(appearancePage, /settings-advanced-divider--import/)
+  assert.match(appearancePage, /SETTINGS_ADVANCED_EXPORT_BUTTON/)
+  assert.match(appearancePage, /SETTINGS_ADVANCED_IMPORT_BUTTON/)
+  assert.match(appearancePage, /\.settings-advanced-row__label \{\s*position: absolute;\s*top: 20px/)
+  assert.match(appearancePage, /\.settings-advanced-row--import \.settings-advanced-row__label \{\s*top: 18px/)
+  assert.match(appearancePage, /\.settings-advanced-row__label strong \{[\s\S]*?line-height: 22px/)
+  assert.match(appearancePage, /\.settings-advanced-row__label span \{[\s\S]*?line-height: 20px/)
+  assert.match(appearancePage, /\.settings-advanced-data-card \.settings-card__heading p \{[\s\S]*?height: 34px;[\s\S]*?align-items: center/)
+  assert.match(appearancePage, /\.settings-advanced-row__label strong \{[\s\S]*?font-weight: 700/)
+  assert.match(appearancePage, /\.settings-advanced-action \{[\s\S]*?font-weight: 700/)
+  assert.match(appearancePage, /parseSettingsBackup/)
+  assert.match(appearancePage, /serializeSettingsBackup/)
   assert.equal(appearancePage.includes("pageId === 'help'"), false)
   assert.equal(appearancePage.includes('settings-help-page'), false)
 
@@ -399,6 +440,12 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(preview, /\.settings-guide-preview--blocked-sites li:nth-child\(2\) \{ top: 79px; \}/)
   assert.match(preview, /\.settings-guide-preview--blocked-sites li:nth-child\(3\) \{ top: 139px; \}/)
   assert.match(preview, /settings-guide-preview__note/)
+  assert.match(preview, /settings-live-preview--advanced/)
+  assert.match(preview, /settings-reset-danger-card/)
+  assert.match(preview, /SETTINGS_ADVANCED_RESET_BUTTON/)
+  assert.match(preview, /\.settings-reset-danger-card__description \{[\s\S]*?width: 252px;[\s\S]*?height: 66px;[\s\S]*?align-items: center;[\s\S]*?font-size: 12px/)
+  assert.match(preview, /\.settings-reset-danger-card__badge \{[\s\S]*?font-size: 10px;[\s\S]*?font-weight: 700/)
+  assert.match(preview, /\.settings-reset-danger-card__button \{[\s\S]*?font-size: 12px;[\s\S]*?font-weight: 700/)
   assert.equal(preview.includes("activePage.id === 'help'"), false)
   assert.equal(preview.includes('settings-help-preview'), false)
 })

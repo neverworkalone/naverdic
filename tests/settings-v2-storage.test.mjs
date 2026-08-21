@@ -108,6 +108,7 @@ test('uses the Figma drag trigger for a new install without stored settings', as
   const loaded = await loadSettingsV2(createStorage())
 
   assert.equal(loaded.hasV2Settings, false)
+  assert.equal(loaded.settings.translation.providerId, 'chrome-translator')
   assert.equal(loaded.settings.dictionary.drag.triggerKey, 'none')
   assert.equal(loaded.migrationNeeded, true)
 })

@@ -15,6 +15,11 @@ import {
   normalizeHexColor,
   stepperFontSize
 } from '/src/settings-appearance.mjs'
+import {
+  parseSettingsBackup,
+  serializeSettingsBackup,
+  SETTINGS_BACKUP_FILE_NAME
+} from '/src/settings-backup.mjs'
 import TranslationSettings from '/src/components/TranslationSettings.vue'
 
 const props = defineProps({
@@ -29,6 +34,14 @@ const props = defineProps({
   draftSecrets: {
     type: Object,
     required: true
+  },
+  persistedSettings: {
+    type: Object,
+    default: null
+  },
+  persistedSecrets: {
+    type: Object,
+    default: null
   },
   draftRevision: {
     type: Number,
@@ -50,6 +63,10 @@ const props = defineProps({
     type: Function,
     default: null
   },
+  onDraftRevision: {
+    type: Function,
+    default: null
+  },
   translationPendingChange: {
     type: Function,
     default: null
@@ -63,6 +80,8 @@ const backgroundHex = ref('')
 const fontHex = ref('')
 const invalidBackgroundHex = ref(false)
 const invalidFontHex = ref(false)
+const importFileInput = ref(null)
+const importError = ref('')
 const controlsDisabled = computed(() => props.isLoading || props.isSaving)
 
 const pageId = computed(() => props.activePage?.id || '')
@@ -134,8 +153,78 @@ function updateFontSize(delta) {
   props.draft.popup.fontSizePt = changeFontSize(props.draft.popup.fontSizePt, delta)
 }
 
+function replaceObject(target, source) {
+  Object.keys(target).forEach(key => {
+    if (!Object.prototype.hasOwnProperty.call(source, key)) {
+      delete target[key]
+    }
+  })
+  Object.assign(target, JSON.parse(JSON.stringify(source)))
+}
+
+function exportSettings() {
+  if (controlsDisabled.value) {
+    return
+  }
+
+  const BlobConstructor = globalThis.Blob
+  const urlApi = globalThis.URL
+  const documentRef = globalThis.document
+  if (typeof BlobConstructor !== 'function' || !urlApi || typeof urlApi.createObjectURL !== 'function' || !documentRef) {
+    return
+  }
+
+  const settings = props.persistedSettings || props.draft
+  const secrets = props.persistedSecrets || props.draftSecrets
+  const blob = new BlobConstructor([serializeSettingsBackup(settings, secrets)], {type: 'application/json'})
+  const url = urlApi.createObjectURL(blob)
+  const link = documentRef.createElement('a')
+  link.href = url
+  link.download = SETTINGS_BACKUP_FILE_NAME
+  link.click()
+  if (typeof urlApi.revokeObjectURL === 'function') {
+    urlApi.revokeObjectURL(url)
+  }
+}
+
+function openImportPicker() {
+  if (controlsDisabled.value) {
+    return
+  }
+
+  importFileInput.value?.click()
+}
+
+async function importSettings(event) {
+  if (controlsDisabled.value) {
+    return
+  }
+
+  const input = event.currentTarget
+  const file = input?.files?.[0]
+  if (!file) {
+    return
+  }
+
+  importError.value = ''
+
+  try {
+    const imported = parseSettingsBackup(await file.text())
+    replaceObject(props.draft, imported.settings)
+    replaceObject(props.draftSecrets, imported.secrets)
+    props.onDraftRevision?.()
+  } catch (_error) {
+    importError.value = text('SETTINGS_ADVANCED_IMPORT_ERROR')
+  } finally {
+    input.value = ''
+  }
+}
+
 watch(() => props.draftRevision, syncSiteInput, {immediate: true})
 watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
+watch(() => props.draftRevision, () => {
+  importError.value = ''
+})
 </script>
 
 <template>
@@ -556,27 +645,82 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
     <section
       v-if="pageId === 'advanced'"
-      class="settings-card settings-card--advanced"
-      data-testid="settings-advanced-page"
+      class="settings-card settings-advanced-data-card"
+      data-testid="settings-advanced-data-card"
     >
       <div class="settings-card__heading">
-        <h3>{{ text('SETTINGS_PAGE_ADVANCED_TITLE') }}</h3>
-        <p>{{ text('SETTINGS_PAGE_ADVANCED_DESCRIPTION') }}</p>
+        <h3>{{ text('SETTINGS_ADVANCED_DATA_TITLE') }}</h3>
+        <p>{{ text('SETTINGS_ADVANCED_DATA_DESCRIPTION') }}</p>
       </div>
-      <div class="settings-page-notice">
-        {{ text('SETTINGS_ADVANCED_NOTICE') }}
-      </div>
-      <div class="settings-placeholder-card__actions">
+
+      <div
+        class="settings-advanced-divider settings-advanced-divider--heading"
+        aria-hidden="true"
+      />
+
+      <div class="settings-advanced-row settings-advanced-row--export">
+        <div class="settings-advanced-row__label">
+          <strong>{{ text('SETTINGS_ADVANCED_EXPORT_TITLE') }}</strong>
+          <span>{{ text('SETTINGS_ADVANCED_EXPORT_DESCRIPTION') }}</span>
+        </div>
         <button
           type="button"
-          class="settings-placeholder-card__reset"
-          data-testid="settings-reset-button"
-          :disabled="isLoading || isSaving"
-          @click="resetDraft"
+          class="settings-advanced-action"
+          :disabled="controlsDisabled"
+          data-testid="settings-advanced-export"
+          @click="exportSettings"
         >
-          {{ text('RESET') }}
+          {{ text('SETTINGS_ADVANCED_EXPORT_BUTTON') }}
         </button>
       </div>
+
+      <div
+        class="settings-advanced-divider settings-advanced-divider--export"
+        aria-hidden="true"
+      />
+
+      <div class="settings-advanced-row settings-advanced-row--import">
+        <div class="settings-advanced-row__label">
+          <strong>{{ text('SETTINGS_ADVANCED_IMPORT_TITLE') }}</strong>
+          <span>{{ text('SETTINGS_ADVANCED_IMPORT_DESCRIPTION') }}</span>
+        </div>
+        <button
+          type="button"
+          class="settings-advanced-action"
+          :disabled="controlsDisabled"
+          data-testid="settings-advanced-import"
+          @click="openImportPicker"
+        >
+          {{ text('SETTINGS_ADVANCED_IMPORT_BUTTON') }}
+        </button>
+        <label
+          class="settings-sr-only"
+          for="settings-advanced-file-input"
+        >{{ text('SETTINGS_ADVANCED_IMPORT_FILE_LABEL') }}</label>
+        <input
+          id="settings-advanced-file-input"
+          ref="importFileInput"
+          class="settings-advanced-file-input"
+          type="file"
+          accept="application/json,.json"
+          :disabled="controlsDisabled"
+          :aria-describedby="importError ? 'settings-advanced-import-error' : undefined"
+          data-testid="settings-advanced-file-input"
+          @change="importSettings"
+        >
+        <p
+          v-if="importError"
+          id="settings-advanced-import-error"
+          class="settings-advanced-import-error"
+          role="alert"
+          data-testid="settings-advanced-import-error"
+        >{{ importError }}</p>
+      </div>
+
+      <div
+        class="settings-advanced-divider settings-advanced-divider--import"
+        aria-hidden="true"
+      />
     </section>
 
     <section
@@ -587,20 +731,6 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
       <p>{{ text('SETTINGS_SHELL_PLACEHOLDER_DESCRIPTION') }}</p>
       <div class="settings-placeholder-card__note">
         {{ text('SETTINGS_SHELL_DRAFT_NOTE') }}
-      </div>
-      <div
-        v-if="pageId === 'advanced' && resetDraft"
-        class="settings-placeholder-card__actions"
-      >
-        <button
-          type="button"
-          class="settings-placeholder-card__reset"
-          data-testid="settings-reset-button"
-          :disabled="isLoading || isSaving"
-          @click="resetDraft"
-        >
-          {{ text('RESET') }}
-        </button>
       </div>
     </section>
   </div>
@@ -621,6 +751,10 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 }
 
 .settings-page[data-page-id='behavior'] {
+  margin-top: 20px;
+}
+
+.settings-page[data-page-id='advanced'] {
   margin-top: 20px;
 }
 
@@ -1492,14 +1626,175 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   min-height: 220px;
 }
 
-.settings-page-notice {
-  margin-top: 20px;
-  padding: 14px 16px;
-  color: var(--naverdic-settings-primary-text);
-  background: var(--naverdic-settings-info);
-  border-radius: var(--naverdic-radius-sm);
-  font-size: 12px;
+.settings-advanced-data-card {
+  position: relative;
+  height: 282px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.settings-advanced-data-card .settings-card__heading {
+  position: absolute;
+  top: 0;
+  left: 23px;
+  width: 508px;
+  height: 90px;
+  padding: 0;
+  border-bottom: 0;
+}
+
+.settings-advanced-data-card .settings-card__heading h3 {
+  position: absolute;
+  top: 21px;
+  left: 0;
+  display: flex;
+  width: 508px;
+  height: 24px;
+  align-items: center;
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.settings-advanced-data-card .settings-card__heading p {
+  position: absolute;
+  top: 51px;
+  left: 0;
+  display: flex;
+  width: 508px;
+  height: 34px;
+  align-items: center;
+  margin: 0;
   line-height: 20px;
+}
+
+.settings-advanced-divider {
+  position: absolute;
+  left: 23px;
+  width: 508px;
+  height: 1px;
+  background: var(--naverdic-settings-divider);
+}
+
+.settings-advanced-divider--heading {
+  top: 89px;
+}
+
+.settings-advanced-divider--export {
+  top: 177px;
+}
+
+.settings-advanced-divider--import {
+  top: 261px;
+}
+
+.settings-advanced-row {
+  position: absolute;
+  left: 23px;
+  width: 508px;
+}
+
+.settings-advanced-row--export {
+  top: 90px;
+  height: 87px;
+}
+
+.settings-advanced-row--import {
+  top: 178px;
+  height: 83px;
+}
+
+.settings-advanced-row__label {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  display: flex;
+  width: 330px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-advanced-row--import .settings-advanced-row__label {
+  top: 18px;
+}
+
+.settings-advanced-row__label strong {
+  color: var(--naverdic-settings-text);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 22px;
+}
+
+.settings-advanced-row__label span {
+  color: var(--naverdic-settings-text-muted);
+  font-size: 11px;
+  line-height: 20px;
+}
+
+.settings-advanced-action {
+  position: absolute;
+  top: 26px;
+  right: 0;
+  display: inline-flex;
+  width: 94px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  color: var(--naverdic-settings-primary-text);
+  background: var(--naverdic-settings-surface);
+  border: 1px solid var(--naverdic-settings-primary);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.settings-advanced-row--import .settings-advanced-action {
+  top: 24px;
+}
+
+.settings-advanced-action:hover {
+  background: var(--naverdic-settings-nav-active);
+}
+
+.settings-advanced-action:focus-visible {
+  outline: 2px solid var(--naverdic-color-focus);
+  outline-offset: 2px;
+  box-shadow: var(--naverdic-input-focus-ring);
+}
+
+.settings-advanced-action:disabled {
+  color: var(--naverdic-color-text-disabled);
+  background: var(--naverdic-input-background-disabled);
+  border-color: var(--naverdic-settings-border);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.settings-advanced-file-input,
+.settings-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.settings-advanced-import-error {
+  position: absolute;
+  right: 110px;
+  bottom: 3px;
+  left: 0;
+  margin: 0;
+  color: var(--naverdic-color-danger);
+  font-size: 10px;
+  line-height: 14px;
 }
 
 .settings-placeholder-card__note {
@@ -1510,33 +1805,6 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   border-radius: var(--naverdic-radius-sm);
   font-size: 11px;
   line-height: 18px;
-}
-
-.settings-placeholder-card__actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
-.settings-placeholder-card__reset {
-  min-height: 34px;
-  padding: 0 16px;
-  color: var(--naverdic-color-danger);
-  background: var(--naverdic-settings-surface);
-  border: 1px solid var(--naverdic-color-danger);
-  border-radius: var(--naverdic-radius-sm);
-  font-size: var(--naverdic-font-size-sm);
-  font-weight: var(--naverdic-font-weight-medium);
-  cursor: pointer;
-}
-
-.settings-placeholder-card__reset:hover {
-  background: var(--naverdic-settings-danger-hover);
-}
-
-.settings-placeholder-card__reset:disabled {
-  cursor: not-allowed;
-  opacity: 0.65;
 }
 
 /* Keep the double-click rhythm independent from the shared settings rows. */
@@ -1570,6 +1838,13 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   }
 
   .settings-blocked-sites-card {
+    height: auto;
+    min-height: 0;
+    padding: 0 18px 18px;
+    overflow: visible;
+  }
+
+  .settings-advanced-data-card {
     height: auto;
     min-height: 0;
     padding: 0 18px 18px;
@@ -1668,6 +1943,77 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
     top: auto;
     left: auto;
     width: auto;
+  }
+
+  .settings-advanced-data-card .settings-card__heading {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    height: 90px;
+  }
+
+  .settings-advanced-data-card .settings-card__heading h3,
+  .settings-advanced-data-card .settings-card__heading p {
+    position: static;
+    display: block;
+    width: auto;
+    height: auto;
+  }
+
+  .settings-advanced-data-card .settings-card__heading h3 {
+    padding-top: 20px;
+  }
+
+  .settings-advanced-data-card .settings-card__heading p {
+    margin-top: 4px;
+  }
+
+  .settings-advanced-divider {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+  }
+
+  .settings-advanced-row,
+  .settings-advanced-row--export,
+  .settings-advanced-row--import {
+    position: relative;
+    top: auto;
+    left: auto;
+    display: flex;
+    width: auto;
+    height: auto;
+    min-height: 87px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 0;
+  }
+
+  .settings-advanced-row--import {
+    min-height: 83px;
+  }
+
+  .settings-advanced-row__label,
+  .settings-advanced-row--import .settings-advanced-row__label {
+    position: static;
+    width: auto;
+    flex: 1;
+  }
+
+  .settings-advanced-action,
+  .settings-advanced-row--import .settings-advanced-action {
+    position: static;
+    flex: 0 0 94px;
+  }
+
+  .settings-advanced-import-error {
+    position: static;
+    width: 100%;
+    margin: -8px 0 0;
+    order: 3;
   }
 
   .settings-blocked-sites-switch {
@@ -1801,6 +2147,10 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   }
 
   .settings-blocked-sites-card {
+    padding: 0 18px 18px;
+  }
+
+  .settings-advanced-data-card {
     padding: 0 18px 18px;
   }
 

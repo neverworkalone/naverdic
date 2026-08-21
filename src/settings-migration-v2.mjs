@@ -74,6 +74,7 @@ export function migrateV66ToV2(values) {
   const legacy = normalizeSettings(source)
   const settings = createInitialSettingsV2()
   const secrets = createDefaultSecretsV2()
+  const sourceKeys = LEGACY_SETTING_KEYS.filter(key => hasOwn(source, key))
 
   settings.dictionary.doubleClick.enabled = legacy.dclick
   settings.dictionary.doubleClick.triggerKey = legacy.dclick_trigger_key
@@ -87,7 +88,11 @@ export function migrateV66ToV2(values) {
   }
   settings.translation.enabled = legacy.translate
   settings.translation.triggerKey = legacy.translate_trigger_key
-  settings.translation.providerId = DEFAULT_PROVIDER_ID
+  // v6.6 only supported DeepL. Keep that provider for users with legacy
+  // settings while leaving the new-install Chrome default untouched.
+  if (sourceKeys.length > 0) {
+    settings.translation.providerId = DEFAULT_PROVIDER_ID
+  }
   settings.popup.backgroundColor = legacy.popup_bgcolor
   settings.popup.fontColor = legacy.popup_fontcolor
   settings.popup.fontSizePt = finiteNumber(
@@ -102,7 +107,6 @@ export function migrateV66ToV2(values) {
     secrets.providers[DEFAULT_PROVIDER_ID] = {apiKey}
   }
 
-  const sourceKeys = LEGACY_SETTING_KEYS.filter(key => hasOwn(source, key))
   const unknownKeys = Object.keys(source).filter(key => !V66_TO_V2_RULES[key])
 
   return {

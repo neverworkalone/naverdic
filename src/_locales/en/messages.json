@@ -210,10 +210,49 @@
     "message": "Advanced"
   },
   "SETTINGS_PAGE_ADVANCED_DESCRIPTION": {
-    "message": "Manage advanced features such as settings data and reset."
+    "message": "Back up settings data or reset all settings."
   },
-  "SETTINGS_ADVANCED_NOTICE": {
-    "message": "Advanced settings can affect stored data and recovery. Save your current settings before changing them."
+  "SETTINGS_ADVANCED_DATA_TITLE": {
+    "message": "Settings data"
+  },
+  "SETTINGS_ADVANCED_DATA_DESCRIPTION": {
+    "message": "Save your settings to a file when moving to another environment."
+  },
+  "SETTINGS_ADVANCED_EXPORT_TITLE": {
+    "message": "Export settings"
+  },
+  "SETTINGS_ADVANCED_EXPORT_DESCRIPTION": {
+    "message": "Save the current settings as a JSON file."
+  },
+  "SETTINGS_ADVANCED_EXPORT_BUTTON": {
+    "message": "Export"
+  },
+  "SETTINGS_ADVANCED_IMPORT_TITLE": {
+    "message": "Import settings"
+  },
+  "SETTINGS_ADVANCED_IMPORT_DESCRIPTION": {
+    "message": "Load a backed-up JSON file."
+  },
+  "SETTINGS_ADVANCED_IMPORT_BUTTON": {
+    "message": "Import"
+  },
+  "SETTINGS_ADVANCED_IMPORT_FILE_LABEL": {
+    "message": "Settings backup JSON file"
+  },
+  "SETTINGS_ADVANCED_IMPORT_ERROR": {
+    "message": "Select a valid NaverDic settings backup file."
+  },
+  "SETTINGS_ADVANCED_DANGER_BADGE": {
+    "message": "Dangerous action"
+  },
+  "SETTINGS_ADVANCED_RESET_TITLE": {
+    "message": "Reset all settings"
+  },
+  "SETTINGS_ADVANCED_RESET_DESCRIPTION": {
+    "message": "Saved appearance, behavior, and service settings will be deleted. This cannot be undone."
+  },
+  "SETTINGS_ADVANCED_RESET_BUTTON": {
+    "message": "Reset all settings"
   },
   "SETTINGS_SHELL_STATUS_SAVED": {
     "message": "Saved"
@@ -270,7 +309,7 @@
     "message": "Reset ready"
   },
   "SETTINGS_SHELL_RESET_CONFIRM": {
-    "message": "Reset all settings to their defaults? The reset will not affect stored settings until you save."
+    "message": "Reset all settings\nSaved appearance, behavior, and service settings will be deleted. This cannot be undone.\nContinue?"
   },
   "SETTINGS_SECTION_POPUP_APPEARANCE": {
     "message": "Popup dictionary"
@@ -464,13 +503,10 @@
     "message": "Add only the domains you need; the popup will continue to work on other sites."
   },
   "SETTINGS_PREVIEW_ADVANCED_TITLE": {
-    "message": "Settings data management"
+    "message": "Complete reset"
   },
   "SETTINGS_PREVIEW_ADVANCED_DESCRIPTION": {
-    "message": "Reset returns saved settings and API keys to their defaults."
-  },
-  "SETTINGS_PREVIEW_ADVANCED_WARNING": {
-    "message": "Reset cannot be undone, so record anything you need first."
+    "message": "Review the contents before deleting."
   },
   "SETTINGS_TRANSLATION_ENABLED": {
     "message": "Enable sentence translation"
