@@ -503,7 +503,7 @@
     "message": "필요한 도메인만 추가하면 다른 사이트에는 계속 적용됩니다."
   },
   "SETTINGS_PREVIEW_ADVANCED_TITLE": {
-    "message": "완전 초기화"
+    "message": "설정 초기화"
   },
   "SETTINGS_PREVIEW_ADVANCED_DESCRIPTION": {
     "message": "삭제 전 내용을 꼭 확인하세요."
