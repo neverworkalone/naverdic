@@ -364,6 +364,8 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(appearancePage, /settings-blocked-sites-divider--editor/)
   assert.match(appearancePage, /settings-blocked-sites-field/)
   assert.match(appearancePage, /settings-blocked-sites-card \.settings-blocked-sites-field > textarea/)
+  assert.match(appearancePage, /\.settings-blocked-sites-switch \.settings-switch__label \{\s*position: absolute;\s*top: 25px/)
+  assert.match(appearancePage, /\.settings-blocked-sites-switch \.settings-switch__track \{\s*position: absolute;\s*top: 25px/)
   assert.match(appearancePage, /SETTINGS_BLOCKED_SITES_REGISTERED/)
   assert.equal(appearancePage.includes("pageId === 'help'"), false)
   assert.equal(appearancePage.includes('settings-help-page'), false)

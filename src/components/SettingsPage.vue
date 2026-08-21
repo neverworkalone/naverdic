@@ -685,7 +685,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
 .settings-blocked-sites-switch .settings-switch__label {
   position: absolute;
-  top: 21px;
+  top: 25px;
   left: 0;
   display: flex;
   height: 22px;
@@ -697,7 +697,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
 .settings-blocked-sites-switch .settings-switch__track {
   position: absolute;
-  top: 22px;
+  top: 25px;
   right: 0;
   width: 40px;
   height: 22px;
