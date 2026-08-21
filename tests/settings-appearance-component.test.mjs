@@ -15,7 +15,11 @@ import {
   normalizeHexColor,
   stepperFontSize
 } from '../src/settings-appearance.mjs'
-import {createDefaultSecretsV2, createDefaultSettingsV2} from '../src/settings-v2.mjs'
+import {
+  createDefaultSecretsV2,
+  createDefaultSettingsV2,
+  createInitialSettingsV2
+} from '../src/settings-v2.mjs'
 import {hasPendingSettingsChanges} from '../src/settings-v2-storage.mjs'
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -122,7 +126,7 @@ function mountDoubleClick(draft = createDoubleClickDraft(), extraProps = {}) {
 }
 
 function createDragDraft(drag = {}) {
-  const draft = createDefaultSettingsV2()
+  const draft = createInitialSettingsV2()
   Object.assign(draft.dictionary.drag, drag)
   return makeReactive(draft)
 }
@@ -417,7 +421,7 @@ test('renders drag defaults, locale-backed controls, and only drag settings', as
   const trigger = wrapper.get('[data-testid="settings-drag-trigger"]').element
 
   assert.equal(enabled.checked, true)
-  assert.equal(trigger.value, 'ctrl')
+  assert.equal(trigger.value, 'none')
   assert.deepEqual(
     [...trigger.options].map(option => option.value),
     ['none', 'ctrl', 'alt', 'ctrlalt']
@@ -463,11 +467,11 @@ test('updates drag draft values, reports dirty state, and resets from the revisi
     true
   )
 
-  Object.assign(draft.dictionary.drag, createDefaultSettingsV2().dictionary.drag)
+  Object.assign(draft.dictionary.drag, createInitialSettingsV2().dictionary.drag)
   await wrapper.setProps({draftRevision: 1})
   await wrapper.vm.$nextTick()
   assert.equal(wrapper.get('[data-testid="settings-drag-enabled"]').element.checked, true)
-  assert.equal(wrapper.get('[data-testid="settings-drag-trigger"]').element.value, 'ctrl')
+  assert.equal(wrapper.get('[data-testid="settings-drag-trigger"]').element.value, 'none')
   wrapper.unmount()
 })
 

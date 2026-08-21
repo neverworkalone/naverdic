@@ -4,7 +4,7 @@ import { getText } from '/src/text.js'
 import SettingsPreview from '/src/components/SettingsPreview.vue'
 import {
   createDefaultSecretsV2,
-  createDefaultSettingsV2,
+  createInitialSettingsV2,
   SETTINGS_NAVIGATION
 } from '/src/settings-v2.mjs'
 import {
@@ -19,11 +19,11 @@ const navigation = SETTINGS_NAVIGATION
 const activeNavigationId = ref(navigation[0].id)
 const storage = globalThis.chrome?.storage || null
 
-const defaultSettings = createDefaultSettingsV2()
+const defaultSettings = createInitialSettingsV2()
 const defaultSecrets = createDefaultSecretsV2()
-const persistedSettings = reactive(createDefaultSettingsV2())
+const persistedSettings = reactive(createInitialSettingsV2())
 const persistedSecrets = reactive(createDefaultSecretsV2())
-const draftSettings = reactive(createDefaultSettingsV2())
+const draftSettings = reactive(createInitialSettingsV2())
 const draftSecrets = reactive(createDefaultSecretsV2())
 const navButtonRefs = ref([])
 const isLoading = ref(true)
@@ -467,8 +467,8 @@ a {
 
 .settings-shell--double-click {
   width: min(1200px, 100%);
-  min-height: min(860px, 100vh);
-  margin: 0 auto;
+  min-height: min(860px, calc(100vh - 32px));
+  margin: 16px auto;
   border: 0;
   border-radius: 0;
   box-shadow: none;
@@ -476,15 +476,15 @@ a {
 
 .settings-shell--drag {
   width: min(1200px, 100%);
-  min-height: min(860px, 100vh);
-  margin: 0 auto;
+  min-height: min(860px, calc(100vh - 32px));
+  margin: 16px auto;
   border: 0;
   border-radius: 0;
   box-shadow: none;
 }
 
 .settings-shell--double-click .settings-body {
-  min-height: calc(min(860px, 100vh) - var(--naverdic-settings-header-height));
+  min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
 }
 
 .settings-shell--double-click .settings-header {
@@ -493,7 +493,7 @@ a {
 }
 
 .settings-shell--drag .settings-body {
-  min-height: calc(min(860px, 100vh) - var(--naverdic-settings-header-height));
+  min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
 }
 
 .settings-shell--drag .settings-header {

@@ -14,6 +14,7 @@ import {
   SETTINGS_V2_DEFAULTS,
   createDefaultSecretsV2,
   createDefaultSettingsV2,
+  createInitialSettingsV2,
   normalizeSecretsV2,
   normalizeSettingsV2
 } from '../src/settings-v2.mjs'
@@ -98,6 +99,8 @@ test('defines the v2 storage split and nested settings defaults', () => {
   assert.equal(SETTINGS_V2_DEFAULTS.translation.providerId, DEFAULT_PROVIDER_ID)
   assert.equal(SETTINGS_V2_DEFAULTS.translation.targetLanguage, 'ko')
   assert.equal(SETTINGS_V2_DEFAULTS.popup.fontSizePt, 11)
+  assert.equal(SETTINGS_V2_DEFAULTS.dictionary.drag.triggerKey, 'ctrl')
+  assert.equal(createInitialSettingsV2().dictionary.drag.triggerKey, 'none')
   assert.equal(SETTINGS_SCHEMA_V2.some(field => field.path === 'customProviders'), false)
   assert.ok(SETTINGS_SCHEMA_V2.some(field => field.path === 'translation.targetLanguage'))
 })
@@ -277,9 +280,11 @@ test('keeps the official Chrome Translator display name and translation panel bo
   const shell = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsShell.vue'), 'utf8')
   assert.match(shell, /settings-shell--double-click/)
   assert.match(shell, /\.settings-shell--double-click \{[\s\S]*width: min\(1200px, 100%\)/)
+  assert.match(shell, /\.settings-shell--double-click \{[\s\S]*margin: 16px auto/)
   assert.match(shell, /settings-content--translation/)
   assert.match(shell, /settings-content--double-click/)
   assert.match(shell, /settings-shell--drag/)
+  assert.match(shell, /\.settings-shell--drag \{[\s\S]*margin: 16px auto/)
   assert.match(shell, /settings-content--drag/)
   assert.match(shell, /currentNavigation\.previewTitleKey/)
   assert.match(shell, /currentNavigation\.previewDescriptionKey/)
@@ -466,6 +471,7 @@ test('falls back only damaged v6.6 values while preserving valid values', () => 
   assert.equal(result.settings.dictionary.doubleClick.speedMs, 400)
   assert.equal(result.settings.popup.fontSizePt, 11)
   assert.equal(result.settings.translation.triggerKey, 'ctrlalt')
+  assert.equal(result.settings.dictionary.drag.triggerKey, 'none')
   assert.equal(result.settings.popup.backgroundColor, 'blue')
   assert.deepEqual(result.settings.sites.denyList, ['example.com'])
 })

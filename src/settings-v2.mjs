@@ -343,6 +343,15 @@ export function createDefaultSettingsV2() {
   return cloneValue(SETTINGS_V2_DEFAULTS)
 }
 
+// The compatibility defaults keep the v2 contract stable for callers that
+// normalize incomplete settings. New installs and resets use the Figma state
+// for the drag trigger instead.
+export function createInitialSettingsV2() {
+  const settings = createDefaultSettingsV2()
+  settings.dictionary.drag.triggerKey = 'none'
+  return settings
+}
+
 export function createDefaultSecretsV2() {
   return cloneValue(SECRETS_V2_DEFAULTS)
 }
