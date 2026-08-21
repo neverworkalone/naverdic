@@ -824,3 +824,14 @@ test('renders help as a bottom external link without changing the active page', 
   assert.equal(wrapper.vm.activeNavigationId, 'appearance')
   wrapper.unmount()
 })
+
+test('resets the translation provider to Chrome built-in translation', async () => {
+  const wrapper = mount(SettingsShell)
+  await flushPromises()
+
+  wrapper.vm.draftSettings.translation.providerId = 'deepl-free'
+  wrapper.vm.resetDraft()
+
+  assert.equal(wrapper.vm.draftSettings.translation.providerId, 'chrome-translator')
+  wrapper.unmount()
+})

@@ -1,4 +1,5 @@
 import {
+  CHROME_TRANSLATOR_PROVIDER_ID,
   DEFAULT_PROVIDER_ID,
   PROVIDER_PRESETS
 } from './translation-provider.mjs'
@@ -346,9 +347,10 @@ export function createDefaultSettingsV2() {
 
 // The compatibility defaults keep the v2 contract stable for callers that
 // normalize incomplete settings. New installs and resets use the Figma state
-// for the drag trigger instead.
+// for the translation provider and drag trigger instead.
 export function createInitialSettingsV2() {
   const settings = createDefaultSettingsV2()
+  settings.translation.providerId = CHROME_TRANSLATOR_PROVIDER_ID
   settings.dictionary.drag.triggerKey = 'none'
   return settings
 }

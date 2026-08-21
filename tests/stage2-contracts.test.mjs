@@ -24,6 +24,7 @@ import {
   migrateV66ToV2
 } from '../src/settings-migration-v2.mjs'
 import {
+  CHROME_TRANSLATOR_PROVIDER_ID,
   DEFAULT_PROVIDER_ID,
   PROVIDER_ADAPTERS,
   PROVIDER_AUTH_MODES,
@@ -109,6 +110,7 @@ test('defines the v2 storage split and nested settings defaults', () => {
   assert.equal(SETTINGS_V2_DEFAULTS.translation.targetLanguage, 'ko')
   assert.equal(SETTINGS_V2_DEFAULTS.popup.fontSizePt, 11)
   assert.equal(SETTINGS_V2_DEFAULTS.dictionary.drag.triggerKey, 'ctrl')
+  assert.equal(createInitialSettingsV2().translation.providerId, CHROME_TRANSLATOR_PROVIDER_ID)
   assert.equal(createInitialSettingsV2().dictionary.drag.triggerKey, 'none')
   assert.equal(SETTINGS_SCHEMA_V2.some(field => field.path === 'customProviders'), false)
   assert.ok(SETTINGS_SCHEMA_V2.some(field => field.path === 'translation.targetLanguage'))
