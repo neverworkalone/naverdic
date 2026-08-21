@@ -469,18 +469,18 @@ a {
   width: min(1200px, 100%);
   min-height: min(860px, calc(100vh - 32px));
   margin: 16px auto;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
+  border: 1px solid var(--naverdic-settings-border);
+  border-radius: var(--naverdic-settings-radius);
+  box-shadow: var(--naverdic-settings-shadow);
 }
 
 .settings-shell--drag {
   width: min(1200px, 100%);
   min-height: min(860px, calc(100vh - 32px));
   margin: 16px auto;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
+  border: 1px solid var(--naverdic-settings-border);
+  border-radius: var(--naverdic-settings-radius);
+  box-shadow: var(--naverdic-settings-shadow);
 }
 
 .settings-shell--double-click .settings-body {
