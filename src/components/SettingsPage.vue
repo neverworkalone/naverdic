@@ -824,7 +824,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   padding: 12px 20px;
   color: var(--naverdic-settings-text);
   background: var(--naverdic-settings-info);
-  border: 1px solid var(--naverdic-settings-info);
+  border: 1px solid var(--naverdic-settings-border);
   border-radius: 10px;
 }
 

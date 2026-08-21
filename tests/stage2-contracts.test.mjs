@@ -228,6 +228,7 @@ test('keeps the official Chrome Translator display name and translation panel bo
 
   const appearancePage = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPage.vue'), 'utf8')
   assert.match(appearancePage, /settings-appearance-guidance/)
+  assert.match(appearancePage, /\.settings-appearance-guidance \{[\s\S]*border: 1px solid var\(--naverdic-settings-border\)/)
   assert.equal(appearancePage.includes('사전 팝업과 번역 결과 팝업은 같은 너비로 표시됩니다.'), false)
 })
 
