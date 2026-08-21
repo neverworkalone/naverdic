@@ -907,7 +907,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
 .settings-double-click-switch .settings-switch__label {
   position: absolute;
-  top: 25px;
+  top: 18px;
   left: 0;
   height: 22px;
   align-items: center;
@@ -918,7 +918,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
 .settings-double-click-switch .settings-switch__track {
   position: absolute;
-  top: 26px;
+  top: 18px;
   right: 0;
   width: 40px;
   height: 22px;
@@ -955,7 +955,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
 .settings-drag-switch .settings-switch__label {
   position: absolute;
-  top: 25px;
+  top: 18px;
   left: 0;
   height: 22px;
   align-items: center;
@@ -966,7 +966,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
 .settings-drag-switch .settings-switch__track {
   position: absolute;
-  top: 26px;
+  top: 18px;
   right: 0;
   width: 40px;
   height: 22px;
