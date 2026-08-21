@@ -503,7 +503,7 @@
     "message": "Add only the domains you need; the popup will continue to work on other sites."
   },
   "SETTINGS_PREVIEW_ADVANCED_TITLE": {
-    "message": "Complete reset"
+    "message": "Reset settings"
   },
   "SETTINGS_PREVIEW_ADVANCED_DESCRIPTION": {
     "message": "Review the contents before deleting."
