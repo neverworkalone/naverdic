@@ -129,7 +129,7 @@ test('keeps Chrome free of API controls and exposes the fixed language pair', as
   wrapper.unmount()
 })
 
-test('locks DeepL controls while a connection test is in flight and ignores stale results', async () => {
+test('locks DeepL controls while a connection test is in flight and clears stale target-language results', async () => {
   const previousFetch = globalThis.fetch
   let resolveFetch
   globalThis.fetch = () => new Promise(resolve => { resolveFetch = resolve })
@@ -140,9 +140,52 @@ test('locks DeepL controls while a connection test is in flight and ignores stal
   await flushPromises()
   assert.equal(wrapper.get('[data-testid="settings-translation-preset-api-key"]').attributes('disabled'), '')
   assert.equal(wrapper.get('[data-testid="settings-translation-test"]').attributes('disabled'), '')
+  const changedDraft = createDraft()
+  changedDraft.translation.targetLanguage = 'ja'
+  await wrapper.setProps({draft: changedDraft})
+  await flushPromises()
+  assert.equal(wrapper.get('[data-testid="settings-translation-test"]').attributes('disabled'), undefined)
   resolveFetch({ok: true, json: async () => ({translations: [{text: 'ok'}]})})
   await flushPromises()
+  assert.equal(wrapper.find('[data-testid="settings-translation-test-result"]').exists(), false)
+  wrapper.unmount()
+  globalThis.fetch = previousFetch
+})
+
+test('invalidates a successful connection test when the target language changes', async () => {
+  const previousFetch = globalThis.fetch
+  globalThis.fetch = async () => ({ok: true, json: async () => ({candidates: [{content: {parts: [{text: 'ok'}]}}]})})
+  const secrets = createDefaultSecretsV2()
+  secrets.providers.gemini = {apiKey: 'test-key'}
+  const wrapper = mount(TranslationSettings, {props: {draft: createDraft(), draftSecrets: secrets}})
+  await wrapper.get('[data-provider-id="gemini"]').trigger('click')
+  await wrapper.get('[data-testid="settings-translation-test"]').trigger('click')
+  await flushPromises()
   assert.match(wrapper.get('[data-testid="settings-translation-test-result"]').text(), /Connection test succeeded/)
+  await wrapper.get('[data-testid="settings-translation-target-language"]').setValue('ja')
+  await flushPromises()
+  assert.equal(wrapper.find('[data-testid="settings-translation-test-result"]').exists(), false)
+  assert.equal(wrapper.get('[data-testid="settings-translation-activate"]').attributes('disabled'), '')
+  wrapper.unmount()
+  globalThis.fetch = previousFetch
+})
+
+test('clears an in-flight connection test when settings are reset or saved', async () => {
+  const previousFetch = globalThis.fetch
+  let resolveFetch
+  globalThis.fetch = () => new Promise(resolve => { resolveFetch = resolve })
+  const secrets = createDefaultSecretsV2()
+  secrets.providers['deepl-free'] = {apiKey: 'test-key'}
+  const wrapper = mount(TranslationSettings, {props: {draft: createDraft(), draftSecrets: secrets}})
+  await wrapper.get('[data-testid="settings-translation-test"]').trigger('click')
+  await flushPromises()
+  assert.equal(wrapper.get('[data-testid="settings-translation-test"]').attributes('disabled'), '')
+  await wrapper.setProps({draftRevision: 1})
+  await flushPromises()
+  assert.equal(wrapper.get('[data-testid="settings-translation-test"]').attributes('disabled'), undefined)
+  resolveFetch({ok: true, json: async () => ({translations: [{text: 'ok'}]})})
+  await flushPromises()
+  assert.equal(wrapper.find('[data-testid="settings-translation-test-result"]').exists(), false)
   wrapper.unmount()
   globalThis.fetch = previousFetch
 })

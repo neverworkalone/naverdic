@@ -20,6 +20,7 @@ const props = defineProps({
 
 const CHROME_ID = 'chrome-translator'
 const DEFAULT_PROVIDER_ID = 'deepl-free'
+const GEMINI_MODEL_ID = 'gemini-3.5-flash'
 const PRESET_IDS = new Set(['deepl-free', 'deepl-pro', 'gemini'])
 const serviceDefinitions = Object.freeze([
   Object.freeze({id: CHROME_ID, providerIds: [CHROME_ID], nameKey: 'SETTINGS_TRANSLATION_CHROME_NAME', descriptionKey: 'SETTINGS_TRANSLATION_CHROME_DESCRIPTION'}),
@@ -38,6 +39,7 @@ const connectionStates = reactive({})
 const anyConnectionTesting = computed(() => Object.values(connectionStates).some(state => state?.status === 'testing'))
 const formControlsDisabled = computed(() => controlsDisabled.value || anyConnectionTesting.value)
 const showApiKey = ref(false)
+const geminiModel = ref(GEMINI_MODEL_ID)
 let connectionRequestId = 0
 const chromeState = ref({supported: false, availability: null, phase: CHROME_TRANSLATOR_PHASES.CHECKING, progress: null, indeterminate: false, errorCode: null, errorName: '', errorMessage: ''})
 let chromeRuntime = null
@@ -46,10 +48,31 @@ let chromeRuntimeUnsubscribe = null
 function text(key, placeholders = undefined) { return getText(key, placeholders) }
 function stateFor(id) { return connectionStates[id] || {status: 'idle', messageKey: '', signature: ''} }
 function providerCredential(provider) { return getProviderCredential(provider, props.draftSecrets) }
-function providerSignature(provider, id = provider?.id || '') { return provider ? JSON.stringify({provider, credential: providerCredential(provider)}) : id + ':empty' }
+function providerSignature(provider, id = provider?.id || '') {
+  return provider
+    ? JSON.stringify({
+      provider,
+      credential: providerCredential(provider),
+      targetLanguage: translation.value.targetLanguage || '',
+      model: provider.id === 'gemini' ? geminiModel.value : ''
+    })
+    : id + ':empty'
+}
 function isConnectionSuccess(id) { const state = stateFor(id); return state.status === 'success' && state.signature === providerSignature(getProviderPreset(id), id) }
 function setConnectionState(id, patch) { connectionStates[id] = {...stateFor(id), ...patch} }
 function invalidateConnectionState(id = selectedProviderId.value) { connectionRequestId += 1; setConnectionState(id, {status: 'idle', messageKey: '', signature: ''}) }
+function invalidateAllConnectionStates() {
+  connectionRequestId += 1
+  Object.keys(connectionStates).forEach(id => {
+    setConnectionState(id, {status: 'idle', messageKey: '', signature: ''})
+  })
+}
+function clearStaleConnectionState(id, signature) {
+  const state = stateFor(id)
+  if (state.status === 'testing' && state.signature === signature) {
+    setConnectionState(id, {status: 'idle', messageKey: '', signature: ''})
+  }
+}
 function ensureDraftSecrets() {
   if (!props.draftSecrets.providers || typeof props.draftSecrets.providers !== 'object') props.draftSecrets.providers = {}
   return props.draftSecrets.providers
@@ -71,6 +94,10 @@ function setProviderSecret(provider, value) {
 }
 function updatePresetCredential(event) { setProviderSecret(selectedProvider.value, event.target.value); invalidateConnectionState() }
 function deletePresetCredential() { setProviderSecret(selectedProvider.value, ''); invalidateConnectionState(); showApiKey.value = false }
+function updateTargetLanguage(event) {
+  translation.value.targetLanguage = event.target.value
+  invalidateAllConnectionStates()
+}
 function cardProviderId(card) {
   if (card.id === 'deepl') {
     if (isDeepL.value) return selectedProviderId.value
@@ -180,10 +207,17 @@ async function runConnectionTest(provider) {
   setConnectionState(id, {status: 'testing', messageKey: '', signature})
   try {
     await testTranslationProvider(provider, {secrets: props.draftSecrets, targetLanguage: translation.value.targetLanguage})
-    if (requestId !== connectionRequestId || signature !== providerSignature(provider, id)) return
+    if (requestId !== connectionRequestId || signature !== providerSignature(provider, id)) {
+      clearStaleConnectionState(id, signature)
+      return
+    }
     setConnectionState(id, {status: 'success', messageKey: 'SETTINGS_TRANSLATION_TEST_SUCCESS', signature})
   } catch (_error) {
-    if (requestId === connectionRequestId) setConnectionState(id, {status: 'error', messageKey: 'SETTINGS_TRANSLATION_TEST_FAILURE', signature: ''})
+    if (requestId !== connectionRequestId || signature !== providerSignature(provider, id)) {
+      clearStaleConnectionState(id, signature)
+      return
+    }
+    setConnectionState(id, {status: 'error', messageKey: 'SETTINGS_TRANSLATION_TEST_FAILURE', signature: ''})
   }
 }
 function testPresetConnection() { void runConnectionTest(selectedProvider.value) }
@@ -217,7 +251,10 @@ watch(selectedProviderId, (next, previous) => {
   if (previous === CHROME_ID && next !== CHROME_ID) destroyChromeRuntime()
   if (next === CHROME_ID) refreshChromeAvailability()
 })
+watch(() => translation.value.targetLanguage, () => invalidateAllConnectionStates())
+watch(geminiModel, () => invalidateAllConnectionStates())
 watch(() => [props.draftRevision, props.draftResetRevision], () => {
+  invalidateAllConnectionStates()
   if (selectedProviderId.value !== activeProviderId.value) selectedProviderId.value = activeProviderId.value
 })
 onBeforeUnmount(() => { connectionRequestId += 1; destroyChromeRuntime() })
@@ -239,7 +276,7 @@ onBeforeUnmount(() => { connectionRequestId += 1; destroyChromeRuntime() })
               <span class="translation-service-row__status" :class="cardStatusClass(card)">{{ text(cardStatusKey(card)) }}</span>
             </button>
           </div>
-          <div v-if="!selectedIsChrome" class="translation-settings__general"><label class="translation-settings__field" for="settings-translation-target-language"><span>{{ text('SETTINGS_TRANSLATION_TARGET_LANGUAGE') }}</span><input id="settings-translation-target-language" :value="translation.targetLanguage" type="text" inputmode="text" autocomplete="off" :disabled="formControlsDisabled" data-testid="settings-translation-target-language" @input="translation.targetLanguage = $event.target.value"><small>{{ text('SETTINGS_TRANSLATION_TARGET_LANGUAGE_HINT') }}</small></label></div>
+          <div v-if="!selectedIsChrome" class="translation-settings__general"><label class="translation-settings__field" for="settings-translation-target-language"><span>{{ text('SETTINGS_TRANSLATION_TARGET_LANGUAGE') }}</span><input id="settings-translation-target-language" :value="translation.targetLanguage" type="text" inputmode="text" autocomplete="off" :disabled="formControlsDisabled" data-testid="settings-translation-target-language" @input="updateTargetLanguage"><small>{{ text('SETTINGS_TRANSLATION_TARGET_LANGUAGE_HINT') }}</small></label></div>
         </div>
       </section>
       <section class="translation-settings__column">
@@ -257,7 +294,7 @@ onBeforeUnmount(() => { connectionRequestId += 1; destroyChromeRuntime() })
           <template v-else-if="selectedProvider">
             <div class="translation-detail-header"><div><h3>{{ selectedProvider.name }}</h3><p>{{ text('SETTINGS_TRANSLATION_PRESET_DESCRIPTION') }}</p></div><span class="translation-detail-badge" :class="detailBadgeClass()">{{ text(detailBadgeKey()) }}</span></div>
             <div v-if="isDeepL" class="translation-plan-switch" :aria-label="text('SETTINGS_TRANSLATION_DEEPL_VARIANT')"><button type="button" :class="{ 'is-selected': selectedProviderId === 'deepl-free' }" :disabled="formControlsDisabled" @click="selectService('deepl-free')">{{ text('SETTINGS_TRANSLATION_DEEPL_FREE') }}</button><button type="button" :class="{ 'is-selected': selectedProviderId === 'deepl-pro' }" :disabled="formControlsDisabled" @click="selectService('deepl-pro')">{{ text('SETTINGS_TRANSLATION_DEEPL_PRO') }}</button></div>
-            <label v-else class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_GEMINI_MODEL') }}</span><select disabled data-testid="settings-translation-gemini-model"><option value="gemini-3.5-flash">gemini-3.5-flash</option></select><small>{{ text('SETTINGS_TRANSLATION_GEMINI_MODEL_HINT') }}</small></label>
+            <label v-else class="translation-detail-field"><span>{{ text('SETTINGS_TRANSLATION_GEMINI_MODEL') }}</span><select v-model="geminiModel" disabled data-testid="settings-translation-gemini-model"><option :value="GEMINI_MODEL_ID">{{ GEMINI_MODEL_ID }}</option></select><small>{{ text('SETTINGS_TRANSLATION_GEMINI_MODEL_HINT') }}</small></label>
             <label class="translation-detail-field" for="settings-translation-preset-api-key"><span>{{ text('SETTINGS_TRANSLATION_API_KEY') }}</span><div class="translation-secret-field"><input id="settings-translation-preset-api-key" :value="providerCredential(selectedProvider)" :type="showApiKey ? 'text' : 'password'" autocomplete="new-password" :placeholder="text('SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER')" :disabled="connectionControlsDisabled(selectedProvider.id)" data-testid="settings-translation-preset-api-key" @input="updatePresetCredential"><button type="button" :disabled="connectionControlsDisabled(selectedProvider.id)" @click="showApiKey = !showApiKey">{{ text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY') }}</button></div><small>{{ text('SETTINGS_TRANSLATION_API_KEY_HINT') }}</small><button v-if="providerCredential(selectedProvider)" type="button" class="translation-text-button" :disabled="connectionControlsDisabled(selectedProvider.id)" data-testid="settings-translation-delete-key" @click="deletePresetCredential">{{ text('SETTINGS_TRANSLATION_DELETE_KEY') }}</button></label>
             <p v-if="selectedConnectionState().messageKey" class="translation-detail-result" :class="'translation-detail-result--' + selectedConnectionState().status" role="status" data-testid="settings-translation-test-result">{{ text(selectedConnectionState().messageKey) }}</p>
             <div class="translation-detail-actions"><button type="button" class="translation-secondary-button" :disabled="connectionControlsDisabled(selectedProvider.id)" data-testid="settings-translation-test" @click="testPresetConnection">{{ text(selectedConnectionState().status === 'testing' ? 'SETTINGS_TRANSLATION_TESTING' : 'SETTINGS_TRANSLATION_TEST') }}</button><button v-if="activeProviderId !== selectedProviderId" type="button" class="translation-primary-button" :disabled="formControlsDisabled || !canActivateSelected()" data-testid="settings-translation-activate" @click="activateSelectedProvider">{{ text('SETTINGS_TRANSLATION_ACTIVATE') }}</button><span v-else class="translation-active-label">{{ text('SETTINGS_TRANSLATION_ACTIVE') }}</span></div>
@@ -289,16 +326,16 @@ onBeforeUnmount(() => { connectionRequestId += 1; destroyChromeRuntime() })
 .settings-switch--compact .settings-switch__label { font-size: 10px; line-height: 16px; }
 .translation-settings__service-list { display: flex; flex-direction: column; gap: 16px; padding: 16px 0 12px; }
 .translation-service-row { display: flex; min-height: 90px; align-items: center; justify-content: space-between; gap: 14px; padding: 16px; color: var(--naverdic-settings-text); background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-settings-border); border-radius: var(--naverdic-radius-sm); text-align: left; cursor: pointer; }
-.translation-service-row:hover, .translation-service-row--selected { border-color: var(--naverdic-settings-primary); background: var(--naverdic-settings-nav-active); }
+.translation-service-row:hover { border-color: var(--naverdic-settings-primary); background: var(--naverdic-settings-nav-active); }
+.translation-service-row--active { border-color: var(--naverdic-settings-border); }
+.translation-service-row--selected { border-color: var(--naverdic-settings-primary); background: var(--naverdic-settings-nav-active); }
 .translation-service-row--selected { box-shadow: inset 3px 0 0 var(--naverdic-settings-primary); }
-.translation-service-row--active, .translation-service-row--active:hover { color: #fff; background: var(--naverdic-settings-primary); border-color: var(--naverdic-settings-primary); box-shadow: none; }
 .translation-service-row:focus-visible, .translation-settings button:focus-visible, .translation-settings input:focus-visible, .translation-settings select:focus-visible { outline: 2px solid var(--naverdic-color-focus); outline-offset: 2px; }
 .translation-service-row__copy { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
 .translation-service-row__copy strong { color: inherit; font-size: 13px; line-height: 20px; }
 .translation-service-row__copy small { color: var(--naverdic-settings-text-muted); font-size: 10px; line-height: 16px; }
-.translation-service-row--active .translation-service-row__copy small { color: rgb(255 255 255 / 82%); }
 .translation-service-row__status, .translation-detail-badge { display: inline-flex; flex: 0 0 auto; align-items: center; min-height: 24px; padding: 0 9px; border-radius: 999px; font-size: 9px; font-weight: 700; line-height: 16px; white-space: nowrap; }
-.translation-service-row__status--active { color: #fff; background: rgb(255 255 255 / 18%); }
+.translation-service-row__status--active { color: #fff; background: var(--naverdic-settings-primary); }
 .translation-service-row__status--configured { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
 .translation-service-row__status--unconfigured { color: var(--naverdic-settings-text-muted); background: var(--naverdic-settings-page); }
 .translation-service-row__status--testing, .translation-service-row__status--downloading { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
