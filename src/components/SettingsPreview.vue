@@ -89,7 +89,7 @@ const previewSteps = computed(() => {
 .settings-live-preview--appearance { margin-top: 18px; }
 .settings-live-preview--double-click, .settings-live-preview--drag { margin-top: 20px; box-shadow: none; }
 .settings-live-preview--double-click { height: 260px; min-height: 260px; }
-.settings-live-preview--drag { height: 308px; min-height: 308px; }
+.settings-live-preview--drag { height: 260px; min-height: 260px; }
 .settings-live-preview__browser-bar { display: flex; align-items: center; gap: 5px; height: 32px; padding: 0 12px; background: var(--naverdic-settings-preview-bar); border-bottom: 1px solid var(--naverdic-settings-border); }
 .settings-live-preview__dot { width: 7px; height: 7px; background: var(--naverdic-settings-text-subtle); border-radius: 50%; }
 .settings-live-preview__content { position: relative; min-height: 328px; padding: 36px 18px 20px; background: var(--naverdic-settings-preview-window); }
@@ -101,7 +101,7 @@ const previewSteps = computed(() => {
 .settings-guide-preview ol { display: flex; margin: 30px 0 0; padding: 0; flex-direction: column; gap: 22px; list-style: none; }.settings-guide-preview li { display: flex; align-items: flex-start; gap: 12px; }.settings-guide-preview li > span { display: grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); border-radius: 50%; font-size: 11px; font-weight: 700; }.settings-guide-preview p { margin: 2px 0 0; color: var(--naverdic-settings-text-muted); font-size: 12px; line-height: 20px; }
 .settings-guide-preview--double-click, .settings-guide-preview--drag { position: relative; padding: 0; }
 .settings-guide-preview--double-click { height: 258px; min-height: 258px; }
-.settings-guide-preview--drag { height: 306px; min-height: 306px; }
+.settings-guide-preview--drag { height: 258px; min-height: 258px; }
 .settings-guide-preview--double-click ol { position: relative; display: block; width: 100%; height: 100%; margin: 0; }
 .settings-guide-preview--double-click li { position: absolute; left: 23px; display: flex; width: 252px; min-height: 24px; gap: 12px; }
 .settings-guide-preview--double-click li:nth-child(1) { top: 19px; }
@@ -114,10 +114,10 @@ const previewSteps = computed(() => {
 .settings-guide-preview--double-click li p span { color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 18px; }
 .settings-guide-preview--drag ol { position: relative; display: block; width: 100%; height: 100%; margin: 0; }
 .settings-guide-preview--drag li { position: absolute; left: 23px; display: flex; width: 252px; min-height: 24px; gap: 12px; }
-.settings-guide-preview--drag li:nth-child(1) { top: 23px; }
-.settings-guide-preview--drag li:nth-child(2) { top: 97px; }
-.settings-guide-preview--drag li:nth-child(3) { top: 171px; }
-.settings-guide-preview--drag li:nth-child(4) { top: 245px; }
+.settings-guide-preview--drag li:nth-child(1) { top: 19px; }
+.settings-guide-preview--drag li:nth-child(2) { top: 79px; }
+.settings-guide-preview--drag li:nth-child(3) { top: 139px; }
+.settings-guide-preview--drag li:nth-child(4) { top: 199px; }
 .settings-guide-preview--drag li > span { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
 .settings-guide-preview--drag li p { display: flex; width: 216px; margin: -2px 0 0; flex-direction: column; gap: 2px; color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 18px; }
 .settings-guide-preview--drag li p strong { color: #344054; font-size: 13px; font-weight: 700; line-height: 20px; }
