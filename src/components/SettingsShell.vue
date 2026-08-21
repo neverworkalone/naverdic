@@ -262,7 +262,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="settings-shell" data-testid="settings-shell">
+  <main
+    class="settings-shell"
+    :class="{'settings-shell--double-click': currentNavigation.id === 'double-click'}"
+    data-testid="settings-shell"
+  >
     <header class="settings-header">
       <h1 class="settings-header__title">
         {{ text('SETTINGS_PRODUCT_TITLE') }}
@@ -352,7 +356,10 @@ onBeforeUnmount(() => {
 
       <section
         class="settings-content"
-        :class="{'settings-content--translation': currentNavigation.id === 'translation-service'}"
+        :class="{
+          'settings-content--translation': currentNavigation.id === 'translation-service',
+          'settings-content--double-click': currentNavigation.id === 'double-click'
+        }"
         :aria-labelledby="`settings-page-title-${currentNavigation.id}`"
       >
         <div class="settings-form-column">
@@ -452,6 +459,24 @@ a {
   border: 1px solid var(--naverdic-settings-border);
   border-radius: var(--naverdic-settings-radius);
   box-shadow: var(--naverdic-settings-shadow);
+}
+
+.settings-shell--double-click {
+  width: min(1200px, 100%);
+  min-height: min(860px, 100vh);
+  margin: 0 auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.settings-shell--double-click .settings-body {
+  min-height: calc(min(860px, 100vh) - var(--naverdic-settings-header-height));
+}
+
+.settings-shell--double-click .settings-header {
+  height: var(--naverdic-settings-header-height);
+  min-height: var(--naverdic-settings-header-height);
 }
 
 .settings-header {
@@ -629,6 +654,11 @@ a {
   gap: 28px;
 }
 
+.settings-content--double-click {
+  grid-template-columns: 556px 300px;
+  gap: 28px;
+}
+
 .settings-content--translation .settings-form-column {
   grid-column: 1 / -1;
 }
@@ -734,6 +764,14 @@ a {
 
   .settings-preview-column {
     display: none;
+  }
+
+  .settings-content--double-click {
+    grid-template-columns: minmax(0, 556px);
+  }
+
+  .settings-content--double-click .settings-preview-column {
+    display: block;
   }
 }
 

@@ -35,7 +35,10 @@ const previewSteps = computed(() => {
 <template>
   <div
     class="settings-live-preview"
-    :class="{'settings-live-preview--appearance': activePage.id === 'appearance'}"
+    :class="{
+      'settings-live-preview--appearance': activePage.id === 'appearance',
+      'settings-live-preview--double-click': activePage.id === 'double-click'
+    }"
     :data-preview-page="activePage.id"
     data-testid="settings-live-preview"
   >
@@ -46,7 +49,11 @@ const previewSteps = computed(() => {
         <article class="settings-live-preview__popup" :style="popupStyle"><strong>{{ text('SETTINGS_PREVIEW_WORD') }}</strong><span>{{ text('SETTINGS_PREVIEW_MEANING') }}</span><small>{{ text('SETTINGS_PREVIEW_HINT') }}</small></article>
       </div>
     </div>
-    <div v-else-if="previewSteps.length" class="settings-guide-preview">
+    <div
+      v-else-if="previewSteps.length"
+      class="settings-guide-preview"
+      :class="{'settings-guide-preview--double-click': activePage.id === 'double-click'}"
+    >
       <div class="settings-guide-preview__eyebrow">{{ text('SETTINGS_PREVIEW_FLOW_LABEL') }}</div>
       <ol><li v-for="(step, index) in previewSteps" :key="step"><span>{{ index + 1 }}</span><p>{{ text(step) }}</p></li></ol>
     </div>
@@ -62,6 +69,7 @@ const previewSteps = computed(() => {
 <style scoped>
 .settings-live-preview { min-height: 360px; overflow: hidden; background: var(--naverdic-settings-preview-surface); border: 1px solid var(--naverdic-settings-border); border-radius: var(--naverdic-radius-md); box-shadow: var(--naverdic-card-shadow-default); }
 .settings-live-preview--appearance { margin-top: 18px; }
+.settings-live-preview--double-click { height: 332px; min-height: 332px; margin-top: 20px; box-shadow: none; }
 .settings-live-preview__browser-bar { display: flex; align-items: center; gap: 5px; height: 32px; padding: 0 12px; background: var(--naverdic-settings-preview-bar); border-bottom: 1px solid var(--naverdic-settings-border); }
 .settings-live-preview__dot { width: 7px; height: 7px; background: var(--naverdic-settings-text-subtle); border-radius: 50%; }
 .settings-live-preview__content { position: relative; min-height: 328px; padding: 36px 18px 20px; background: var(--naverdic-settings-preview-window); }
@@ -72,5 +80,14 @@ const previewSteps = computed(() => {
 .settings-guide-preview, .settings-notice-preview, .settings-help-preview { min-height: 360px; padding: 28px 24px; color: var(--naverdic-settings-text); }
 .settings-guide-preview__eyebrow { color: var(--naverdic-settings-text-muted); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .settings-guide-preview ol { display: flex; margin: 30px 0 0; padding: 0; flex-direction: column; gap: 22px; list-style: none; }.settings-guide-preview li { display: flex; align-items: flex-start; gap: 12px; }.settings-guide-preview li > span { display: grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); border-radius: 50%; font-size: 11px; font-weight: 700; }.settings-guide-preview p { margin: 2px 0 0; color: var(--naverdic-settings-text-muted); font-size: 12px; line-height: 20px; }
+.settings-guide-preview--double-click { position: relative; height: 330px; min-height: 330px; padding: 0; }
+.settings-guide-preview--double-click .settings-guide-preview__eyebrow { position: absolute; top: 27px; left: 23px; color: #344054; font-size: 15px; letter-spacing: normal; line-height: 20px; text-transform: none; }
+.settings-guide-preview--double-click ol { position: relative; display: block; width: 100%; height: 100%; margin: 0; }
+.settings-guide-preview--double-click li { position: absolute; left: 23px; display: flex; width: 252px; min-height: 24px; gap: 12px; }
+.settings-guide-preview--double-click li:nth-child(1) { top: 107px; }
+.settings-guide-preview--double-click li:nth-child(2) { top: 181px; }
+.settings-guide-preview--double-click li:nth-child(3) { top: 255px; }
+.settings-guide-preview--double-click li > span { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
+.settings-guide-preview--double-click li p { width: 216px; margin: 3px 0 0; color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 18px; }
 .settings-notice-preview strong, .settings-help-preview strong { display: block; font-size: 16px; line-height: 24px; }.settings-notice-preview p, .settings-help-preview p { margin: 12px 0 0; color: var(--naverdic-settings-text-muted); font-size: 12px; line-height: 20px; }.settings-notice-preview span { display: block; margin-top: 26px; padding: 12px; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); border-radius: 8px; font-size: 11px; line-height: 18px; }.settings-help-preview a { display: inline-block; margin-top: 24px; color: var(--naverdic-settings-primary-text); font-size: 12px; font-weight: 700; }
 </style>

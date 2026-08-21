@@ -226,13 +226,28 @@ test('keeps the official Chrome Translator display name and translation panel bo
     'SETTINGS_TRANSLATION_CHROME_NAME',
     'SETTINGS_SECTION_POPUP_APPEARANCE',
     'SETTINGS_SECTION_POPUP_APPEARANCE_DESCRIPTION',
+    'SETTINGS_SECTION_DOUBLE_CLICK',
+    'SETTINGS_SECTION_DOUBLE_CLICK_DESCRIPTION',
+    'SETTINGS_FIELD_DOUBLE_CLICK_ENABLED',
+    'SETTINGS_FIELD_TRIGGER_KEY',
+    'SETTINGS_FIELD_DOUBLE_CLICK_TRIGGER_HINT',
+    'SETTINGS_FIELD_DOUBLE_CLICK_SPEED',
+    'SETTINGS_FIELD_DOUBLE_CLICK_SPEED_HINT',
     'SETTINGS_SHELL_PREVIEW_TITLE',
-    'SETTINGS_SHELL_PREVIEW_DESCRIPTION'
+    'SETTINGS_SHELL_PREVIEW_DESCRIPTION',
+    'SETTINGS_PREVIEW_FLOW_LABEL',
+    'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1',
+    'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_2',
+    'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3'
   ])
   assert.equal(en.SETTINGS_TRANSLATION_CHROME_NAME.message.includes('Translator API'), true)
 
   const shell = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsShell.vue'), 'utf8')
+  assert.match(shell, /settings-shell--double-click/)
+  assert.match(shell, /\.settings-shell--double-click \{[\s\S]*width: min\(1200px, 100%\)/)
   assert.match(shell, /settings-content--translation/)
+  assert.match(shell, /settings-content--double-click/)
+  assert.match(shell, /grid-template-columns: 556px 300px;\s*gap: 28px/)
   assert.match(shell, /currentNavigation\.id !== 'translation-service'/)
 
   const appearancePage = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPage.vue'), 'utf8')
@@ -241,10 +256,22 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(appearancePage, /\.settings-appearance-guidance \{[\s\S]*border: 1px solid var\(--naverdic-settings-border\)/)
   assert.match(appearancePage, /\.settings-inline-link:hover \.settings-inline-link__label \{[\s\S]*text-decoration: underline/)
   assert.equal(appearancePage.includes('.settings-inline-link:hover {'), false)
+  assert.match(appearancePage, /settings-double-click-card/)
+  assert.match(appearancePage, /\.settings-double-click-card \{[\s\S]*height: 316px/)
+  assert.match(appearancePage, /\.settings-double-click-divider--heading \{\s*top: 89px/)
+  assert.match(appearancePage, /\.settings-double-click-divider--toggle \{\s*top: 149px/)
+  assert.match(appearancePage, /\.settings-double-click-divider--trigger \{\s*top: 221px/)
+  assert.match(appearancePage, /\.settings-double-click-divider--speed \{\s*top: 293px/)
+  assert.match(appearancePage, /\.settings-double-click-select \{[\s\S]*width: 240px/)
 
   const preview = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPreview.vue'), 'utf8')
   assert.match(preview, /settings-live-preview--appearance/)
   assert.match(preview, /\.settings-live-preview--appearance \{ margin-top: 18px; \}/)
+  assert.match(preview, /settings-live-preview--double-click/)
+  assert.match(preview, /\.settings-live-preview--double-click \{ height: 332px; min-height: 332px; margin-top: 20px/)
+  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(1\) \{ top: 107px; \}/)
+  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(2\) \{ top: 181px; \}/)
+  assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(3\) \{ top: 255px; \}/)
 })
 
 test('rejects legacy custom provider definitions', () => {
