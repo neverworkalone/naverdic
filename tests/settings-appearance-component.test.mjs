@@ -101,6 +101,26 @@ function mountAppearance(draft = createAppearanceDraft(), extraProps = {}) {
   })
 }
 
+function createDoubleClickDraft(doubleClick = {}) {
+  const draft = createDefaultSettingsV2()
+  Object.assign(draft.dictionary.doubleClick, doubleClick)
+  return makeReactive(draft)
+}
+
+function mountDoubleClick(draft = createDoubleClickDraft(), extraProps = {}) {
+  return mount(SettingsPage, {
+    props: {
+      activePage: {id: 'double-click'},
+      draft,
+      draftSecrets: createDefaultSecretsV2(),
+      draftRevision: 0,
+      isLoading: false,
+      isSaving: false,
+      ...extraProps
+    }
+  })
+}
+
 before(async () => {
   installDom()
   tempRoot = await mkdtemp(path.join(projectRoot, '.tmp-naverdic-vue-tests-'))
@@ -275,4 +295,125 @@ test('updates the live popup preview for appearance changes', async () => {
   assert.equal(popup.element.style.color, 'rgb(255, 255, 255)')
   assert.equal(popup.element.style.fontSize, '14pt')
   wrapper.unmount()
+})
+
+test('renders double-click defaults and locale-backed control options', async () => {
+  const wrapper = mountDoubleClick()
+  await flushPromises()
+
+  const form = wrapper.get('[data-testid="settings-double-click-form"]')
+  const enabled = wrapper.get('[data-testid="settings-double-click-enabled"]').element
+  const trigger = wrapper.get('[data-testid="settings-double-click-trigger"]').element
+  const speed = wrapper.get('[data-testid="settings-double-click-speed"]').element
+
+  assert.equal(enabled.checked, true)
+  assert.equal(trigger.value, 'none')
+  assert.deepEqual(
+    [...trigger.options].map(option => option.value),
+    ['none', 'ctrl', 'alt', 'ctrlalt']
+  )
+  assert.equal(speed.value, '400')
+  assert.deepEqual(
+    [...speed.options].map(option => Number(option.value)),
+    [200, 300, 400, 500]
+  )
+  assert.equal(
+    speed.options[2].textContent,
+    `${koText('DCLICK_SPEED_SLOW')} · 400ms`
+  )
+  assert.equal(form.findAll('.settings-double-click-divider').length, 4)
+  assert.equal(
+    form.get('label[for="settings-double-click-trigger"]').text(),
+    koText('SETTINGS_FIELD_TRIGGER_KEY')
+  )
+  assert.equal(
+    form.get('label[for="settings-double-click-speed"]').text(),
+    koText('SETTINGS_FIELD_DOUBLE_CLICK_SPEED')
+  )
+  assert.equal(form.text().includes(koText('SETTINGS_FIELD_DOUBLE_CLICK_SPEED_HINT')), true)
+  wrapper.unmount()
+})
+
+test('updates double-click draft values and reports dirty state', async () => {
+  const draft = createDoubleClickDraft()
+  const persisted = createDoubleClickDraft()
+  const wrapper = mountDoubleClick(draft)
+  await flushPromises()
+
+  assert.equal(
+    hasPendingSettingsChanges(
+      {settings: persisted, secrets: createDefaultSecretsV2()},
+      {settings: draft, secrets: createDefaultSecretsV2()}
+    ),
+    false
+  )
+
+  await wrapper.get('[data-testid="settings-double-click-enabled"]').setValue(false)
+  await wrapper.get('[data-testid="settings-double-click-trigger"]').setValue('ctrlalt')
+  await wrapper.get('[data-testid="settings-double-click-speed"]').setValue('200')
+
+  assert.equal(draft.dictionary.doubleClick.enabled, false)
+  assert.equal(draft.dictionary.doubleClick.triggerKey, 'ctrlalt')
+  assert.equal(draft.dictionary.doubleClick.speedMs, 200)
+  assert.equal(
+    hasPendingSettingsChanges(
+      {settings: persisted, secrets: createDefaultSecretsV2()},
+      {settings: draft, secrets: createDefaultSecretsV2()}
+    ),
+    true
+  )
+
+  Object.assign(draft.dictionary.doubleClick, createDefaultSettingsV2().dictionary.doubleClick)
+  await wrapper.setProps({draftRevision: 1})
+  await wrapper.vm.$nextTick()
+  assert.equal(wrapper.get('[data-testid="settings-double-click-enabled"]').element.checked, true)
+  assert.equal(wrapper.get('[data-testid="settings-double-click-trigger"]').element.value, 'none')
+  assert.equal(wrapper.get('[data-testid="settings-double-click-speed"]').element.value, '400')
+  wrapper.unmount()
+})
+
+test('locks every double-click control while loading or saving', async () => {
+  const wrapper = mountDoubleClick()
+  await flushPromises()
+
+  await wrapper.setProps({isLoading: true})
+  assert.equal(wrapper.get('[data-testid="settings-double-click-enabled"]').element.disabled, true)
+  assert.equal(wrapper.get('[data-testid="settings-double-click-trigger"]').element.disabled, true)
+  assert.equal(wrapper.get('[data-testid="settings-double-click-speed"]').element.disabled, true)
+
+  await wrapper.setProps({isLoading: false, isSaving: true})
+  assert.equal(wrapper.get('[data-testid="settings-double-click-enabled"]').element.disabled, true)
+  assert.equal(wrapper.get('[data-testid="settings-double-click-trigger"]').element.disabled, true)
+  assert.equal(wrapper.get('[data-testid="settings-double-click-speed"]').element.disabled, true)
+  wrapper.unmount()
+})
+
+test('renders the double-click flow without leaking into other previews', () => {
+  const doubleClick = createDoubleClickDraft()
+  const wrapper = mount(SettingsPreview, {
+    props: {activePage: {id: 'double-click'}, draft: doubleClick}
+  })
+
+  assert.equal(wrapper.classes().includes('settings-live-preview--double-click'), true)
+  assert.equal(wrapper.get('.settings-guide-preview').classes().includes('settings-guide-preview--double-click'), true)
+  assert.equal(wrapper.findAll('.settings-guide-preview li').length, 3)
+  assert.equal(wrapper.findAll('.settings-guide-preview--double-click li p > strong').length, 3)
+  assert.equal(wrapper.findAll('.settings-guide-preview--double-click li p > span').length, 3)
+  for (const step of [1, 2, 3]) {
+    assert.equal(wrapper.text().includes(koText(`SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_${step}`)), true)
+    assert.equal(
+      wrapper.text().includes(koText(`SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_${step}_DESCRIPTION`)),
+      true
+    )
+  }
+  wrapper.unmount()
+
+  const behavior = mount(SettingsPreview, {
+    props: {activePage: {id: 'behavior'}, draft: createDoubleClickDraft()}
+  })
+  assert.equal(behavior.classes().includes('settings-live-preview--double-click'), false)
+  assert.equal(behavior.get('.settings-guide-preview').classes().includes('settings-guide-preview--double-click'), false)
+  assert.equal(behavior.text().includes(koText('SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1')), false)
+  assert.equal(behavior.text().includes(koText('SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1_DESCRIPTION')), false)
+  behavior.unmount()
 })

@@ -342,7 +342,7 @@
     "message": "Double-click speed"
   },
   "SETTINGS_FIELD_DOUBLE_CLICK_SPEED_HINT": {
-    "message": "Shorter intervals respond more quickly."
+    "message": "Longer intervals recognize slower double-clicks."
   },
   "SETTINGS_SECTION_DRAG": {
     "message": "Drag search"
@@ -401,13 +401,22 @@
     "message": "How it works"
   },
   "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1": {
-    "message": "Double-click a word you want to look up on a page."
+    "message": "Move the pointer over a word"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1_DESCRIPTION": {
+    "message": "Find the word you want to look up."
   },
   "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_2": {
-    "message": "Adjust the trigger key and double-click speed when needed."
+    "message": "Double-click with the configured method"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_2_DESCRIPTION": {
+    "message": "Open the dictionary with the configured trigger."
   },
   "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3": {
-    "message": "Review the dictionary result in the popup."
+    "message": "Show the dictionary popup"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3_DESCRIPTION": {
+    "message": "See the result near the selected word."
   },
   "SETTINGS_PREVIEW_BEHAVIOR_STEP_1": {
     "message": "Select a phrase by dragging across the page."

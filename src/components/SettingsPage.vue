@@ -308,7 +308,7 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 
     <section
       v-if="pageId === 'double-click'"
-      class="settings-card"
+      class="settings-card settings-double-click-card"
       data-testid="settings-double-click-form"
     >
       <div class="settings-card__heading">
@@ -316,7 +316,15 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
         <p>{{ text('SETTINGS_SECTION_DOUBLE_CLICK_DESCRIPTION') }}</p>
       </div>
 
-      <label class="settings-switch" for="settings-double-click-enabled">
+      <div
+        class="settings-double-click-divider settings-double-click-divider--heading"
+        aria-hidden="true"
+      />
+
+      <label class="settings-switch settings-double-click-switch" for="settings-double-click-enabled">
+        <span class="settings-switch__label">
+          {{ text('SETTINGS_FIELD_DOUBLE_CLICK_ENABLED') }}
+        </span>
         <input
           id="settings-double-click-enabled"
           v-model="draft.dictionary.doubleClick.enabled"
@@ -327,50 +335,66 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
         <span class="settings-switch__track" aria-hidden="true">
           <span class="settings-switch__thumb" />
         </span>
-        <span class="settings-switch__label">
-          {{ text('SETTINGS_FIELD_DOUBLE_CLICK_ENABLED') }}
-        </span>
       </label>
 
-      <div class="settings-field-row">
+      <div
+        class="settings-double-click-divider settings-double-click-divider--toggle"
+        aria-hidden="true"
+      />
+
+      <div class="settings-field-row settings-double-click-row settings-double-click-row--trigger">
         <div class="settings-field-row__label">
           <label for="settings-double-click-trigger">
             {{ text('SETTINGS_FIELD_TRIGGER_KEY') }}
           </label>
           <span>{{ text('SETTINGS_FIELD_DOUBLE_CLICK_TRIGGER_HINT') }}</span>
         </div>
-        <select
-          id="settings-double-click-trigger"
-          v-model="draft.dictionary.doubleClick.triggerKey"
-          :disabled="controlsDisabled"
-          data-testid="settings-double-click-trigger"
-        >
-          <option value="none">{{ text('DCLICK') }}</option>
-          <option value="ctrl">{{ text('CTRL_DCLICK', [ctrl]) }}</option>
-          <option value="alt">{{ text('ALT_DCLICK', [alt]) }}</option>
-          <option value="ctrlalt">{{ text('CTRL_ALT_DCLICK', [ctrl, alt]) }}</option>
-        </select>
+        <div class="settings-double-click-select">
+          <select
+            id="settings-double-click-trigger"
+            v-model="draft.dictionary.doubleClick.triggerKey"
+            :disabled="controlsDisabled"
+            data-testid="settings-double-click-trigger"
+          >
+            <option value="none">{{ text('DCLICK') }}</option>
+            <option value="ctrl">{{ text('CTRL_DCLICK', [ctrl]) }}</option>
+            <option value="alt">{{ text('ALT_DCLICK', [alt]) }}</option>
+            <option value="ctrlalt">{{ text('CTRL_ALT_DCLICK', [ctrl, alt]) }}</option>
+          </select>
+        </div>
       </div>
 
-      <div class="settings-field-row">
+      <div
+        class="settings-double-click-divider settings-double-click-divider--trigger"
+        aria-hidden="true"
+      />
+
+      <div class="settings-field-row settings-double-click-row settings-double-click-row--speed">
         <div class="settings-field-row__label">
           <label for="settings-double-click-speed">
             {{ text('SETTINGS_FIELD_DOUBLE_CLICK_SPEED') }}
           </label>
           <span>{{ text('SETTINGS_FIELD_DOUBLE_CLICK_SPEED_HINT') }}</span>
         </div>
-        <select
-          id="settings-double-click-speed"
-          v-model.number="draft.dictionary.doubleClick.speedMs"
-          :disabled="controlsDisabled"
-          data-testid="settings-double-click-speed"
-        >
-          <option :value="200">{{ text('DCLICK_SPEED_FASTEST') }} · 200ms</option>
-          <option :value="300">{{ text('DCLICK_SPEED_FAST') }} · 300ms</option>
-          <option :value="400">{{ text('DCLICK_SPEED_SLOW') }} · 400ms</option>
-          <option :value="500">{{ text('DCLICK_SPEED_SLOWEST') }} · 500ms</option>
-        </select>
+        <div class="settings-double-click-select">
+          <select
+            id="settings-double-click-speed"
+            v-model.number="draft.dictionary.doubleClick.speedMs"
+            :disabled="controlsDisabled"
+            data-testid="settings-double-click-speed"
+          >
+            <option :value="200">{{ text('DCLICK_SPEED_FASTEST') }} · 200ms</option>
+            <option :value="300">{{ text('DCLICK_SPEED_FAST') }} · 300ms</option>
+            <option :value="400">{{ text('DCLICK_SPEED_SLOW') }} · 400ms</option>
+            <option :value="500">{{ text('DCLICK_SPEED_SLOWEST') }} · 500ms</option>
+          </select>
+        </div>
       </div>
+
+      <div
+        class="settings-double-click-divider settings-double-click-divider--speed"
+        aria-hidden="true"
+      />
     </section>
 
     <section
@@ -590,12 +614,205 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   margin-top: 18px;
 }
 
+.settings-page[data-page-id='double-click'] {
+  margin-top: 20px;
+}
+
 .settings-card {
   padding: 24px;
   background: var(--naverdic-settings-surface);
   border: 1px solid var(--naverdic-settings-border);
   border-radius: var(--naverdic-radius-md);
   box-shadow: var(--naverdic-card-shadow-default);
+}
+
+.settings-double-click-card {
+  position: relative;
+  height: 316px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.settings-double-click-card .settings-card__heading {
+  position: absolute;
+  top: 0;
+  left: 23px;
+  width: 508px;
+  height: 90px;
+  padding: 0;
+  border-bottom: 0;
+}
+
+.settings-double-click-card .settings-card__heading h3 {
+  position: absolute;
+  top: 21px;
+  left: 0;
+  display: flex;
+  width: 508px;
+  height: 24px;
+  align-items: center;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.settings-double-click-card .settings-card__heading p {
+  position: absolute;
+  top: 51px;
+  left: 0;
+  display: flex;
+  width: 508px;
+  height: 34px;
+  align-items: center;
+  margin: 0;
+  line-height: 17px;
+}
+
+.settings-double-click-divider {
+  position: absolute;
+  left: 23px;
+  width: 508px;
+  height: 1px;
+  background: var(--naverdic-settings-divider);
+}
+
+.settings-double-click-divider--heading {
+  top: 89px;
+}
+
+.settings-double-click-divider--toggle {
+  top: 149px;
+}
+
+.settings-double-click-divider--trigger {
+  top: 221px;
+}
+
+.settings-double-click-divider--speed {
+  top: 293px;
+}
+
+.settings-double-click-switch {
+  position: absolute;
+  top: 90px;
+  left: 23px;
+  display: flex;
+  width: 508px;
+  height: 60px;
+  min-height: 60px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 0;
+}
+
+.settings-double-click-switch .settings-switch__label {
+  position: absolute;
+  top: 25px;
+  left: 0;
+  height: 22px;
+  align-items: center;
+  color: #344054;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.settings-double-click-switch .settings-switch__track {
+  position: absolute;
+  top: 26px;
+  right: 0;
+  width: 40px;
+  height: 22px;
+  padding: 2px;
+}
+
+.settings-double-click-switch .settings-switch__thumb {
+  width: 18px;
+  height: 18px;
+}
+
+.settings-double-click-switch input:checked + .settings-switch__track .settings-switch__thumb {
+  transform: translateX(18px);
+}
+
+.settings-double-click-switch input:disabled + .settings-switch__track {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.settings-double-click-row {
+  position: absolute;
+  left: 23px;
+  display: block;
+  width: 508px;
+  height: 72px;
+  min-height: 72px;
+  border-bottom: 0;
+}
+
+.settings-double-click-row--trigger {
+  top: 150px;
+}
+
+.settings-double-click-row--speed {
+  top: 222px;
+}
+
+.settings-double-click-row .settings-field-row__label {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  width: 250px;
+  gap: 0;
+}
+
+.settings-double-click-row .settings-field-row__label label {
+  display: flex;
+  height: 20px;
+  align-items: center;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.settings-double-click-row .settings-field-row__label span {
+  display: flex;
+  height: 18px;
+  align-items: center;
+  margin-top: 3px;
+  line-height: 18px;
+}
+
+.settings-double-click-select {
+  position: absolute;
+  top: 15px;
+  right: 0;
+  width: 240px;
+  height: 40px;
+}
+
+.settings-double-click-select::after {
+  position: absolute;
+  top: 0;
+  right: 13px;
+  display: grid;
+  width: 16px;
+  height: 40px;
+  color: var(--naverdic-settings-text-muted);
+  content: 'v';
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  place-items: center;
+}
+
+.settings-double-click-select select {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 36px 0 13px;
+  background: #f8fafc;
+  appearance: none;
 }
 
 .settings-appearance-card {
@@ -1033,9 +1250,112 @@ watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
   opacity: 0.65;
 }
 
+/* Keep the double-click rhythm independent from the shared settings rows. */
+.settings-double-click-switch {
+  min-height: 60px;
+  border-bottom: 0;
+}
+
+.settings-double-click-row {
+  display: block;
+  align-items: initial;
+  justify-content: initial;
+  gap: 0;
+  min-height: 72px;
+  border-bottom: 0;
+}
+
+@media (max-width: 1050px) {
+  .settings-double-click-card {
+    height: auto;
+    min-height: 0;
+    padding: 0 18px 18px;
+    overflow: visible;
+  }
+
+  .settings-double-click-card .settings-card__heading {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    height: 90px;
+  }
+
+  .settings-double-click-card .settings-card__heading h3,
+  .settings-double-click-card .settings-card__heading p {
+    position: static;
+    display: block;
+    width: auto;
+    height: auto;
+  }
+
+  .settings-double-click-card .settings-card__heading h3 {
+    padding-top: 20px;
+  }
+
+  .settings-double-click-card .settings-card__heading p {
+    margin-top: 4px;
+  }
+
+  .settings-double-click-divider {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+  }
+
+  .settings-double-click-switch,
+  .settings-double-click-row {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+  }
+
+  .settings-double-click-switch {
+    height: 60px;
+    min-height: 60px;
+  }
+
+  .settings-double-click-row {
+    display: flex;
+    height: auto;
+    min-height: 0;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 0;
+  }
+
+  .settings-double-click-row .settings-field-row__label {
+    position: static;
+    width: auto;
+    gap: 4px;
+  }
+
+  .settings-double-click-row .settings-field-row__label label,
+  .settings-double-click-row .settings-field-row__label span {
+    display: block;
+    height: auto;
+    margin-top: 0;
+  }
+
+  .settings-double-click-select {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    height: 40px;
+  }
+}
+
 @media (max-width: 600px) {
   .settings-card {
     padding: 18px;
+  }
+
+  .settings-double-click-card {
+    padding: 0 18px 18px;
   }
 
   .settings-appearance-card {
