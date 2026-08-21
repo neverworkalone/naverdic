@@ -20,7 +20,7 @@ const RELEVANT_KEYS = new Set([
 
 function providerForSettings(settings) {
   const providerId = settings.translation.providerId
-  return getProviderPreset(providerId) || settings.customProviders[providerId] || null
+  return getProviderPreset(providerId) || null
 }
 
 /**

@@ -14,8 +14,7 @@ export const PROVIDER_KINDS = Object.freeze({
 })
 
 export const PROVIDER_SOURCES = Object.freeze({
-  PRESET: 'preset',
-  CUSTOM: 'custom'
+  PRESET: 'preset'
 })
 
 export const PROVIDER_EXECUTION_CONTEXTS = Object.freeze({
@@ -32,30 +31,16 @@ export const PROVIDER_ADAPTERS = Object.freeze({
 
 export const PROVIDER_AUTH_MODES = Object.freeze({
   NONE: 'none',
-  API_KEY: 'api-key',
-  BEARER: 'bearer',
-  CUSTOM: 'custom'
+  API_KEY: 'api-key'
 })
-
-export const PROVIDER_HTTP_METHODS = Object.freeze([
-  'POST',
-  'PUT',
-  'PATCH'
-])
 
 export const DEFAULT_PROVIDER_ID = 'deepl-free'
 export const CHROME_TRANSLATOR_PROVIDER_ID = 'chrome-translator'
 
 const PROVIDER_ID_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/
-const SECRET_REF_PATTERN = /^providers\.[a-z0-9][a-z0-9._-]{0,63}\.(?:apiKey|token)$/
-const SECRET_PLACEHOLDER_PATTERN = /\{\{(?:apiKey|token|secret)\}\}/
 
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
-}
-
-function hasOwn(value, key) {
-  return Object.prototype.hasOwnProperty.call(value, key)
 }
 
 function cloneValue(value) {
@@ -91,202 +76,9 @@ function normalizedString(value, fallback = '') {
   return result || fallback
 }
 
-function normalizedFieldName(value) {
-  return String(value ?? '')
-    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-    .replace(/[^a-z0-9]+/gi, '_')
-    .replace(/^_+|_+$/g, '')
-    .toLowerCase()
-}
-
-function isSensitiveFieldName(value) {
-  const fieldName = normalizedFieldName(value)
-  return fieldName === 'key' ||
-    fieldName === 'apikey' ||
-    fieldName.endsWith('_key') ||
-    fieldName === 'token' ||
-    fieldName.endsWith('_token') ||
-    fieldName === 'authorization' ||
-    fieldName.endsWith('_authorization') ||
-    fieldName === 'credential' ||
-    fieldName === 'credentials' ||
-    fieldName.endsWith('_credential') ||
-    fieldName.endsWith('_credentials') ||
-    fieldName === 'password' ||
-    fieldName.endsWith('_password') ||
-    fieldName === 'secret' ||
-    fieldName.endsWith('_secret')
-}
-
-function isSensitiveHeaderName(value) {
-  return isSensitiveFieldName(value)
-}
-
 function normalizedProviderId(value, fallback = '') {
   const result = normalizedString(value, fallback).toLowerCase()
   return PROVIDER_ID_PATTERN.test(result) ? result : fallback
-}
-
-function normalizedSecretRef(value) {
-  const result = normalizedString(value)
-  return SECRET_REF_PATTERN.test(result) ? result : null
-}
-
-function normalizedHttpUrl(value) {
-  const result = normalizedString(value)
-  if (!result) {
-    return ''
-  }
-
-  try {
-    const url = new URL(result)
-    if ((url.protocol !== 'http:' && url.protocol !== 'https:') ||
-        url.username || url.password) {
-      return ''
-    }
-
-    return url.toString()
-  } catch (_error) {
-    return ''
-  }
-}
-
-function isValidHeaderName(value) {
-  return /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(value)
-}
-
-function normalizedMethod(value, fallback = 'POST') {
-  const method = normalizedString(value).toUpperCase()
-  if (!method) {
-    return fallback
-  }
-
-  return PROVIDER_HTTP_METHODS.includes(method) ? method : ''
-}
-
-function sanitizeTemplateValue(value, fieldName = '') {
-  if (Array.isArray(value)) {
-    return value.map(child => sanitizeTemplateValue(child, fieldName))
-  }
-
-  if (isRecord(value)) {
-    return Object.fromEntries(
-      Object.entries(value)
-        .filter(([key, child]) => !isSensitiveFieldName(key) || (
-          typeof child === 'string' && SECRET_PLACEHOLDER_PATTERN.test(child)
-        ))
-        .map(([key, child]) => [key, sanitizeTemplateValue(child, key)])
-    )
-  }
-
-  if (isSensitiveFieldName(fieldName) && (
-    typeof value !== 'string' || !SECRET_PLACEHOLDER_PATTERN.test(value)
-  )) {
-    return undefined
-  }
-
-  return value
-}
-
-function normalizedHeader(header) {
-  const name = normalizedString(header.name)
-  const valueTemplate = normalizedString(
-    header.valueTemplate ?? header.value,
-    ''
-  )
-  const secretRef = normalizedSecretRef(header.secretRef)
-  if (!name || !isValidHeaderName(name)) {
-    return null
-  }
-
-  if (!valueTemplate && !secretRef) {
-    return null
-  }
-
-  const sensitive = isSensitiveHeaderName(name)
-
-  if (sensitive &&
-      !secretRef &&
-      !SECRET_PLACEHOLDER_PATTERN.test(valueTemplate)) {
-    // A sensitive header without a local secret reference is not safe to
-    // persist. The caller can add a secretRef and a {{secret}} placeholder.
-    return null
-  }
-
-  const safeValueTemplate = sensitive &&
-    !SECRET_PLACEHOLDER_PATTERN.test(valueTemplate)
-    ? '{{secret}}'
-    : valueTemplate
-
-  return {
-    name,
-    valueTemplate: safeValueTemplate,
-    secretRef: secretRef || null
-  }
-}
-
-function normalizedHeaderEntries(value) {
-  let headers
-  if (Array.isArray(value)) {
-    headers = value.filter(isRecord)
-  } else if (isRecord(value)) {
-    headers = Object.entries(value).map(([name, headerValue]) => ({
-      name,
-      value: headerValue
-    }))
-  } else {
-    headers = []
-  }
-
-  return headers
-    .map(normalizedHeader)
-    .filter(Boolean)
-}
-
-function normalizedAuth(value, providerId, fallback = {}) {
-  const source = isRecord(value) ? value : {}
-  const mode = Object.values(PROVIDER_AUTH_MODES).includes(source.mode)
-    ? source.mode
-    : (fallback.mode || PROVIDER_AUTH_MODES.NONE)
-  const location = source.location === 'query' ? 'query' : 'header'
-  const headerName = normalizedString(source.headerName, fallback.headerName || '')
-  const prefix = typeof source.prefix === 'string'
-    ? source.prefix
-    : (fallback.prefix || '')
-  const fallbackRef = fallback.secretRef || `providers.${providerId}.apiKey`
-  const secretRef = mode === PROVIDER_AUTH_MODES.NONE
-    ? null
-    : normalizedSecretRef(source.secretRef) || normalizedSecretRef(fallbackRef)
-
-  return {
-    mode,
-    location,
-    headerName,
-    prefix,
-    secretRef
-  }
-}
-
-function normalizedExecution(value, kind, adapterId) {
-  const source = isRecord(value) ? value : {}
-
-  if (kind === PROVIDER_KINDS.BUILT_IN) {
-    return {
-      adapterId: PROVIDER_ADAPTERS.CHROME_TRANSLATOR,
-      context: PROVIDER_EXECUTION_CONTEXTS.CONTENT_PAGE,
-      globalName: normalizedString(source.globalName, 'Translator'),
-      requiresDocument: true,
-      supportsWebWorker: false
-    }
-  }
-
-  return {
-    adapterId: normalizedString(adapterId, PROVIDER_ADAPTERS.HTTP),
-    context: PROVIDER_EXECUTION_CONTEXTS.BACKGROUND,
-    globalName: '',
-    requiresDocument: false,
-    supportsWebWorker: true
-  }
 }
 
 const DEEPL_REQUEST = deepFreeze({
@@ -435,8 +227,12 @@ const PRESET_DEFINITIONS = {
 export const PROVIDER_PRESETS = deepFreeze(PRESET_DEFINITIONS)
 
 /**
- * Normalize a provider definition to the storage-safe common model.
- * Unknown fields, including apiKey/key/authorization values, are discarded.
+ * Return a canonical built-in provider definition.
+ *
+ * Provider definitions are intentionally closed over the three supported
+ * services. Persisted or message-bound objects that do not identify one of
+ * unsupported persisted objects are rejected instead of being interpreted as
+ * arbitrary network configuration.
  */
 export function normalizeProviderDefinition(input, {id: fallbackId = ''} = {}) {
   if (!isRecord(input)) {
@@ -444,77 +240,19 @@ export function normalizeProviderDefinition(input, {id: fallbackId = ''} = {}) {
   }
 
   const id = normalizedProviderId(input.id, normalizedProviderId(fallbackId))
-  if (!id) {
+  const preset = PROVIDER_PRESETS[id]
+  if (!id || !preset) {
     return null
   }
 
-  const kind = input.kind === PROVIDER_KINDS.BUILT_IN
-    ? PROVIDER_KINDS.BUILT_IN
-    : PROVIDER_KINDS.HTTP
-  const source = input.kind === PROVIDER_KINDS.BUILT_IN ||
-    input.source === PROVIDER_SOURCES.PRESET ||
-    input.kind === 'preset'
-    ? PROVIDER_SOURCES.PRESET
-    : PROVIDER_SOURCES.CUSTOM
-  const presetId = source === PROVIDER_SOURCES.PRESET
-    ? normalizedProviderId(input.presetId, id)
-    : null
-  const endpointSource = isRecord(input.endpoint) ? input.endpoint : input
-  const url = normalizedHttpUrl(endpointSource.url)
-  if (kind === PROVIDER_KINDS.HTTP && !url) {
+  if (input.source && input.source !== PROVIDER_SOURCES.PRESET) {
+    return null
+  }
+  if (input.kind && input.kind !== preset.kind) {
     return null
   }
 
-  const method = kind === PROVIDER_KINDS.HTTP
-    ? normalizedMethod(endpointSource.method)
-    : null
-  if (kind === PROVIDER_KINDS.HTTP && !method) {
-    return null
-  }
-
-  const requestSource = isRecord(input.request) ? input.request : {}
-  const responseSource = isRecord(input.response) ? input.response : {}
-  const authFallback = source === PROVIDER_SOURCES.PRESET && PROVIDER_PRESETS[presetId]
-    ? PROVIDER_PRESETS[presetId].auth
-    : {}
-  const bodyTemplate = hasOwn(requestSource, 'bodyTemplate')
-    ? sanitizeTemplateValue(requestSource.bodyTemplate)
-    : {}
-
-  return {
-    modelVersion: TRANSLATION_PROVIDER_MODEL_VERSION,
-    id,
-    name: normalizedString(input.name, id),
-    kind,
-    source,
-    presetId,
-    endpoint: kind === PROVIDER_KINDS.BUILT_IN
-      ? null
-      : {
-        url,
-        method
-      },
-    auth: kind === PROVIDER_KINDS.BUILT_IN
-      ? normalizedAuth({mode: PROVIDER_AUTH_MODES.NONE}, id)
-      : normalizedAuth(input.auth, id, authFallback),
-    request: {
-      headers: normalizedHeaderEntries(requestSource.headers),
-      bodyTemplate,
-      textPath: normalizedString(requestSource.textPath, 'text'),
-      targetLanguagePath: normalizedString(
-        requestSource.targetLanguagePath,
-        'target_lang'
-      )
-    },
-    response: {
-      textPath: normalizedString(responseSource.textPath, 'text')
-    },
-    execution: normalizedExecution(
-      input.execution,
-      kind,
-      input.execution?.adapterId
-    )
-  }
+  return cloneValue(preset)
 }
 
 export function getProviderPreset(presetId) {
@@ -527,8 +265,9 @@ export function isProviderDefinition(value) {
     isRecord(value) &&
     value.modelVersion === TRANSLATION_PROVIDER_MODEL_VERSION &&
     typeof value.id === 'string' &&
+    Boolean(PROVIDER_PRESETS[value.id]) &&
     Object.values(PROVIDER_KINDS).includes(value.kind) &&
-    Object.values(PROVIDER_SOURCES).includes(value.source) &&
+    value.source === PROVIDER_SOURCES.PRESET &&
     (value.kind === PROVIDER_KINDS.BUILT_IN
       ? value.endpoint === null
       : isRecord(value.endpoint) &&
