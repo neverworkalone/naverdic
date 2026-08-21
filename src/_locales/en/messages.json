@@ -342,7 +342,7 @@
     "message": "Double-click speed"
   },
   "SETTINGS_FIELD_DOUBLE_CLICK_SPEED_HINT": {
-    "message": "Shorter intervals respond more quickly."
+    "message": "Longer intervals recognize slower double-clicks."
   },
   "SETTINGS_SECTION_DRAG": {
     "message": "Drag search"

@@ -330,6 +330,7 @@ test('renders double-click defaults and locale-backed control options', async ()
     form.get('label[for="settings-double-click-speed"]').text(),
     koText('SETTINGS_FIELD_DOUBLE_CLICK_SPEED')
   )
+  assert.equal(form.text().includes(koText('SETTINGS_FIELD_DOUBLE_CLICK_SPEED_HINT')), true)
   wrapper.unmount()
 })
 
@@ -396,6 +397,8 @@ test('renders the double-click flow without leaking into other previews', () => 
   assert.equal(wrapper.classes().includes('settings-live-preview--double-click'), true)
   assert.equal(wrapper.get('.settings-guide-preview').classes().includes('settings-guide-preview--double-click'), true)
   assert.equal(wrapper.findAll('.settings-guide-preview li').length, 3)
+  assert.equal(wrapper.findAll('.settings-guide-preview--double-click li p > strong').length, 3)
+  assert.equal(wrapper.findAll('.settings-guide-preview--double-click li p > span').length, 3)
   for (const step of [1, 2, 3]) {
     assert.equal(wrapper.text().includes(koText(`SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_${step}`)), true)
     assert.equal(

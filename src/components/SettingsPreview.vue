@@ -100,8 +100,8 @@ const previewSteps = computed(() => {
 .settings-guide-preview--double-click li:nth-child(2) { top: 181px; }
 .settings-guide-preview--double-click li:nth-child(3) { top: 255px; }
 .settings-guide-preview--double-click li > span { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
-.settings-guide-preview--double-click li p { display: flex; width: 216px; margin: 1px 0 0; flex-direction: column; gap: 2px; color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 16px; }
-.settings-guide-preview--double-click li p strong { color: #344054; font-size: 11px; font-weight: 600; line-height: 16px; }
-.settings-guide-preview--double-click li p span { color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 16px; }
+.settings-guide-preview--double-click li p { display: flex; width: 216px; margin: 1px 0 0; flex-direction: column; gap: 2px; color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 18px; }
+.settings-guide-preview--double-click li p strong { color: #344054; font-size: 13px; font-weight: 700; line-height: 20px; }
+.settings-guide-preview--double-click li p span { color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 18px; }
 .settings-notice-preview strong, .settings-help-preview strong { display: block; font-size: 16px; line-height: 24px; }.settings-notice-preview p, .settings-help-preview p { margin: 12px 0 0; color: var(--naverdic-settings-text-muted); font-size: 12px; line-height: 20px; }.settings-notice-preview span { display: block; margin-top: 26px; padding: 12px; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); border-radius: 8px; font-size: 11px; line-height: 18px; }.settings-help-preview a { display: inline-block; margin-top: 24px; color: var(--naverdic-settings-primary-text); font-size: 12px; font-weight: 700; }
 </style>

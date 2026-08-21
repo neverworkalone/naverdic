@@ -244,6 +244,10 @@ test('keeps the official Chrome Translator display name and translation panel bo
     'SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3_DESCRIPTION'
   ])
   assert.equal(en.SETTINGS_TRANSLATION_CHROME_NAME.message.includes('Translator API'), true)
+  assert.equal(
+    en.SETTINGS_FIELD_DOUBLE_CLICK_SPEED_HINT.message,
+    'Longer intervals recognize slower double-clicks.'
+  )
 
   const shell = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsShell.vue'), 'utf8')
   assert.match(shell, /settings-shell--double-click/)
@@ -275,6 +279,8 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(1\) \{ top: 107px; \}/)
   assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(2\) \{ top: 181px; \}/)
   assert.match(preview, /\.settings-guide-preview--double-click li:nth-child\(3\) \{ top: 255px; \}/)
+  assert.match(preview, /\.settings-guide-preview--double-click li p strong \{ color: #344054; font-size: 13px; font-weight: 700; line-height: 20px; \}/)
+  assert.match(preview, /\.settings-guide-preview--double-click li p span \{ color: var\(--naverdic-settings-text-muted\); font-size: 11px; line-height: 18px; \}/)
 })
 
 test('rejects legacy custom provider definitions', () => {

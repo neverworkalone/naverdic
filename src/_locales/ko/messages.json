@@ -342,7 +342,7 @@
     "message": "더블클릭 속도"
   },
   "SETTINGS_FIELD_DOUBLE_CLICK_SPEED_HINT": {
-    "message": "더 빠른 간격일수록 민감하게 반응합니다."
+    "message": "간격이 길수록 느린 더블클릭도 인식합니다."
   },
   "SETTINGS_SECTION_DRAG": {
     "message": "드래그 검색"
