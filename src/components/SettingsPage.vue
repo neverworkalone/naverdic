@@ -2,11 +2,19 @@
 import { computed, ref, watch } from 'vue'
 import { getText } from '/src/text.js'
 import { getTriggerLabels } from '/src/content-interaction.mjs'
-import { resolveCssColor } from '/src/settings-colors.mjs'
 import {
   formatDenyList,
   parseDenyListInput
 } from '/src/settings-sites.mjs'
+import {
+  APPEARANCE_DEFAULTS,
+  FONT_SIZE_MAX_PT,
+  FONT_SIZE_MIN_PT,
+  changeFontSize,
+  colorInputValue,
+  normalizeHexColor,
+  stepperFontSize
+} from '/src/settings-appearance.mjs'
 import TranslationSettings from '/src/components/TranslationSettings.vue'
 
 const props = defineProps({
@@ -51,10 +59,17 @@ const props = defineProps({
 const {ctrl, alt} = getTriggerLabels()
 const siteInput = ref('')
 const invalidSiteEntries = ref([])
+const backgroundHex = ref('')
+const fontHex = ref('')
+const invalidBackgroundHex = ref(false)
+const invalidFontHex = ref(false)
 const controlsDisabled = computed(() => props.isLoading || props.isSaving)
 
 const pageId = computed(() => props.activePage?.id || '')
 const siteDomains = computed(() => props.draft.sites?.denyList || [])
+const fontSizeValue = computed(() => stepperFontSize(props.draft.popup?.fontSizePt))
+const canDecreaseFontSize = computed(() => fontSizeValue.value > FONT_SIZE_MIN_PT)
+const canIncreaseFontSize = computed(() => fontSizeValue.value < FONT_SIZE_MAX_PT)
 
 function text(key, placeholders = undefined) {
   return getText(key, placeholders)
@@ -73,7 +88,54 @@ function updateSiteInput(event) {
   props.draft.sites.denyList = parsed.domains
 }
 
+function syncAppearanceInputs() {
+  const backgroundColor = props.draft.popup?.backgroundColor
+  const fontColor = props.draft.popup?.fontColor
+  backgroundHex.value = normalizeHexColor(backgroundColor) || String(backgroundColor ?? '')
+  fontHex.value = normalizeHexColor(fontColor) || String(fontColor ?? '')
+  invalidBackgroundHex.value = false
+  invalidFontHex.value = false
+}
+
+function updateHexColor(field, event) {
+  const value = event.target.value
+  const normalized = normalizeHexColor(value)
+  const isBackground = field === 'backgroundColor'
+
+  if (isBackground) {
+    backgroundHex.value = value
+    invalidBackgroundHex.value = !normalized
+  } else {
+    fontHex.value = value
+    invalidFontHex.value = !normalized
+  }
+
+  if (!normalized) {
+    return
+  }
+
+  props.draft.popup[field] = normalized
+  if (isBackground) {
+    backgroundHex.value = normalized
+  } else {
+    fontHex.value = normalized
+  }
+}
+
+function updateColorPicker(field, event) {
+  updateHexColor(field, {target: {value: event.target.value}})
+}
+
+function updateFontSize(delta) {
+  if (controlsDisabled.value) {
+    return
+  }
+
+  props.draft.popup.fontSizePt = changeFontSize(props.draft.popup.fontSizePt, delta)
+}
+
 watch(() => props.draftRevision, syncSiteInput, {immediate: true})
+watch(() => props.draftRevision, syncAppearanceInputs, {immediate: true})
 </script>
 
 <template>
@@ -84,7 +146,7 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
   >
     <section
       v-if="pageId === 'appearance'"
-      class="settings-card"
+      class="settings-card settings-appearance-card"
       data-testid="settings-appearance-form"
     >
       <div class="settings-card__heading">
@@ -100,20 +162,38 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
           <span>{{ text('SETTINGS_FIELD_BACKGROUND_COLOR_HINT') }}</span>
         </div>
         <div class="settings-color-control">
-          <span
-            class="settings-color-control__swatch"
-            :style="{backgroundColor: resolveCssColor(draft.popup.backgroundColor, '#FFF59D')}"
-            aria-hidden="true"
-          />
           <input
-            id="settings-popup-background-color"
-            v-model="draft.popup.backgroundColor"
-            type="text"
-            autocomplete="off"
-            spellcheck="false"
+            id="settings-popup-background-color-picker"
+            class="settings-color-control__picker"
+            :value="colorInputValue(draft.popup.backgroundColor, APPEARANCE_DEFAULTS.backgroundColor)"
+            type="color"
+            :aria-label="text('SETTINGS_FIELD_BACKGROUND_COLOR_PICKER')"
             :disabled="controlsDisabled"
-            data-testid="settings-popup-background-color"
+            data-testid="settings-popup-background-color-picker"
+            @input="updateColorPicker('backgroundColor', $event)"
           >
+          <div class="settings-color-control__hex">
+            <input
+              id="settings-popup-background-color"
+              :value="backgroundHex"
+              type="text"
+              inputmode="text"
+              maxlength="7"
+              autocomplete="off"
+              spellcheck="false"
+              :aria-invalid="invalidBackgroundHex ? 'true' : 'false'"
+              :aria-describedby="invalidBackgroundHex ? 'settings-popup-background-color-error' : undefined"
+              :disabled="controlsDisabled"
+              data-testid="settings-popup-background-color"
+              @input="updateHexColor('backgroundColor', $event)"
+            >
+            <span
+              v-if="invalidBackgroundHex"
+              id="settings-popup-background-color-error"
+              class="settings-field-error"
+              role="alert"
+            >{{ text('SETTINGS_FIELD_INVALID_HEX') }}</span>
+          </div>
         </div>
       </div>
 
@@ -125,20 +205,38 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
           <span>{{ text('SETTINGS_FIELD_FONT_COLOR_HINT') }}</span>
         </div>
         <div class="settings-color-control">
-          <span
-            class="settings-color-control__swatch"
-            :style="{backgroundColor: resolveCssColor(draft.popup.fontColor, '#000000')}"
-            aria-hidden="true"
-          />
           <input
-            id="settings-popup-font-color"
-            v-model="draft.popup.fontColor"
-            type="text"
-            autocomplete="off"
-            spellcheck="false"
+            id="settings-popup-font-color-picker"
+            class="settings-color-control__picker"
+            :value="colorInputValue(draft.popup.fontColor, APPEARANCE_DEFAULTS.fontColor)"
+            type="color"
+            :aria-label="text('SETTINGS_FIELD_FONT_COLOR_PICKER')"
             :disabled="controlsDisabled"
-            data-testid="settings-popup-font-color"
+            data-testid="settings-popup-font-color-picker"
+            @input="updateColorPicker('fontColor', $event)"
           >
+          <div class="settings-color-control__hex">
+            <input
+              id="settings-popup-font-color"
+              :value="fontHex"
+              type="text"
+              inputmode="text"
+              maxlength="7"
+              autocomplete="off"
+              spellcheck="false"
+              :aria-invalid="invalidFontHex ? 'true' : 'false'"
+              :aria-describedby="invalidFontHex ? 'settings-popup-font-color-error' : undefined"
+              :disabled="controlsDisabled"
+              data-testid="settings-popup-font-color"
+              @input="updateHexColor('fontColor', $event)"
+            >
+            <span
+              v-if="invalidFontHex"
+              id="settings-popup-font-color-error"
+              class="settings-field-error"
+              role="alert"
+            >{{ text('SETTINGS_FIELD_INVALID_HEX') }}</span>
+          </div>
         </div>
       </div>
 
@@ -150,16 +248,31 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
           <span>{{ text('SETTINGS_FIELD_FONT_SIZE_HINT') }}</span>
         </div>
         <div class="settings-number-control">
-          <input
+          <button
+            type="button"
+            class="settings-number-control__button"
+            :aria-label="text('SETTINGS_FIELD_FONT_SIZE_DECREASE')"
+            :aria-disabled="canDecreaseFontSize ? 'false' : 'true'"
+            :disabled="controlsDisabled || !canDecreaseFontSize"
+            data-testid="settings-popup-font-size-decrease"
+            @click="updateFontSize(-1)"
+          >−</button>
+          <output
             id="settings-popup-font-size"
-            v-model.number="draft.popup.fontSizePt"
-            type="number"
-            min="1"
-            step="1"
-            :disabled="controlsDisabled"
+            class="settings-number-control__value"
+            :aria-label="text('SETTINGS_FIELD_FONT_SIZE')"
+            aria-live="polite"
             data-testid="settings-popup-font-size"
-          >
-          <span>pt</span>
+          >{{ fontSizeValue }} pt</output>
+          <button
+            type="button"
+            class="settings-number-control__button"
+            :aria-label="text('SETTINGS_FIELD_FONT_SIZE_INCREASE')"
+            :aria-disabled="canIncreaseFontSize ? 'false' : 'true'"
+            :disabled="controlsDisabled || !canIncreaseFontSize"
+            data-testid="settings-popup-font-size-increase"
+            @click="updateFontSize(1)"
+          >+</button>
         </div>
       </div>
 
@@ -170,8 +283,18 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
         rel="noopener noreferrer"
       >
         {{ text('SETTINGS_POPUP_THEME_GUIDE') }}
+        <span class="settings-inline-link__icon" aria-hidden="true">↗</span>
       </a>
     </section>
+
+    <aside
+      v-if="pageId === 'appearance'"
+      class="settings-appearance-guidance"
+      data-testid="settings-appearance-scope"
+    >
+      <strong>{{ text('SETTINGS_APPEARANCE_SCOPE_TITLE') }}</strong>
+      <p>{{ text('SETTINGS_APPEARANCE_SCOPE_DESCRIPTION') }}</p>
+    </aside>
 
     <section
       v-if="pageId === 'double-click'"
@@ -461,6 +584,19 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
   box-shadow: var(--naverdic-card-shadow-default);
 }
 
+.settings-appearance-card {
+  min-height: 314px;
+  padding: 18px 24px 12px;
+}
+
+.settings-appearance-card .settings-card__heading {
+  padding-bottom: 12px;
+}
+
+.settings-appearance-card .settings-field-row {
+  min-height: 60px;
+}
+
 .settings-card__heading {
   padding-bottom: 18px;
   border-bottom: 1px solid var(--naverdic-settings-divider);
@@ -523,15 +659,28 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
   gap: 8px;
 }
 
-.settings-color-control__swatch {
-  width: 20px;
-  height: 20px;
+.settings-color-control__picker {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  padding: 2px;
   border: 1px solid var(--naverdic-settings-border);
   border-radius: 50%;
-  box-shadow: inset 0 0 0 2px var(--naverdic-settings-surface);
+  cursor: pointer;
+  appearance: none;
 }
 
-.settings-color-control input,
+.settings-color-control__picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.settings-color-control__picker::-webkit-color-swatch,
+.settings-color-control__picker::-moz-color-swatch {
+  border: 0;
+  border-radius: 50%;
+}
+
+.settings-color-control__hex input,
 .settings-number-control input,
 .settings-field-row select,
 .settings-textarea-field textarea {
@@ -542,23 +691,33 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
   font: inherit;
 }
 
-.settings-color-control input {
-  width: 112px;
+.settings-color-control__hex {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-color-control__hex input {
+  width: 100px;
   min-height: 36px;
   padding: 0 10px;
   font-size: 12px;
 }
 
-.settings-number-control input {
-  width: 76px;
-  min-height: 36px;
-  padding: 0 10px;
-  font-size: 12px;
+.settings-color-control__picker:focus-visible,
+.settings-color-control__hex input:focus-visible,
+.settings-number-control__button:focus-visible,
+.settings-field-row select:focus-visible,
+.settings-textarea-field textarea:focus-visible,
+.settings-switch input:focus-visible + .settings-switch__track {
+  outline: 2px solid var(--naverdic-color-focus);
+  outline-offset: 2px;
+  box-shadow: var(--naverdic-input-focus-ring);
 }
 
-.settings-number-control span {
-  color: var(--naverdic-settings-text-muted);
-  font-size: 12px;
+.settings-color-control__hex input[aria-invalid='true'] {
+  border-color: var(--naverdic-color-danger);
 }
 
 .settings-field-row select {
@@ -568,34 +727,102 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
   font-size: 12px;
 }
 
-.settings-color-control input:hover,
-.settings-number-control input:hover,
+.settings-color-control__picker:hover,
+.settings-color-control__hex input:hover,
 .settings-field-row select:hover,
 .settings-textarea-field textarea:hover {
   border-color: var(--naverdic-input-border-hover);
 }
 
-.settings-color-control input:focus-visible,
-.settings-number-control input:focus-visible,
-.settings-field-row select:focus-visible,
-.settings-textarea-field textarea:focus-visible,
-.settings-switch input:focus-visible + .settings-switch__track {
-  outline: 2px solid var(--naverdic-color-focus);
-  outline-offset: 2px;
-  box-shadow: var(--naverdic-input-focus-ring);
+.settings-number-control {
+  width: 140px;
+  height: 36px;
+  gap: 0;
+  overflow: hidden;
+  background: var(--naverdic-input-background-default);
+  border: 1px solid var(--naverdic-input-border-default);
+  border-radius: var(--naverdic-radius-sm);
+}
+
+.settings-number-control__button {
+  display: grid;
+  width: 36px;
+  height: 34px;
+  flex: 0 0 36px;
+  padding: 0;
+  color: var(--naverdic-settings-text);
+  background: transparent;
+  border: 0;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.settings-number-control__button:disabled {
+  color: var(--naverdic-color-text-disabled);
+  cursor: not-allowed;
+}
+
+.settings-number-control__value {
+  display: grid;
+  width: 66px;
+  height: 34px;
+  flex: 0 0 66px;
+  color: var(--naverdic-settings-text);
+  border-right: 1px solid var(--naverdic-input-border-default);
+  border-left: 1px solid var(--naverdic-input-border-default);
+  place-items: center;
+  font-size: 12px;
+  line-height: 1;
+  text-align: center;
 }
 
 .settings-inline-link {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   margin-top: 18px;
   color: var(--naverdic-settings-primary-text);
   font-size: 12px;
   font-weight: 600;
+  line-height: 20px;
   text-decoration: none;
+}
+
+.settings-inline-link__icon {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .settings-inline-link:hover {
   text-decoration: underline;
+}
+
+.settings-appearance-guidance {
+  min-height: 72px;
+  margin-top: 16px;
+  padding: 12px 20px;
+  color: var(--naverdic-settings-text);
+  background: var(--naverdic-settings-info);
+  border: 1px solid var(--naverdic-settings-info);
+  border-radius: 10px;
+}
+
+.settings-appearance-guidance strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.settings-appearance-guidance p {
+  margin: 2px 0 0;
+  color: var(--naverdic-settings-text-muted);
+  font-size: 11px;
+  line-height: 17px;
 }
 
 .settings-switch {
@@ -790,6 +1017,11 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
     padding: 18px;
   }
 
+  .settings-appearance-card {
+    min-height: 0;
+    padding: 18px;
+  }
+
   .settings-field-row {
     align-items: flex-start;
     flex-direction: column;
@@ -803,7 +1035,19 @@ watch(() => props.draftRevision, syncSiteInput, {immediate: true})
     align-self: stretch;
   }
 
+  .settings-appearance-card .settings-number-control {
+    align-self: flex-start;
+  }
+
+  .settings-appearance-card .settings-color-control__hex {
+    flex: 1;
+  }
+
   .settings-field-row select {
+    width: 100%;
+  }
+
+  .settings-color-control__hex input {
     width: 100%;
   }
 }

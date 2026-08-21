@@ -217,10 +217,18 @@ test('keeps the official Chrome Translator display name and translation panel bo
   const en = JSON.parse(fs.readFileSync(path.join(projectRoot, 'src/_locales/en/messages.json'), 'utf8'))
   assert.equal(ko.SETTINGS_TRANSLATION_CHROME_NAME.message, 'Chrome 내장 번역 (Translator API)')
   assert.equal(en.SETTINGS_TRANSLATION_CHROME_NAME.message.includes('Translator API'), true)
+  assert.equal(ko.SETTINGS_SECTION_POPUP_APPEARANCE.message, '팝업 사전')
+  assert.equal(ko.SETTINGS_SECTION_POPUP_APPEARANCE_DESCRIPTION.message, '페이지에서 단어를 더블클릭했을 때 표시되는 팝업의 스타일을 설정합니다.')
+  assert.equal(ko.SETTINGS_SHELL_PREVIEW_TITLE.message, '미리보기')
+  assert.equal(ko.SETTINGS_SHELL_PREVIEW_DESCRIPTION.message, '현재 화면의 변경 결과를 미리 볼 수 있습니다.')
 
   const shell = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsShell.vue'), 'utf8')
   assert.match(shell, /settings-content--translation/)
   assert.match(shell, /currentNavigation\.id !== 'translation-service'/)
+
+  const appearancePage = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPage.vue'), 'utf8')
+  assert.match(appearancePage, /settings-appearance-guidance/)
+  assert.equal(appearancePage.includes('사전 팝업과 번역 결과 팝업은 같은 너비로 표시됩니다.'), false)
 })
 
 test('rejects legacy custom provider definitions', () => {
