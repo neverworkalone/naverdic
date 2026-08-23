@@ -33,7 +33,7 @@
     "message": "글자 크기(pt): "
   },
   "DCLICK_DESC": {
-    "message": "단어를 더블 클릭했을 때 팝업 사전을 보여줍니다."
+    "message": "단어를 더블클릭했을 때 팝업 사전을 보여줍니다."
   },
   "DRAG_DESC": {
     "message": "드래그하여 단어나 숙어를 선택했을 때 팝업 사전을 보여줍니다."
@@ -45,10 +45,10 @@
     "message": "트리거 키: "
   },
   "DCLICK" : {
-    "message": "더블 클릭"
+    "message": "더블클릭"
   },
   "CTRL_DCLICK": {
-    "message": "$ctrl$ + 더블 클릭",
+    "message": "$ctrl$ + 더블클릭",
     "placeholders": {
       "ctrl": {
         "content": "$1"
@@ -56,7 +56,7 @@
     }
   },
   "ALT_DCLICK": {
-    "message": "$alt$ + 더블 클릭",
+    "message": "$alt$ + 더블클릭",
     "placeholders": {
       "alt": {
         "content": "$1"
@@ -64,7 +64,7 @@
     }
   },
   "CTRL_ALT_DCLICK": {
-    "message": "$ctrl$ + $alt$ + 더블 클릭",
+    "message": "$ctrl$ + $alt$ + 더블클릭",
     "placeholders": {
       "ctrl": {
         "content": "$1"
@@ -75,7 +75,7 @@
     }
   },
   "DCLICK_SPEED": {
-    "message": "더블 클릭 스피드: "
+    "message": "더블클릭 스피드: "
   },
   "DCLICK_SPEED_FASTEST": {
     "message": "더 빠르게"
