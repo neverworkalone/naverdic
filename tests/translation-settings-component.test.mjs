@@ -129,6 +129,22 @@ test('keeps Chrome free of API controls and exposes the fixed language pair', as
   wrapper.unmount()
 })
 
+test('renders translation defaults and updates the feature controls in the draft', async () => {
+  const draft = createDraft('chrome-translator')
+  const wrapper = mount(TranslationSettings, {
+    props: {draft, draftSecrets: createDefaultSecretsV2(), translatorRuntime: createChromeRuntime()}
+  })
+  await flushPromises()
+  assert.equal(wrapper.get('[data-testid="settings-translation-enabled"]').element.checked, true)
+  assert.equal(wrapper.get('[data-testid="settings-translation-trigger"]').element.value, 'ctrl')
+  assert.equal(wrapper.findAll('[data-testid="settings-translation-trigger"] option').length, 4)
+  await wrapper.get('[data-testid="settings-translation-trigger"]').setValue('ctrlalt')
+  assert.equal(draft.translation.triggerKey, 'ctrlalt')
+  await wrapper.get('[data-testid="settings-translation-enabled"]').setValue(false)
+  assert.equal(draft.translation.enabled, false)
+  wrapper.unmount()
+})
+
 test('locks DeepL controls while a connection test is in flight and clears stale target-language results', async () => {
   const previousFetch = globalThis.fetch
   let resolveFetch
@@ -152,7 +168,7 @@ test('locks DeepL controls while a connection test is in flight and clears stale
   globalThis.fetch = previousFetch
 })
 
-test('invalidates a successful connection test when the target language changes', async () => {
+test('invalidates a successful Gemini connection test when the model changes', async () => {
   const previousFetch = globalThis.fetch
   globalThis.fetch = async () => ({ok: true, json: async () => ({candidates: [{content: {parts: [{text: 'ok'}]}}]})})
   const secrets = createDefaultSecretsV2()
@@ -162,12 +178,51 @@ test('invalidates a successful connection test when the target language changes'
   await wrapper.get('[data-testid="settings-translation-test"]').trigger('click')
   await flushPromises()
   assert.match(wrapper.get('[data-testid="settings-translation-test-result"]').text(), /Connection test succeeded/)
-  await wrapper.get('[data-testid="settings-translation-target-language"]').setValue('ja')
+  const changedDraft = createDraft()
+  changedDraft.translation.geminiModel = 'gemini-2.5-flash'
+  await wrapper.setProps({draft: changedDraft})
   await flushPromises()
   assert.equal(wrapper.find('[data-testid="settings-translation-test-result"]').exists(), false)
   assert.equal(wrapper.get('[data-testid="settings-translation-activate"]').attributes('disabled'), '')
   wrapper.unmount()
   globalThis.fetch = previousFetch
+})
+
+test('fetches and stores compatible Gemini model choices without exposing the API key', async () => {
+  const previousFetch = globalThis.fetch
+  let request
+  globalThis.fetch = async (url, options) => {
+    request = {url, options}
+    return {
+      ok: true,
+      json: async () => ({models: [
+        {name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent']},
+        {name: 'models/gemini-embedding', supportedGenerationMethods: ['embedContent']}
+      ]})
+    }
+  }
+  const secrets = createDefaultSecretsV2()
+  secrets.providers.gemini = {apiKey: 'private-key'}
+  const draft = createDraft('gemini')
+  const wrapper = mount(TranslationSettings, {props: {draft, draftSecrets: secrets}})
+  await wrapper.get('[data-testid="settings-translation-gemini-model-fetch"]').trigger('click')
+  await flushPromises()
+  assert.equal(request.url, 'https://generativelanguage.googleapis.com/v1beta/models')
+  assert.equal(request.options.headers['x-goog-api-key'], 'private-key')
+  assert.deepEqual([...wrapper.get('[data-testid="settings-translation-gemini-model"]').element.options].map(option => option.value), ['gemini-3.5-flash', 'gemini-2.5-flash'])
+  assert.equal(wrapper.text().includes('private-key'), false)
+  wrapper.unmount()
+  globalThis.fetch = previousFetch
+})
+
+test('locks translation controls while loading and saving', async () => {
+  const wrapper = mount(TranslationSettings, {
+    props: {draft: createDraft(), draftSecrets: createDefaultSecretsV2(), isLoading: true}
+  })
+  assert.equal(wrapper.get('[data-testid="settings-translation-enabled"]').attributes('disabled'), '')
+  assert.equal(wrapper.get('[data-testid="settings-translation-trigger"]').attributes('disabled'), '')
+  assert.equal(wrapper.get('[data-provider-id="gemini"]').attributes('disabled'), '')
+  wrapper.unmount()
 })
 
 test('clears an in-flight connection test when settings are reset or saved', async () => {

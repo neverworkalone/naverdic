@@ -509,7 +509,7 @@
     "message": "삭제 전 내용을 꼭 확인하세요."
   },
   "SETTINGS_TRANSLATION_ENABLED": {
-    "message": "문장 번역 사용"
+    "message": "번역 기능"
   },
   "SETTINGS_TRANSLATION_TARGET_LANGUAGE": {
     "message": "대상 언어"
@@ -530,7 +530,7 @@
     "message": "문장 번역에 사용할 서비스를 선택하고 관리합니다."
   },
   "SETTINGS_TRANSLATION_AVAILABLE_SERVICES": {
-    "message": "사용 가능한 서비스"
+    "message": "서비스 선택"
   },
   "SETTINGS_TRANSLATION_AVAILABLE_SERVICES_HINT": {
     "message": "기본 서비스와 추가 연결 서비스를 한 곳에서 관리합니다."
@@ -539,7 +539,7 @@
     "message": "Chrome 내장 번역 (Translator API)"
   },
   "SETTINGS_TRANSLATION_CHROME_DESCRIPTION": {
-    "message": "브라우저에서 무료로 제공되는 로컬 번역"
+    "message": "Translator API · 무료"
   },
   "SETTINGS_TRANSLATION_CHROME_PREVIEW_DESCRIPTION": {
     "message": "브라우저에서 제공하는 Chrome Translator API입니다."
@@ -551,19 +551,19 @@
     "message": "DeepL"
   },
   "SETTINGS_TRANSLATION_DEEPL_DESCRIPTION": {
-    "message": "고품질 번역을 위한 외부 서비스"
+    "message": "Free / Pro API"
   },
   "SETTINGS_TRANSLATION_GEMINI_NAME": {
     "message": "Gemini"
   },
   "SETTINGS_TRANSLATION_GEMINI_DESCRIPTION": {
-    "message": "자연스러운 문장 번역과 요약"
+    "message": "문장 번역 및 요약"
   },
   "SETTINGS_TRANSLATION_GEMINI_MODEL": {
     "message": "모델"
   },
   "SETTINGS_TRANSLATION_GEMINI_MODEL_HINT": {
-    "message": "현재 지원하는 모델은 gemini-3.5-flash입니다."
+    "message": "번역에 적합한 Flash · Flash-Lite 계열만 표시합니다."
   },
   "SETTINGS_TRANSLATION_DEFAULT_BADGE": {
     "message": "무료 기본 제공"
@@ -602,7 +602,7 @@
     "message": "API 키"
   },
   "SETTINGS_TRANSLATION_API_KEY_HINT": {
-    "message": "키는 chrome.storage.local에만 저장됩니다."
+    "message": "인증 정보는 이 기기의 로컬 저장소에만 저장됩니다."
   },
   "SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER": {
     "message": "API 키를 입력하세요"
@@ -647,7 +647,7 @@
     "message": "번역 서비스"
   },
   "SETTINGS_TRANSLATION_SELECTOR_HINT": {
-    "message": "사용할 서비스를 선택하고 세부 설정을 관리하세요."
+    "message": "번역 기능과 사용할 서비스를 설정합니다."
   },
   "SETTINGS_TRANSLATION_DETAIL_TITLE": {
     "message": "세부 설정"
@@ -671,7 +671,7 @@
     "message": "설정 필요"
   },
   "SETTINGS_TRANSLATION_STATUS_CONFIGURED": {
-    "message": "설정됨"
+    "message": "준비됨"
   },
   "SETTINGS_TRANSLATION_STATUS_UNCONFIGURED": {
     "message": "미설정"
@@ -762,5 +762,74 @@
   },
   "SETTINGS_TRANSLATION_CHROME_NOTE": {
     "message": "API 키가 필요하지 않습니다. 번역은 이 페이지의 Chrome Translator API에서 처리됩니다."
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_LABEL": {
+    "message": "번역 트리거"
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_NONE": {
+    "message": "없음"
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_PRIMARY": {
+    "message": "$modifier$ + 드래그",
+    "placeholders": {
+      "modifier": {
+        "content": "$1"
+      }
+    }
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_ALT": {
+    "message": "$modifier$ + 드래그",
+    "placeholders": {
+      "modifier": {
+        "content": "$1"
+      }
+    }
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_PRIMARY_ALT": {
+    "message": "$primary$ + $secondary$ + 드래그",
+    "placeholders": {
+      "primary": {
+        "content": "$1"
+      },
+      "secondary": {
+        "content": "$2"
+      }
+    }
+  },
+  "SETTINGS_TRANSLATION_CHROME_PAGE_DESCRIPTION": {
+    "message": "Chrome 번역 모델의 상태를 확인하고 관리합니다."
+  },
+  "SETTINGS_TRANSLATION_EXTERNAL_PAGE_DESCRIPTION": {
+    "message": "외부 번역 서비스 연결과 인증 정보를 관리합니다."
+  },
+  "SETTINGS_TRANSLATION_CHROME_CARD_DESCRIPTION": {
+    "message": "Chrome 내장 Translator API는 모델을 다운로드하면 인터넷 연결이나 사용량 제한 없이 기기에서 무료로 작동하는 온디바이스 번역 기능입니다."
+  },
+  "SETTINGS_TRANSLATION_EXTERNAL_CARD_DESCRIPTION": {
+    "message": "API 키와 연결 상태를 설정합니다."
+  },
+  "SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR_VALUE": {
+    "message": "영어 → 한국어"
+  },
+  "SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR_CODE": {
+    "message": "en → ko"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_MANAGEMENT": {
+    "message": "번역 모델 관리"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_KEY_LINK": {
+    "message": "DeepL API 키 발급하기"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_KEY_LINK": {
+    "message": "Gemini API 키 발급하기"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_MODEL_FETCH": {
+    "message": "모델 목록 가져오기"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_MODEL_LOADING": {
+    "message": "가져오는 중…"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_MODEL_LIST_FAILURE": {
+    "message": "모델 목록을 가져오지 못했습니다. API 키와 연결을 확인하세요."
   }
 }

@@ -1,6 +1,8 @@
 import {
   CHROME_TRANSLATOR_PROVIDER_ID,
   DEFAULT_PROVIDER_ID,
+  GEMINI_DEFAULT_MODEL_ID,
+  normalizeGeminiModelId,
   PROVIDER_PRESETS
 } from './translation-provider.mjs'
 
@@ -297,10 +299,11 @@ export const SETTINGS_SCHEMA_V2 = Object.freeze([
   Object.freeze({path: 'popup.fontSizePt', type: 'positive-integer', storage: 'sync', defaultValue: 11}),
   Object.freeze({path: 'sites.denyListEnabled', type: 'boolean', storage: 'sync', defaultValue: false}),
   Object.freeze({path: 'sites.denyList', type: 'domain-list', storage: 'sync', defaultValue: []}),
-  Object.freeze({path: 'translation.enabled', type: 'boolean', storage: 'sync', defaultValue: false}),
-  Object.freeze({path: 'translation.triggerKey', type: 'trigger', storage: 'sync', defaultValue: 'ctrlalt', values: TRIGGER_KEYS}),
+  Object.freeze({path: 'translation.enabled', type: 'boolean', storage: 'sync', defaultValue: true}),
+  Object.freeze({path: 'translation.triggerKey', type: 'trigger', storage: 'sync', defaultValue: 'ctrl', values: TRIGGER_KEYS}),
   Object.freeze({path: 'translation.providerId', type: 'provider-id', storage: 'sync', defaultValue: DEFAULT_PROVIDER_ID}),
-  Object.freeze({path: 'translation.targetLanguage', type: 'language-code', storage: 'sync', defaultValue: 'ko'})
+  Object.freeze({path: 'translation.targetLanguage', type: 'language-code', storage: 'sync', defaultValue: 'ko'}),
+  Object.freeze({path: 'translation.geminiModel', type: 'string', storage: 'sync', defaultValue: GEMINI_DEFAULT_MODEL_ID})
 ])
 
 export const SETTINGS_V2_DEFAULTS = deepFreeze({
@@ -329,10 +332,11 @@ export const SETTINGS_V2_DEFAULTS = deepFreeze({
     denyList: []
   },
   translation: {
-    enabled: false,
-    triggerKey: 'ctrlalt',
+    enabled: true,
+    triggerKey: 'ctrl',
     providerId: DEFAULT_PROVIDER_ID,
-    targetLanguage: 'ko'
+    targetLanguage: 'ko',
+    geminiModel: GEMINI_DEFAULT_MODEL_ID
   }
 })
 
@@ -436,6 +440,10 @@ export function normalizeSettingsV2(values) {
       targetLanguage: normalizeLanguageCode(
         source.translation?.targetLanguage,
         defaults.translation.targetLanguage
+      ),
+      geminiModel: normalizeGeminiModelId(
+        source.translation?.geminiModel,
+        defaults.translation.geminiModel
       )
     }
   }

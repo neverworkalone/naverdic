@@ -36,8 +36,10 @@ export const PROVIDER_AUTH_MODES = Object.freeze({
 
 export const DEFAULT_PROVIDER_ID = 'deepl-free'
 export const CHROME_TRANSLATOR_PROVIDER_ID = 'chrome-translator'
+export const GEMINI_DEFAULT_MODEL_ID = 'gemini-3.5-flash'
 
 const PROVIDER_ID_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/
+const GEMINI_MODEL_ID_PATTERN = /^[a-z0-9][a-z0-9._-]{0,127}$/
 
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -79,6 +81,14 @@ function normalizedString(value, fallback = '') {
 function normalizedProviderId(value, fallback = '') {
   const result = normalizedString(value, fallback).toLowerCase()
   return PROVIDER_ID_PATTERN.test(result) ? result : fallback
+}
+
+export function normalizeGeminiModelId(value, fallback = GEMINI_DEFAULT_MODEL_ID) {
+  const normalized = normalizedString(value, fallback)
+    .replace(/^models\//i, '')
+    .replace(/:generateContent$/i, '')
+    .toLowerCase()
+  return GEMINI_MODEL_ID_PATTERN.test(normalized) ? normalized : fallback
 }
 
 const DEEPL_REQUEST = deepFreeze({
@@ -175,8 +185,9 @@ const PRESET_DEFINITIONS = {
     kind: PROVIDER_KINDS.HTTP,
     source: PROVIDER_SOURCES.PRESET,
     presetId: 'gemini',
+    model: GEMINI_DEFAULT_MODEL_ID,
     endpoint: {
-      url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+      url: `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_DEFAULT_MODEL_ID}:generateContent`,
       method: 'POST'
     },
     auth: {
@@ -226,6 +237,17 @@ const PRESET_DEFINITIONS = {
 
 export const PROVIDER_PRESETS = deepFreeze(PRESET_DEFINITIONS)
 
+function providerWithGeminiModel(preset, model) {
+  if (preset.id !== 'gemini') {
+    return cloneValue(preset)
+  }
+
+  const result = cloneValue(preset)
+  result.model = normalizeGeminiModelId(model)
+  result.endpoint.url = `https://generativelanguage.googleapis.com/v1beta/models/${result.model}:generateContent`
+  return result
+}
+
 /**
  * Return a canonical built-in provider definition.
  *
@@ -234,7 +256,7 @@ export const PROVIDER_PRESETS = deepFreeze(PRESET_DEFINITIONS)
  * unsupported persisted objects are rejected instead of being interpreted as
  * arbitrary network configuration.
  */
-export function normalizeProviderDefinition(input, {id: fallbackId = ''} = {}) {
+export function normalizeProviderDefinition(input, {id: fallbackId = '', model: fallbackModel = ''} = {}) {
   if (!isRecord(input)) {
     return null
   }
@@ -252,12 +274,15 @@ export function normalizeProviderDefinition(input, {id: fallbackId = ''} = {}) {
     return null
   }
 
-  return cloneValue(preset)
+  return providerWithGeminiModel(
+    preset,
+    id === 'gemini' ? fallbackModel || input.model : ''
+  )
 }
 
-export function getProviderPreset(presetId) {
+export function getProviderPreset(presetId, {model = ''} = {}) {
   const definition = PROVIDER_PRESETS[normalizedProviderId(presetId)]
-  return definition ? normalizeProviderDefinition(definition) : null
+  return definition ? normalizeProviderDefinition(definition, {model}) : null
 }
 
 export function isProviderDefinition(value) {
@@ -280,6 +305,7 @@ export function isProviderDefinition(value) {
     typeof value.execution.adapterId === 'string' &&
     typeof value.execution.context === 'string' &&
     (value.kind !== PROVIDER_KINDS.BUILT_IN ||
-      value.execution.context === PROVIDER_EXECUTION_CONTEXTS.CONTENT_PAGE)
+      value.execution.context === PROVIDER_EXECUTION_CONTEXTS.CONTENT_PAGE) &&
+    (value.id !== 'gemini' || normalizeGeminiModelId(value.model) === value.model)
   )
 }

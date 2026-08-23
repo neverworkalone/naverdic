@@ -80,3 +80,13 @@ test('reads split sync/local envelopes and follows provider changes once per lif
   lifecycle.stop()
   assert.equal(storage.listeners.size, 0)
 })
+
+test('passes the selected Gemini model through the content provider definition', () => {
+  const settings = createDefaultSettingsV2()
+  settings.translation.providerId = 'gemini'
+  settings.translation.geminiModel = 'gemini-2.5-flash'
+  const runtime = normalizeContentRuntimeSettings({settings, secrets: createDefaultSecretsV2()})
+
+  assert.equal(runtime.translationProvider.model, 'gemini-2.5-flash')
+  assert.match(runtime.translationProvider.endpoint.url, /models\/gemini-2\.5-flash:generateContent$/)
+})

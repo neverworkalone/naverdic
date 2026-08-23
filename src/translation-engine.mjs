@@ -44,7 +44,8 @@ function providerError(code, message, details = {}) {
 
 function providerDefinition(value) {
   const normalized = normalizeProviderDefinition(value, {
-    id: value?.id || ''
+    id: value?.id || '',
+    model: value?.model || ''
   })
   return normalized && isProviderDefinition(normalized) ? normalized : null
 }
@@ -294,7 +295,7 @@ export function normalizeProviderResponse(providerInput, payload) {
 }
 
 function validatePresetEndpoint(provider) {
-  const preset = getProviderPreset(provider.presetId)
+  const preset = getProviderPreset(provider.presetId, {model: provider.model})
   if (!preset || preset.endpoint?.url !== provider.endpoint?.url) {
     throw providerError(
       PROVIDER_ERROR_CODES.INVALID_ENDPOINT,

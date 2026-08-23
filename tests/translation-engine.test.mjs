@@ -56,6 +56,21 @@ test('builds the fixed Gemini 3.5 Flash endpoint with header authentication', as
   assert.equal(result.text, '안녕하세요')
 })
 
+test('builds the selected Gemini model endpoint without changing the provider contract', async () => {
+  const provider = getProviderPreset('gemini', {model: 'gemini-2.5-flash'})
+  const result = await executeProviderTranslation(provider, {
+    text: 'hello',
+    targetLanguage: 'ko',
+    secrets: secretStore('gemini', 'apiKey', 'gemini-secret'),
+    fetchFn: async (url, options) => {
+      assert.match(url, /models\/gemini-2\.5-flash:generateContent$/)
+      assert.equal(options.headers['x-goog-api-key'], 'gemini-secret')
+      return jsonResponse({candidates: [{content: {parts: [{text: 'translated'}]}}]})
+    }
+  })
+  assert.equal(result.text, 'translated')
+})
+
 test('rejects legacy custom definitions before execution', async () => {
   assert.equal(normalizeProviderDefinition({
     id: 'custom-api',

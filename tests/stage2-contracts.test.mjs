@@ -107,6 +107,9 @@ test('defines the v2 storage split and nested settings defaults', () => {
     secrets: {area: 'local', key: 'naverdic.secrets.v2'}
   })
   assert.equal(SETTINGS_V2_DEFAULTS.translation.providerId, DEFAULT_PROVIDER_ID)
+  assert.equal(SETTINGS_V2_DEFAULTS.translation.enabled, true)
+  assert.equal(SETTINGS_V2_DEFAULTS.translation.triggerKey, 'ctrl')
+  assert.equal(SETTINGS_V2_DEFAULTS.translation.geminiModel, 'gemini-3.5-flash')
   assert.equal(SETTINGS_V2_DEFAULTS.translation.targetLanguage, 'ko')
   assert.equal(SETTINGS_V2_DEFAULTS.popup.fontSizePt, 11)
   assert.equal(SETTINGS_V2_DEFAULTS.dictionary.drag.triggerKey, 'ctrl')
@@ -244,6 +247,24 @@ test('keeps the official Chrome Translator display name and translation panel bo
   const en = JSON.parse(fs.readFileSync(path.join(projectRoot, 'src/_locales/en/messages.json'), 'utf8'))
   assertLocaleMessages(ko, [
     'SETTINGS_TRANSLATION_CHROME_NAME',
+    'SETTINGS_TRANSLATION_ENABLED',
+    'SETTINGS_TRANSLATION_TRIGGER_LABEL',
+    'SETTINGS_TRANSLATION_TRIGGER_NONE',
+    'SETTINGS_TRANSLATION_TRIGGER_PRIMARY',
+    'SETTINGS_TRANSLATION_TRIGGER_ALT',
+    'SETTINGS_TRANSLATION_TRIGGER_PRIMARY_ALT',
+    'SETTINGS_TRANSLATION_CHROME_PAGE_DESCRIPTION',
+    'SETTINGS_TRANSLATION_EXTERNAL_PAGE_DESCRIPTION',
+    'SETTINGS_TRANSLATION_CHROME_CARD_DESCRIPTION',
+    'SETTINGS_TRANSLATION_EXTERNAL_CARD_DESCRIPTION',
+    'SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR_VALUE',
+    'SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR_CODE',
+    'SETTINGS_TRANSLATION_CHROME_MODEL_MANAGEMENT',
+    'SETTINGS_TRANSLATION_DEEPL_KEY_LINK',
+    'SETTINGS_TRANSLATION_GEMINI_KEY_LINK',
+    'SETTINGS_TRANSLATION_GEMINI_MODEL_FETCH',
+    'SETTINGS_TRANSLATION_GEMINI_MODEL_LOADING',
+    'SETTINGS_TRANSLATION_GEMINI_MODEL_LIST_FAILURE',
     'SETTINGS_SECTION_POPUP_APPEARANCE',
     'SETTINGS_SECTION_POPUP_APPEARANCE_DESCRIPTION',
     'SETTINGS_NAV_BEHAVIOR',
@@ -565,7 +586,8 @@ test('migrates every v6.6 setting and moves the DeepL key to local secrets', () 
     enabled: true,
     triggerKey: 'none',
     providerId: 'deepl-free',
-    targetLanguage: 'ko'
+    targetLanguage: 'ko',
+    geminiModel: 'gemini-3.5-flash'
   })
   assert.deepEqual(result.secrets, {
     schemaVersion: 2,
