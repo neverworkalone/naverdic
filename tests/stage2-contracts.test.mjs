@@ -363,6 +363,8 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(shell, /\.settings-shell--double-click \{[\s\S]*box-shadow: var\(--naverdic-settings-shadow\)/)
   assert.match(shell, /settings-content--translation/)
   assert.match(shell, /settings-content--double-click/)
+  assert.match(shell, /\.settings-header__title \{[\s\S]*width: 190px/)
+  assert.match(shell, /\.settings-header__version \{[\s\S]*margin-left: -8px/)
   assert.match(shell, /settings-shell--drag/)
   assert.match(shell, /\.settings-shell--drag \{[\s\S]*margin: 16px auto/)
   assert.match(shell, /\.settings-shell--drag \{[\s\S]*border: 1px solid var\(--naverdic-settings-border\)/)
