@@ -264,9 +264,13 @@ export function calculatePopupPosition({
   const verticalAvailable = selected.vertical === 'above'
     ? aboveAvailable
     : belowAvailable
+  const largestSideAvailable = Math.max(belowAvailable, aboveAvailable)
+  const needsScrollableViewport = height > largestSideAvailable
   const maxHeight = Math.min(
     maxAvailableHeight,
-    Math.max(1, verticalAvailable || maxAvailableHeight)
+    needsScrollableViewport
+      ? maxAvailableHeight
+      : Math.max(1, verticalAvailable || maxAvailableHeight)
   )
   const minTop = normalizedViewport.top + normalizedMargin
   const maxTop = normalizedViewport.bottom - normalizedMargin - Math.min(height || maxHeight, maxAvailableHeight)

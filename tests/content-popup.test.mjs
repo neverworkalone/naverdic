@@ -124,7 +124,7 @@ test('limits tall results to the available side and returns a scroll budget', ()
   })
 
   assert.equal(result.vertical, 'above')
-  assert.equal(result.maxHeight, 558)
+  assert.equal(result.maxHeight, 780)
   assert.equal(result.top, 10)
 })
 
@@ -187,13 +187,15 @@ test('ignores a late response after a newer selection starts', async () => {
   assert.equal(secondResult.data, 'new result')
 })
 
-test('renders common states inside an isolated shadow popup and closes on outside or Escape', () => {
+test('renders common states inside an isolated shadow popup and closes on outside or Escape', async () => {
   const dom = new JSDOM('<!doctype html><body></body>', {url: 'https://example.com/'})
   const {document, window} = dom.window
   const controller = createPopupController({
     document,
     window,
-    loadStylesheet: () => Promise.resolve('.naverdic-popup { color: red; }'),
+    loadStylesheet: () => Promise.resolve(
+      '.naverdic-popup { color: red; } .naverdic-popup__body { overflow: auto; }'
+    ),
     getText: id => ({
       INLINE_POPUP_DICTIONARY_TITLE: 'Dictionary',
       INLINE_POPUP_TRANSLATION_TITLE: 'Translation',
@@ -213,6 +215,7 @@ test('renders common states inside an isolated shadow popup and closes on outsid
   assert.ok(host)
   assert.ok(host.shadowRoot)
   assert.equal(host.shadowRoot.querySelector('#popupShadow').dataset.state, POPUP_STATES.LOADING)
+  assert.equal(host.shadowRoot.querySelector('.naverdic-popup__header').hidden, true)
   assert.ok(host.shadowRoot.querySelector('style'))
 
   controller.update(POPUP_STATES.RESULT, [{
@@ -224,6 +227,7 @@ test('renders common states inside an isolated shadow popup and closes on outsid
     meanings: [{order: '1', value: '안녕하세요'}]
   }])
   assert.equal(host.shadowRoot.querySelector('.naverdic-wordTitle a').textContent, 'hello')
+  assert.equal(host.shadowRoot.querySelector('.naverdic-popup__header').hidden, true)
   assert.equal(host.shadowRoot.querySelector('audio').getAttribute('controlslist'), 'nodownload')
   assert.equal(host.shadowRoot.querySelector('audio').id, '')
 
@@ -234,8 +238,54 @@ test('renders common states inside an isolated shadow popup and closes on outsid
     popupType: 'translation',
     popupAnchor: {getRect: () => ({left: 100, right: 140, top: 100, bottom: 120})}
   })
+  const longTranslation = Array.from({length: 80}, () => '긴 번역 결과').join(' ')
+  controller.update(POPUP_STATES.RESULT, longTranslation)
+  await new Promise(resolve => setImmediate(resolve))
+  const translationPopup = document.getElementById('popupFrame').shadowRoot
+    .querySelector('#popupShadow')
+  assert.equal(translationPopup.querySelector('.naverdic-popup__header').hidden, false)
+  assert.equal(translationPopup.querySelector('.naverdic-popup__body').textContent, longTranslation)
+  assert.match(
+    document.getElementById('popupFrame').shadowRoot.querySelector('style').textContent,
+    /overflow: auto/
+  )
   document.dispatchEvent(new window.KeyboardEvent('keydown', {key: 'Escape', bubbles: true}))
   assert.equal(controller.isOpen(), false)
+  dom.window.close()
+})
+
+test('keeps the popup hidden until its stylesheet has settled', async () => {
+  const dom = new JSDOM('<!doctype html><body></body>', {url: 'https://example.com/'})
+  const {document, window} = dom.window
+  let resolveStyles
+  const styles = new Promise(resolve => {
+    resolveStyles = resolve
+  })
+  const controller = createPopupController({
+    document,
+    window,
+    loadStylesheet: () => styles,
+    getText: id => ({
+      INLINE_POPUP_DICTIONARY_TITLE: 'Dictionary',
+      INLINE_POPUP_TRANSLATION_TITLE: 'Translation',
+      INLINE_POPUP_LOADING: 'Loading',
+      INLINE_POPUP_NO_RESULT: 'No result',
+      INLINE_POPUP_NETWORK_ERROR: 'Network error',
+      INLINE_POPUP_AUDIO_UNAVAILABLE: 'Audio unavailable'
+    }[id] || id)
+  })
+
+  controller.open({
+    popupType: 'translation',
+    popupAnchor: {getRect: () => ({left: 100, right: 140, top: 100, bottom: 120})}
+  })
+  const popup = document.getElementById('popupFrame').shadowRoot.querySelector('#popupShadow')
+  assert.equal(popup.style.visibility, 'hidden')
+
+  resolveStyles('.naverdic-popup { display: block; }')
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(popup.style.visibility, 'visible')
+  controller.close()
   dom.window.close()
 })
 

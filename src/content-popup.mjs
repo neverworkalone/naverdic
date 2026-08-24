@@ -31,8 +31,33 @@ const DEFAULT_TEXT = Object.freeze({
 
 const FALLBACK_CSS = `
 :host { all: initial; }
-.naverdic-popup { box-sizing: border-box; }
-.naverdic-popup__body { box-sizing: border-box; overflow: auto; }
+.naverdic-popup {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: auto;
+  line-height: normal;
+  padding: 9px;
+  border: 1px solid #999;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  pointer-events: auto;
+}
+.naverdic-popup__header {
+  flex: 0 0 auto;
+  margin: 0 0 8px;
+  padding: 0 1px;
+  font-weight: bold;
+}
+.naverdic-popup__body {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  max-height: calc(var(--naverdic-popup-max-height, 480px) - 42px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
 `
 
 function defaultText(messageId) {
@@ -183,6 +208,7 @@ function createPopupView({
   let host = null
   let shadowRoot = null
   let popup = null
+  let header = null
   let title = null
   let body = null
   let style = null
@@ -222,7 +248,7 @@ function createPopupView({
     popup.setAttribute('aria-live', 'polite')
     popup.setAttribute('aria-label', getText('INLINE_POPUP_DICTIONARY_TITLE'))
 
-    const header = documentLike.createElement('div')
+    header = documentLike.createElement('div')
     header.className = 'naverdic-popup__header'
     title = documentLike.createElement('div')
     title.className = 'naverdic-popup__title'
@@ -233,6 +259,11 @@ function createPopupView({
     body.className = 'naverdic-popup__body'
     popup.appendChild(body)
     shadowRoot.appendChild(popup)
+
+    popup.style.width = `${Number(popupOptions.width) || DEFAULT_POPUP_OPTIONS.width}px`
+    popup.style.backgroundColor = popupOptions.backgroundColor
+    popup.style.color = popupOptions.fontColor
+    popup.style.fontSize = `${popupOptions.fontSizePt}pt`
 
     const mountTarget = documentLike.body || documentLike.documentElement
     mountTarget?.appendChild(host)
@@ -260,7 +291,10 @@ function createPopupView({
     const titleText = type === 'translation'
       ? getText('INLINE_POPUP_TRANSLATION_TITLE')
       : getText('INLINE_POPUP_DICTIONARY_TITLE')
-    title.textContent = titleText
+    const showHeader = type === 'translation'
+    header.hidden = !showHeader
+    header.style.display = showHeader ? '' : 'none'
+    title.textContent = showHeader ? titleText : ''
     popup.dataset.type = type
     popup.dataset.state = state
     popup.setAttribute('aria-label', titleText)
@@ -300,6 +334,7 @@ function createPopupView({
 
   function measure() {
     ensureMounted()
+    popup.style.width = `${Number(popupOptions.width) || DEFAULT_POPUP_OPTIONS.width}px`
     popup.style.maxHeight = 'none'
     popup.style.setProperty('--naverdic-popup-max-height', '100000px')
     const rect = popup.getBoundingClientRect?.() || {}
@@ -352,6 +387,7 @@ function createPopupView({
     host = null
     shadowRoot = null
     popup = null
+    header = null
     title = null
     body = null
     style = null
@@ -361,6 +397,7 @@ function createPopupView({
     mount: ensureMounted,
     update,
     measure,
+    whenReady: () => stylesPromise || Promise.resolve(),
     setPosition,
     setVisibility,
     setOptions,
@@ -395,6 +432,7 @@ export function createPopupController({
   let frameId = null
   let listenersBound = false
   let onClose = null
+  let visibilityRevision = 0
 
   function scheduleReposition() {
     if (!open || destroyed) {
@@ -435,6 +473,20 @@ export function createPopupController({
       gap: popupOptions.gap
     })
     popupView.setPosition(position)
+  }
+
+  function revealWhenReady() {
+    const revision = ++visibilityRevision
+    Promise.resolve(popupView.whenReady?.())
+      .catch(() => {})
+      .then(() => {
+        if (!open || destroyed || revision !== visibilityRevision) {
+          return
+        }
+
+        popupView.setVisibility('visible')
+        scheduleReposition()
+      })
   }
 
   function eventIsInside(event) {
@@ -524,7 +576,7 @@ export function createPopupController({
     popupView.setVisibility('hidden')
     bindListeners()
     reposition()
-    popupView.setVisibility('visible')
+    revealWhenReady()
   }
 
   function update(state, data) {
@@ -535,7 +587,7 @@ export function createPopupController({
     popupView.update({type, state, data})
     popupView.setVisibility('hidden')
     reposition()
-    popupView.setVisibility('visible')
+    revealWhenReady()
   }
 
   function close(reason = 'programmatic', {notify = true} = {}) {
@@ -544,6 +596,7 @@ export function createPopupController({
     }
 
     open = false
+    visibilityRevision += 1
     if (frameId !== null) {
       const cancelFrame = windowLike?.cancelAnimationFrame
       if (typeof cancelFrame === 'function') {
