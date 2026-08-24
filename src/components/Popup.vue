@@ -19,10 +19,13 @@ const entries = ref([])
 const state = ref(POPUP_STATES.IDLE)
 const inputElement = ref(null)
 let requestRevision = 0
-const resultScrollable = computed(() => state.value === POPUP_STATES.RESULT
+const hasVisibleResult = computed(() => entries.value.length > 0
+  && (state.value === POPUP_STATES.RESULT || state.value === POPUP_STATES.LOADING))
+const resultScrollable = computed(() => hasVisibleResult.value
   && shouldUseScrollableResult(entries.value))
 const shellClasses = computed(() => ({
   [`naverdic-popup-shell--${state.value}`]: true,
+  'naverdic-popup-shell--result': hasVisibleResult.value,
   'naverdic-popup-shell--result-scroll': resultScrollable.value
 }))
 
@@ -44,7 +47,6 @@ async function searchWord(searchTerm = word.value) {
 
   const revision = ++requestRevision
   state.value = POPUP_STATES.LOADING
-  entries.value = []
 
   try {
     const response = await sendRuntimeMessage(
@@ -132,7 +134,7 @@ onMounted(() => {
       :class="{'naverdic-popup-body--scrollable': resultScrollable}"
     >
       <DictionaryResult
-        v-if="state === POPUP_STATES.RESULT"
+        v-if="hasVisibleResult"
         :entries="entries"
       />
       <p
@@ -148,7 +150,7 @@ onMounted(() => {
 
       <div
         class="naverdic-popup-divider"
-        :class="{'naverdic-popup-divider--initial': state === POPUP_STATES.IDLE || state === POPUP_STATES.LOADING}"
+        :class="{'naverdic-popup-divider--initial': !hasVisibleResult && (state === POPUP_STATES.IDLE || state === POPUP_STATES.LOADING)}"
         aria-hidden="true"
       />
       <footer class="naverdic-popup-footer">
@@ -201,6 +203,10 @@ body {
 .naverdic-popup-shell--idle,
 .naverdic-popup-shell--loading {
   height: 92px;
+}
+
+.naverdic-popup-shell--loading.naverdic-popup-shell--result:not(.naverdic-popup-shell--result-scroll) {
+  height: auto;
 }
 
 .naverdic-popup-shell--result-scroll {

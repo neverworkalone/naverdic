@@ -188,6 +188,32 @@ test('ignores an older toolbar response after a newer search starts', async () =
   wrapper.unmount()
 })
 
+test('keeps the previous toolbar result visible while a newer lookup is pending', async () => {
+  const wrapper = mountPopup()
+  const input = wrapper.get('.naverdic-popup-search__input')
+  const form = wrapper.get('.naverdic-popup-search')
+  const shell = wrapper.get('.naverdic-popup-shell')
+
+  await input.setValue('first')
+  await form.trigger('submit')
+  respond(0, {ok: true, data: dictionaryResponse('first', '첫 번째 결과')})
+  await flushPromises()
+
+  await input.setValue('second')
+  await form.trigger('submit')
+
+  assert.equal(shell.attributes('data-state'), 'loading')
+  assert.equal(shell.attributes('aria-busy'), 'true')
+  assert.equal(shell.classes('naverdic-popup-shell--result'), true)
+  assert.equal(wrapper.get('.dictionary-result__word').text(), 'first')
+  assert.equal(wrapper.find('.naverdic-popup-status').exists(), false)
+
+  respond(1, {ok: true, data: dictionaryResponse('second', '두 번째 결과')})
+  await flushPromises()
+  assert.equal(wrapper.get('.dictionary-result__word').text(), 'second')
+  wrapper.unmount()
+})
+
 test('uses the taller Figma result variant for long dictionary entries', async () => {
   const wrapper = mountPopup()
   await wrapper.get('.naverdic-popup-search__input').setValue('test')
