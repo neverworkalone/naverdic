@@ -19,10 +19,11 @@ const entries = ref([])
 const state = ref(POPUP_STATES.IDLE)
 const inputElement = ref(null)
 let requestRevision = 0
+const resultScrollable = computed(() => state.value === POPUP_STATES.RESULT
+  && shouldUseScrollableResult(entries.value))
 const shellClasses = computed(() => ({
   [`naverdic-popup-shell--${state.value}`]: true,
-  'naverdic-popup-shell--result-scroll': state.value === POPUP_STATES.RESULT
-    && shouldUseScrollableResult(entries.value)
+  'naverdic-popup-shell--result-scroll': resultScrollable.value
 }))
 
 function setResolvedState(resolved) {
@@ -126,32 +127,37 @@ onMounted(() => {
       </button>
     </form>
 
-    <DictionaryResult
-      v-if="state === POPUP_STATES.RESULT"
-      :entries="entries"
-    />
-    <p
-      v-else-if="state === POPUP_STATES.EMPTY"
-      class="naverdic-popup-status"
-      role="status"
-    >{{ getText('INLINE_POPUP_NO_RESULT') }}</p>
-    <p
-      v-else-if="state === POPUP_STATES.ERROR"
-      class="naverdic-popup-status naverdic-popup-status--error"
-      role="alert"
-    >{{ getText('INLINE_POPUP_NETWORK_ERROR') }}</p>
-
     <div
-      class="naverdic-popup-divider"
-      :class="{'naverdic-popup-divider--initial': state === POPUP_STATES.IDLE || state === POPUP_STATES.LOADING}"
-      aria-hidden="true"
-    />
-    <footer class="naverdic-popup-footer">
-      <span>{{ getText('POPUP_PRODUCT_LABEL') }}</span>
-      <a href="options.html" target="_blank" rel="noopener noreferrer">
-        {{ getText('SETTING') }}
-      </a>
-    </footer>
+      class="naverdic-popup-body"
+      :class="{'naverdic-popup-body--scrollable': resultScrollable}"
+    >
+      <DictionaryResult
+        v-if="state === POPUP_STATES.RESULT"
+        :entries="entries"
+      />
+      <p
+        v-else-if="state === POPUP_STATES.EMPTY"
+        class="naverdic-popup-status"
+        role="status"
+      >{{ getText('INLINE_POPUP_NO_RESULT') }}</p>
+      <p
+        v-else-if="state === POPUP_STATES.ERROR"
+        class="naverdic-popup-status naverdic-popup-status--error"
+        role="alert"
+      >{{ getText('INLINE_POPUP_NETWORK_ERROR') }}</p>
+
+      <div
+        class="naverdic-popup-divider"
+        :class="{'naverdic-popup-divider--initial': state === POPUP_STATES.IDLE || state === POPUP_STATES.LOADING}"
+        aria-hidden="true"
+      />
+      <footer class="naverdic-popup-footer">
+        <span>{{ getText('POPUP_PRODUCT_LABEL') }}</span>
+        <a href="options.html" target="_blank" rel="noopener noreferrer">
+          {{ getText('SETTING') }}
+        </a>
+      </footer>
+    </div>
   </main>
 </template>
 
@@ -198,6 +204,7 @@ body {
 }
 
 .naverdic-popup-shell--result-scroll {
+  height: 400px;
   min-height: 400px;
 }
 
@@ -265,9 +272,42 @@ body {
   opacity: 0.7;
 }
 
+.naverdic-popup-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 340px;
+  min-width: 0;
+}
+
+.naverdic-popup-body--scrollable {
+  max-height: 336px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .naverdic-popup-shell .dictionary-result {
   flex: 0 0 auto;
   width: 340px;
+  height: auto;
+  min-height: 216px;
+  max-height: none;
+  overflow: visible;
+}
+
+.naverdic-popup-body--scrollable::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.naverdic-popup-body--scrollable::-webkit-scrollbar-track {
+  background: rgba(229, 233, 240, 0.9);
+  border-radius: 2px;
+}
+
+.naverdic-popup-body--scrollable::-webkit-scrollbar-thumb {
+  background: rgba(185, 193, 204, 0.9);
+  border-radius: 2px;
 }
 
 .naverdic-popup-status {

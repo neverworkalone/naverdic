@@ -165,6 +165,7 @@ test('matches the v7 toolbar shell and renders a dictionary result', async () =>
   assert.equal(wrapper.get('.dictionary-result__word').text(), 'test')
   assert.equal(wrapper.get('.dictionary-result__meaning').text(), '1. 시험, 테스트')
   assert.equal(wrapper.find('.dictionary-result__audio-button').exists(), false)
+  assert.equal(wrapper.get('.naverdic-popup-body .naverdic-popup-footer').exists(), true)
   wrapper.unmount()
 })
 
@@ -216,6 +217,8 @@ test('uses the taller Figma result variant for long dictionary entries', async (
   await flushPromises()
 
   assert.equal(wrapper.get('.naverdic-popup-shell').classes('naverdic-popup-shell--result-scroll'), true)
+  assert.equal(wrapper.get('.naverdic-popup-body').classes('naverdic-popup-body--scrollable'), true)
+  assert.equal(wrapper.get('.naverdic-popup-body .naverdic-popup-footer').exists(), true)
   assert.equal(wrapper.get('.dictionary-result').classes('dictionary-result--scrollable'), true)
   wrapper.unmount()
 })
@@ -248,6 +251,8 @@ test('promotes a two-meaning result before the compact card shows a scrollbar', 
   await flushPromises()
 
   assert.equal(wrapper.get('.naverdic-popup-shell').classes('naverdic-popup-shell--result-scroll'), true)
+  assert.equal(wrapper.get('.naverdic-popup-body').classes('naverdic-popup-body--scrollable'), true)
+  assert.equal(wrapper.get('.naverdic-popup-body .naverdic-popup-footer').exists(), true)
   assert.equal(wrapper.get('.dictionary-result').classes('dictionary-result--scrollable'), true)
   wrapper.unmount()
 })
