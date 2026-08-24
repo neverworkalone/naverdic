@@ -12,6 +12,11 @@ import {
   createPopupRequestCoordinator,
   POPUP_REQUEST_STATUSES
 } from '../src/content-request.mjs'
+import {
+  SETTINGS_STORAGE,
+  createDefaultSecretsV2,
+  createInitialSettingsV2
+} from '../src/settings-v2.mjs'
 
 const VIEWPORT = {
   left: 0,
@@ -232,4 +237,110 @@ test('renders common states inside an isolated shadow popup and closes on outsid
   document.dispatchEvent(new window.KeyboardEvent('keydown', {key: 'Escape', bubbles: true}))
   assert.equal(controller.isOpen(), false)
   dom.window.close()
+})
+
+test('installs dictionary interaction while Chrome Translator availability is pending', async () => {
+  const dom = new JSDOM(
+    '<!doctype html><body><p id="word">hello</p></body>',
+    {url: 'https://example.com/', pretendToBeVisual: true}
+  )
+  const {document, window} = dom.window
+  const settings = createInitialSettingsV2()
+  settings.dictionary.drag.enabled = false
+  const secrets = createDefaultSecretsV2()
+  const listeners = new Set()
+  const storage = {
+    sync: {
+      get: (_keys, callback) => callback({
+        [SETTINGS_STORAGE.settings.key]: settings
+      })
+    },
+    local: {
+      get: (_keys, callback) => callback({
+        [SETTINGS_STORAGE.secrets.key]: secrets
+      })
+    },
+    onChanged: {
+      addListener: listener => listeners.add(listener),
+      removeListener: listener => listeners.delete(listener)
+    }
+  }
+  let resolveAvailability
+  const availability = new Promise(resolve => {
+    resolveAvailability = resolve
+  })
+  const previousGlobals = {
+    chrome: globalThis.chrome,
+    document: globalThis.document,
+    fetch: globalThis.fetch,
+    navigator: globalThis.navigator,
+    self: globalThis.self,
+    window: globalThis.window
+  }
+
+  globalThis.window = window
+  globalThis.document = document
+  globalThis.navigator = window.navigator
+  globalThis.self = window
+  globalThis.fetch = async () => ({ok: false})
+  window.Translator = {
+    availability: () => availability,
+    create: () => Promise.resolve({translate: async () => '안녕'})
+  }
+  globalThis.chrome = {
+    storage,
+    runtime: {
+      getURL: name => `https://extension.test/${name}`,
+      sendMessage: (_request, callback) => callback({
+        ok: true,
+        data: {searchResult: {searchResultList: []}}
+      })
+    },
+    i18n: {getMessage: () => ''}
+  }
+
+  try {
+    const range = document.createRange()
+    const text = document.getElementById('word').firstChild
+    range.setStart(text, 0)
+    range.setEnd(text, text.length)
+    const selection = window.getSelection()
+    selection.removeAllRanges()
+    selection.addRange(range)
+    window.getSelection = () => selection
+
+    const content = await import(`../src/content.js?pending-availability=${Date.now()}`)
+    content.main()
+    await new Promise(resolve => setImmediate(resolve))
+
+    for (let index = 0; index < 2; index += 1) {
+      document.dispatchEvent(new window.MouseEvent('mousedown', {
+        bubbles: true,
+        button: 0,
+        clientX: 100,
+        clientY: 100
+      }))
+      document.dispatchEvent(new window.MouseEvent('mouseup', {
+        bubbles: true,
+        button: 0,
+        clientX: 100,
+        clientY: 100
+      }))
+    }
+
+    assert.ok(document.getElementById('popupFrame'))
+    assert.equal(listeners.size, 1)
+
+    resolveAvailability('available')
+    await new Promise(resolve => setImmediate(resolve))
+    content.unregisterEventListener()
+  } finally {
+    globalThis.chrome = previousGlobals.chrome
+    globalThis.document = previousGlobals.document
+    globalThis.fetch = previousGlobals.fetch
+    globalThis.navigator = previousGlobals.navigator
+    globalThis.self = previousGlobals.self
+    globalThis.window = previousGlobals.window
+    dom.window.close()
+  }
 })

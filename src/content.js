@@ -241,15 +241,16 @@ function applyOptions(items) {
   }
 
   if (nextNeedsChromeRuntime) {
-    // Finish the availability check before installing the mouseup handler.
-    // Once the handler runs, a ready model lets runtime.translate() reach
-    // Translator.create() before its first await, preserving the page's
-    // transient user activation. Model downloads still only start from the
-    // explicit settings click path.
-    prepareChromeTranslatorRuntime().refreshAvailability?.()
-      .catch(() => {})
-      .finally(bindInteractionController)
-    return
+    // Warm the availability state without gating dictionary interaction on it.
+    // Translator availability can wait on browser/network state; delaying the
+    // document handlers would make double-click dictionary lookup appear dead.
+    // Model downloads still only start from the explicit settings click path.
+    try {
+      const availability = prepareChromeTranslatorRuntime().refreshAvailability?.()
+      availability?.catch?.(() => {})
+    } catch (_error) {
+      // An unavailable Translator API must not disable dictionary lookup.
+    }
   }
 
   bindInteractionController()
