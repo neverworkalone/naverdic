@@ -20,6 +20,9 @@
   "POPUP_AUDIO_LABEL": {
     "message": "발음 재생"
   },
+  "POPUP_AUDIO_PAUSE_LABEL": {
+    "message": "발음 일시정지"
+  },
   "SETTING": {
     "message": "설정"
   },

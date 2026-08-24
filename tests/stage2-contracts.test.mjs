@@ -356,6 +356,15 @@ test('keeps the official Chrome Translator display name and translation panel bo
     'Longer intervals recognize slower double-clicks.'
   )
 
+  const toolbarPopup = fs.readFileSync(path.join(projectRoot, 'src/components/Popup.vue'), 'utf8')
+  assert.match(toolbarPopup, /html,[\s\S]*body,[\s\S]*#app \{[\s\S]*width: 360px;[\s\S]*min-width: 360px/)
+  assert.match(toolbarPopup, /\.naverdic-popup-shell \{[\s\S]*width: 360px;[\s\S]*min-height: 92px;[\s\S]*padding: 10px 10px 8px/)
+  assert.match(toolbarPopup, /\.naverdic-popup-shell--result \{[\s\S]*min-height: 308px/)
+  assert.match(toolbarPopup, /\.naverdic-popup-shell--result-scroll \{[\s\S]*min-height: 400px/)
+  assert.match(toolbarPopup, /\.naverdic-popup-search \{[\s\S]*width: 340px/)
+  assert.match(toolbarPopup, /\.naverdic-popup-search__input \{[\s\S]*width: 272px/)
+  assert.match(toolbarPopup, /\.naverdic-popup-shell \.dictionary-result \{[\s\S]*width: 340px/)
+
   const shell = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsShell.vue'), 'utf8')
   assert.match(shell, /settings-shell--double-click/)
   assert.match(shell, /\.settings-shell--double-click \{[\s\S]*width: min\(1200px, 100%\)/)
@@ -455,6 +464,11 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(translationPage, /translation-provider-card__content \{[\s\S]*padding-top: 12px/)
   assert.match(translationPage, /translation-detail-field \{[\s\S]*margin-top: 12px/)
   assert.match(translationPage, /translation-detail-card--chrome \.translation-provider-card__footer \{[\s\S]*top: 434px;[\s\S]*padding-top: 15px/)
+
+  const dictionaryResult = fs.readFileSync(path.join(projectRoot, 'src/components/DictionaryResult.vue'), 'utf8')
+  assert.match(dictionaryResult, /\.dictionary-result \{[\s\S]*height: 216px;[\s\S]*padding: 12px 4px/)
+  assert.match(dictionaryResult, /\.dictionary-result--scrollable \{[\s\S]*height: 308px;[\s\S]*max-height: 308px/)
+  assert.match(dictionaryResult, /POPUP_AUDIO_PAUSE_LABEL/)
 
   const preview = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPreview.vue'), 'utf8')
   assert.match(preview, /settings-live-preview--appearance/)

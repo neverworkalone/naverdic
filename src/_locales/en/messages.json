@@ -20,6 +20,9 @@
   "POPUP_AUDIO_LABEL": {
     "message": "Play pronunciation"
   },
+  "POPUP_AUDIO_PAUSE_LABEL": {
+    "message": "Pause pronunciation"
+  },
   "SETTING": {
     "message": "Setting"
   },

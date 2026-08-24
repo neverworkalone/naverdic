@@ -1,6 +1,6 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
-import { findAudioEntryIndex } from '/src/dictionary/result-model.mjs'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { findAudioEntryIndex, shouldUseScrollableResult } from '/src/dictionary/result-model.mjs'
 import { getText } from '/src/text.js'
 
 const props = defineProps({
@@ -12,10 +12,12 @@ const props = defineProps({
 
 const audioElement = ref(null)
 const audioAvailable = ref(true)
+const audioPlaying = ref(false)
 const audioEntryIndex = computed(() => findAudioEntryIndex(props.entries))
 const audioEntry = computed(() => (
   audioEntryIndex.value >= 0 ? props.entries[audioEntryIndex.value] : null
 ))
+const scrollable = computed(() => shouldUseScrollableResult(props.entries))
 
 function entryMeta(entry) {
   return [
@@ -24,20 +26,68 @@ function entryMeta(entry) {
   ].filter(Boolean).join(' · ')
 }
 
+function stopAudio(resetPosition = false) {
+  const audio = audioElement.value
+  try {
+    audio?.pause?.()
+  } catch (_error) {
+    // A media element may not implement pause in a test or embedded runtime.
+  }
+  if (resetPosition && audio) {
+    try {
+      audio.currentTime = 0
+    } catch (_error) {
+      // Some browser media implementations expose a read-only currentTime.
+    }
+  }
+  audioPlaying.value = false
+}
+
 function resetAudio() {
+  stopAudio(true)
   audioAvailable.value = true
 }
 
 function hideAudio() {
+  stopAudio()
   audioAvailable.value = false
 }
 
-async function playAudio() {
+function handleAudioPlaying() {
+  audioPlaying.value = true
+}
+
+function handleAudioPaused() {
+  audioPlaying.value = false
+}
+
+function handleAudioEnded() {
+  audioPlaying.value = false
+}
+
+async function toggleAudio() {
   if (!audioElement.value || !audioAvailable.value) {
     return
   }
 
+  if (audioPlaying.value) {
+    try {
+      audioElement.value.pause()
+    } finally {
+      audioPlaying.value = false
+    }
+    return
+  }
+
   try {
+    if (audioElement.value.ended) {
+      try {
+        audioElement.value.currentTime = 0
+      } catch (_error) {
+        // Ignore media implementations that cannot seek back to the start.
+      }
+    }
+    audioPlaying.value = true
     await audioElement.value.play()
   } catch (_error) {
     // A blocked or unavailable pronunciation should leave no broken control
@@ -47,11 +97,13 @@ async function playAudio() {
 }
 
 watch(() => props.entries, resetAudio, {deep: true})
+onBeforeUnmount(() => stopAudio())
 </script>
 
 <template>
   <section
     class="dictionary-result"
+    :class="{'dictionary-result--scrollable': scrollable}"
     :aria-label="getText('INLINE_POPUP_DICTIONARY_TITLE')"
     role="list"
     data-testid="dictionary-result"
@@ -73,11 +125,12 @@ watch(() => props.entries, resetAudio, {deep: true})
           v-if="entryIndex === audioEntryIndex && audioAvailable"
           type="button"
           class="dictionary-result__audio-button"
-          :aria-label="getText('POPUP_AUDIO_LABEL')"
-          :title="getText('POPUP_AUDIO_LABEL')"
-          @click.stop="playAudio"
+          :aria-label="getText(audioPlaying ? 'POPUP_AUDIO_PAUSE_LABEL' : 'POPUP_AUDIO_LABEL')"
+          :title="getText(audioPlaying ? 'POPUP_AUDIO_PAUSE_LABEL' : 'POPUP_AUDIO_LABEL')"
+          @click.stop="toggleAudio"
         >
-          <img src="/audio-play.svg" alt="" aria-hidden="true">
+          <img v-if="!audioPlaying" src="/audio-play.svg" alt="" aria-hidden="true">
+          <span v-else class="dictionary-result__pause-icon" aria-hidden="true"><span /><span /></span>
         </button>
       </div>
 
@@ -103,6 +156,9 @@ watch(() => props.entries, resetAudio, {deep: true})
       class="dictionary-result__audio"
       preload="none"
       :src="audioEntry.audioUrl"
+      @playing="handleAudioPlaying"
+      @pause="handleAudioPaused"
+      @ended="handleAudioEnded"
       @error="hideAudio"
     />
   </section>
@@ -115,13 +171,20 @@ watch(() => props.entries, resetAudio, {deep: true})
   flex-direction: column;
   gap: 8px;
   width: 100%;
+  height: 216px;
   min-height: 216px;
   max-height: 216px;
-  padding: 12px;
+  padding: 12px 4px;
   overflow: auto;
   border-radius: 8px;
   background: var(--naverdic-color-surface-popup, #F5F6F8);
   color: #384252;
+}
+
+.dictionary-result--scrollable {
+  height: 308px;
+  min-height: 308px;
+  max-height: 308px;
 }
 
 .dictionary-result__entry {
@@ -187,6 +250,23 @@ watch(() => props.entries, resetAudio, {deep: true})
   height: 14px;
 }
 
+.dictionary-result__pause-icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.dictionary-result__pause-icon span {
+  display: block;
+  width: 3px;
+  height: 12px;
+  border-radius: 1px;
+  background: #3F81F5;
+}
+
 .dictionary-result__meta {
   margin: 0;
   color: #6B788F;
@@ -206,7 +286,7 @@ watch(() => props.entries, resetAudio, {deep: true})
   overflow-wrap: anywhere;
   color: #384252;
   font-size: 13px;
-  line-height: 1.4;
+  line-height: normal;
 }
 
 .dictionary-result__meaning--primary {
@@ -222,5 +302,20 @@ watch(() => props.entries, resetAudio, {deep: true})
   overflow: hidden;
   opacity: 0;
   pointer-events: none;
+}
+
+.dictionary-result::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.dictionary-result::-webkit-scrollbar-track {
+  background: rgba(229, 233, 240, 0.9);
+  border-radius: 2px;
+}
+
+.dictionary-result::-webkit-scrollbar-thumb {
+  background: rgba(185, 193, 204, 0.9);
+  border-radius: 2px;
 }
 </style>

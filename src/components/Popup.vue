@@ -1,7 +1,8 @@
 <script setup>
-import { nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { buildNaverApiUrl, parseNaverDictionaryResponse } from '/src/dictionary/parser.mjs'
 import DictionaryResult from '/src/components/DictionaryResult.vue'
+import { shouldUseScrollableResult } from '/src/dictionary/result-model.mjs'
 import {
   POPUP_STATES,
   resolvePopupState
@@ -18,6 +19,11 @@ const entries = ref([])
 const state = ref(POPUP_STATES.IDLE)
 const inputElement = ref(null)
 let requestRevision = 0
+const shellClasses = computed(() => ({
+  [`naverdic-popup-shell--${state.value}`]: true,
+  'naverdic-popup-shell--result-scroll': state.value === POPUP_STATES.RESULT
+    && shouldUseScrollableResult(entries.value)
+}))
 
 function setResolvedState(resolved) {
   state.value = resolved?.state || POPUP_STATES.IDLE
@@ -93,7 +99,7 @@ onMounted(() => {
 <template>
   <main
     class="naverdic-popup-shell"
-    :class="`naverdic-popup-shell--${state}`"
+    :class="shellClasses"
     :data-state="state"
     role="dialog"
     :aria-label="getText('APP_NAME')"
@@ -162,13 +168,13 @@ onMounted(() => {
 html,
 body,
 #app {
-  width: 320px;
-  min-width: 320px;
+  width: 360px;
+  min-width: 360px;
   margin: 0;
 }
 
 body {
-  min-height: 104px;
+  min-height: 92px;
   background: var(--naverdic-color-canvas, #E5E5E5);
   color: var(--naverdic-color-text, #1F2937);
   font-family: var(--naverdic-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
@@ -179,9 +185,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: 320px;
-  min-height: 104px;
-  padding: 14px 14px 9px;
+  width: 360px;
+  min-height: 92px;
+  padding: 10px 10px 8px;
   overflow: hidden;
   border: 1px solid #E2E6EC;
   border-radius: 10px;
@@ -190,19 +196,23 @@ body {
 }
 
 .naverdic-popup-shell--result {
-  min-height: 320px;
+  min-height: 308px;
+}
+
+.naverdic-popup-shell--result-scroll {
+  min-height: 400px;
 }
 
 .naverdic-popup-search {
   display: flex;
   flex: 0 0 36px;
   gap: 8px;
-  width: 292px;
+  width: 340px;
   height: 36px;
 }
 
 .naverdic-popup-search__input {
-  width: 224px;
+  width: 272px;
   height: 36px;
   padding: 0 12px;
   border: 1px solid #D1D9E5;
@@ -257,6 +267,11 @@ body {
   opacity: 0.7;
 }
 
+.naverdic-popup-shell .dictionary-result {
+  flex: 0 0 auto;
+  width: 340px;
+}
+
 .naverdic-popup-status {
   display: flex;
   align-items: center;
@@ -277,7 +292,7 @@ body {
 
 .naverdic-popup-divider {
   flex: 0 0 1px;
-  width: 292px;
+  width: 340px;
   height: 1px;
   margin-top: -5px;
   background: #D6DBE5;
@@ -296,11 +311,12 @@ body {
   align-items: center;
   justify-content: flex-end;
   gap: 4px;
-  width: 292px;
-  min-height: 24px;
+  width: 340px;
+  height: 16px;
+  min-height: 16px;
   color: #636E80;
   font-size: 12px;
-  line-height: 1.35;
+  line-height: normal;
   white-space: nowrap;
 }
 

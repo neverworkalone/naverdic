@@ -184,6 +184,39 @@ test('ignores an older toolbar response after a newer search starts', async () =
   wrapper.unmount()
 })
 
+test('uses the taller Figma result variant for long dictionary entries', async () => {
+  const wrapper = mountPopup()
+  await wrapper.get('.naverdic-popup-search__input').setValue('test')
+  await wrapper.get('.naverdic-popup-search').trigger('submit')
+  respond(0, {
+    ok: true,
+    data: {
+      searchResultMap: {
+        searchResultListMap: {
+          WORD: {
+            items: [{
+              handleEntry: 'test',
+              meansCollector: [{
+                partOfSpeech: 'noun',
+                means: [
+                  {order: '1', value: '시험, 테스트'},
+                  {order: '2', value: '검사'},
+                  {order: '3', value: '시험하다'}
+                ]
+              }]
+            }]
+          }
+        }
+      }
+    }
+  })
+  await flushPromises()
+
+  assert.equal(wrapper.get('.naverdic-popup-shell').classes('naverdic-popup-shell--result-scroll'), true)
+  assert.equal(wrapper.get('.dictionary-result').classes('dictionary-result--scrollable'), true)
+  wrapper.unmount()
+})
+
 test('shows empty and network-error states without leaving stale results', async () => {
   const wrapper = mountPopup()
   const input = wrapper.get('.naverdic-popup-search__input')
@@ -239,9 +272,72 @@ test('removes the pronunciation button when toolbar audio cannot play', async ()
 
   const audio = wrapper.get('.dictionary-result__audio')
   assert.equal(wrapper.get('.dictionary-result__audio-button').exists(), true)
+  audio.element.pause = () => {}
   audio.element.dispatchEvent(new Event('error'))
   await flushPromises()
   assert.equal(wrapper.find('.dictionary-result__audio-button').exists(), false)
   assert.equal(wrapper.find('.dictionary-result__audio-unavailable').exists(), false)
+  wrapper.unmount()
+})
+
+test('switches the pronunciation control between play and pause while audio runs', async () => {
+  const wrapper = mountPopup()
+  await wrapper.get('.naverdic-popup-search__input').setValue('sound')
+  await wrapper.get('.naverdic-popup-search').trigger('submit')
+  respond(0, {
+    ok: true,
+    data: {
+      searchResultMap: {
+        searchResultListMap: {
+          WORD: {
+            items: [{
+              handleEntry: 'sound',
+              searchPhoneticSymbolList: [{
+                symbolValue: 'saʊnd',
+                symbolFile: 'https://example.com/sound.mp3'
+              }],
+              meansCollector: [{
+                partOfSpeech: 'noun',
+                means: [{order: '1', value: '소리'}]
+              }]
+            }]
+          }
+        }
+      }
+    }
+  })
+  await flushPromises()
+
+  const audio = wrapper.get('.dictionary-result__audio')
+  let playCalls = 0
+  let pauseCalls = 0
+  audio.element.play = () => {
+    playCalls += 1
+    return Promise.resolve()
+  }
+  audio.element.pause = () => {
+    pauseCalls += 1
+    audio.element.dispatchEvent(new Event('pause'))
+  }
+
+  const button = wrapper.get('.dictionary-result__audio-button')
+  assert.equal(button.attributes('aria-label'), '발음 재생')
+  await button.trigger('click')
+  await flushPromises()
+  assert.equal(playCalls, 1)
+  assert.equal(button.attributes('aria-label'), '발음 일시정지')
+  assert.equal(wrapper.find('.dictionary-result__pause-icon').exists(), true)
+
+  await button.trigger('click')
+  await flushPromises()
+  assert.equal(pauseCalls, 1)
+  assert.equal(button.attributes('aria-label'), '발음 재생')
+  assert.equal(wrapper.find('.dictionary-result__pause-icon').exists(), false)
+
+  await button.trigger('click')
+  await flushPromises()
+  audio.element.dispatchEvent(new Event('ended'))
+  await flushPromises()
+  assert.equal(button.attributes('aria-label'), '발음 재생')
   wrapper.unmount()
 })
