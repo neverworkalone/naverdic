@@ -158,14 +158,26 @@ function setProviderSecret(provider, value) {
   }
 }
 
+function deactivateActiveProvider(providerId) {
+  if (activeProviderId.value !== providerId) {
+    return
+  }
+
+  props.draft.translation.providerId = CHROME_TRANSLATOR_PROVIDER_ID
+}
+
 function updateProviderCredential(event) {
-  setProviderSecret(selectedProvider.value, event.target.value)
-  invalidateConnectionState()
+  const provider = selectedProvider.value
+  setProviderSecret(provider, event.target.value)
+  invalidateConnectionState(provider?.id)
+  deactivateActiveProvider(provider?.id)
 }
 
 function deleteProviderCredential() {
-  setProviderSecret(selectedProvider.value, '')
-  invalidateConnectionState()
+  const provider = selectedProvider.value
+  setProviderSecret(provider, '')
+  invalidateConnectionState(provider?.id)
+  deactivateActiveProvider(provider?.id)
   showApiKey.value = false
 }
 
@@ -185,8 +197,10 @@ function updateGeminiModel(event) {
   if (controlsDisabled.value) {
     return
   }
+  const providerId = 'gemini'
   props.draft.translation.geminiModel = normalizeGeminiModelId(event.target.value)
-  invalidateConnectionState('gemini')
+  invalidateConnectionState(providerId)
+  deactivateActiveProvider(providerId)
 }
 
 function triggerOptions() {

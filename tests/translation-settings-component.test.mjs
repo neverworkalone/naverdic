@@ -253,6 +253,60 @@ test('locks DeepL controls while a connection test is in flight and clears stale
   globalThis.fetch = previousFetch
 })
 
+test('deactivates an active preset after credential deletion until retest and activation', async () => {
+  const previousFetch = globalThis.fetch
+  globalThis.fetch = async () => ({ok: true, json: async () => ({translations: [{text: 'ok'}]})})
+  const secrets = createDefaultSecretsV2()
+  secrets.providers['deepl-free'] = {apiKey: 'old-key'}
+  const draft = createDraft('deepl-free')
+  const wrapper = mount(TranslationSettings, {props: {draft, draftSecrets: secrets}})
+
+  await wrapper.get('[data-testid="settings-translation-delete-key"]').trigger('click')
+  assert.equal(draft.translation.providerId, 'chrome-translator')
+  assert.equal(wrapper.get('[data-provider-id="deepl"]').classes('translation-service-row--active'), false)
+  assert.equal(wrapper.get('[data-testid="settings-translation-activate"]').attributes('disabled'), '')
+
+  await wrapper.get('[data-testid="settings-translation-preset-api-key"]').setValue('new-key')
+  await wrapper.get('[data-testid="settings-translation-test"]').trigger('click')
+  await flushPromises()
+  assert.equal(draft.translation.providerId, 'chrome-translator')
+  assert.equal(wrapper.get('[data-testid="settings-translation-activate"]').attributes('disabled'), undefined)
+
+  await wrapper.get('[data-testid="settings-translation-activate"]').trigger('click')
+  assert.equal(draft.translation.providerId, 'deepl-free')
+  wrapper.unmount()
+  globalThis.fetch = previousFetch
+})
+
+test('deactivates an active Gemini provider after model changes until retest and activation', async () => {
+  const previousFetch = globalThis.fetch
+  globalThis.fetch = async url => {
+    if (url === 'https://generativelanguage.googleapis.com/v1beta/models') {
+      return {ok: true, json: async () => ({models: [{name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent']}]})}
+    }
+    return {ok: true, json: async () => ({candidates: [{content: {parts: [{text: 'ok'}]}}]})}
+  }
+  const secrets = createDefaultSecretsV2()
+  secrets.providers.gemini = {apiKey: 'test-key'}
+  const draft = createDraft('gemini')
+  const wrapper = mount(TranslationSettings, {props: {draft, draftSecrets: secrets}})
+
+  await wrapper.get('[data-testid="settings-translation-gemini-model-fetch"]').trigger('click')
+  await flushPromises()
+  await wrapper.get('[data-testid="settings-translation-gemini-model"]').setValue('gemini-2.5-flash')
+  assert.equal(draft.translation.providerId, 'chrome-translator')
+  assert.equal(wrapper.get('[data-provider-id="gemini"]').classes('translation-service-row--active'), false)
+  assert.equal(wrapper.get('[data-testid="settings-translation-activate"]').attributes('disabled'), '')
+
+  await wrapper.get('[data-testid="settings-translation-test"]').trigger('click')
+  await flushPromises()
+  assert.equal(wrapper.get('[data-testid="settings-translation-activate"]').attributes('disabled'), undefined)
+  await wrapper.get('[data-testid="settings-translation-activate"]').trigger('click')
+  assert.equal(draft.translation.providerId, 'gemini')
+  wrapper.unmount()
+  globalThis.fetch = previousFetch
+})
+
 test('invalidates a successful Gemini connection test when the model changes', async () => {
   const previousFetch = globalThis.fetch
   globalThis.fetch = async () => ({ok: true, json: async () => ({candidates: [{content: {parts: [{text: 'ok'}]}}]})})
