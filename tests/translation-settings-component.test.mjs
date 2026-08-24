@@ -129,6 +129,38 @@ test('keeps Chrome free of API controls and exposes the fixed language pair', as
   wrapper.unmount()
 })
 
+test('opens Chrome model management through the tabs API', async () => {
+  const previousChrome = globalThis.chrome
+  let createdTab
+  exposeDomGlobal('chrome', {
+    tabs: {
+      create(options) {
+        createdTab = options
+        return Promise.resolve()
+      }
+    }
+  })
+
+  try {
+    const wrapper = mount(TranslationSettings, {
+      props: {draft: createDraft('chrome-translator'), draftSecrets: createDefaultSecretsV2(), translatorRuntime: createChromeRuntime()}
+    })
+    await flushPromises()
+    const link = wrapper.get('[data-testid="settings-translation-chrome-model-link"]')
+    assert.equal(link.element.tagName, 'BUTTON')
+    assert.equal(link.get('[aria-hidden="true"]').attributes('aria-hidden'), 'true')
+    await link.trigger('click')
+    assert.deepEqual(createdTab, {url: 'chrome://on-device-translation-internals/'})
+    wrapper.unmount()
+  } finally {
+    if (previousChrome === undefined) {
+      delete globalThis.chrome
+    } else {
+      exposeDomGlobal('chrome', previousChrome)
+    }
+  }
+})
+
 test('renders translation defaults and updates the feature controls in the draft', async () => {
   const draft = createDraft('chrome-translator')
   const wrapper = mount(TranslationSettings, {

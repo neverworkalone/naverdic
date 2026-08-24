@@ -152,6 +152,12 @@
   "SETTINGS_PRODUCT_TITLE": {
     "message": "네이버 영어사전 · NaverDic 7.0"
   },
+  "SETTINGS_PRODUCT_NAME": {
+    "message": "네이버 영어사전 · NaverDic"
+  },
+  "SETTINGS_PRODUCT_VERSION": {
+    "message": "7.0"
+  },
   "SETTINGS_SIDEBAR_HEADING": {
     "message": "설정"
   },

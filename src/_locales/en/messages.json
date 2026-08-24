@@ -152,6 +152,12 @@
   "SETTINGS_PRODUCT_TITLE": {
     "message": "Naver English Dictionary · NaverDic 7.0"
   },
+  "SETTINGS_PRODUCT_NAME": {
+    "message": "Naver English Dictionary · NaverDic"
+  },
+  "SETTINGS_PRODUCT_VERSION": {
+    "message": "7.0"
+  },
   "SETTINGS_SIDEBAR_HEADING": {
     "message": "Settings"
   },

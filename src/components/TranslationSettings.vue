@@ -26,6 +26,7 @@ const serviceDefinitions = Object.freeze([
   Object.freeze({id: 'gemini', providerIds: ['gemini'], nameKey: 'SETTINGS_TRANSLATION_GEMINI_NAME', descriptionKey: 'SETTINGS_TRANSLATION_GEMINI_DESCRIPTION'})
 ])
 const supportedProviderIds = new Set(['chrome-translator', 'deepl-free', 'deepl-pro', 'gemini'])
+const CHROME_MODEL_MANAGEMENT_URL = 'chrome://on-device-translation-internals/'
 const translation = computed(() => props.draft.translation || {})
 const activeProviderId = computed(() => supportedProviderIds.has(translation.value.providerId)
   ? translation.value.providerId
@@ -332,6 +333,22 @@ function downloadChromeModel() {
   }
 }
 
+function openChromeModelManagement() {
+  const tabs = globalThis.chrome?.tabs
+  if (typeof tabs?.create !== 'function') {
+    return
+  }
+
+  try {
+    const result = tabs.create({url: CHROME_MODEL_MANAGEMENT_URL})
+    if (result && typeof result.catch === 'function') {
+      void result.catch(() => {})
+    }
+  } catch (_error) {
+    // The Chrome API may be unavailable while the settings page is being unloaded.
+  }
+}
+
 function chromeModelStatusKey() {
   const phase = chromeState.value.phase
   if (phase === CHROME_TRANSLATOR_PHASES.AVAILABLE) return 'SETTINGS_TRANSLATION_CHROME_MODEL_READY'
@@ -622,7 +639,7 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="translation-provider-card__footer">
-              <a class="translation-external-link" data-testid="settings-translation-chrome-model-link" href="chrome://on-device-translation-internals/" target="_blank" rel="noopener noreferrer"><span>{{ text('SETTINGS_TRANSLATION_CHROME_MODEL_MANAGEMENT') }}</span><span aria-hidden="true">↗</span></a>
+              <button type="button" class="translation-external-link translation-external-link--button" data-testid="settings-translation-chrome-model-link" @click="openChromeModelManagement"><span>{{ text('SETTINGS_TRANSLATION_CHROME_MODEL_MANAGEMENT') }}</span><span aria-hidden="true">↗</span></button>
               <p>{{ text('SETTINGS_TRANSLATION_CHROME_NOTE') }}</p>
             </div>
           </template>
@@ -703,7 +720,7 @@ onBeforeUnmount(() => {
 .translation-switch__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .translation-feature-card__trigger { display: flex; height: 62px; align-items: center; justify-content: space-between; gap: 16px; color: var(--naverdic-settings-text); font-size: 11px; font-weight: 700; line-height: 18px; }
 .translation-feature-card__trigger select { width: 200px; min-width: 0; height: 40px; padding: 0 10px; color: var(--naverdic-settings-text); background: var(--naverdic-input-background-default); border: 1px solid var(--naverdic-input-border-default); border-radius: var(--naverdic-radius-sm); font: inherit; font-size: 11px; }
-.translation-service-selector { height: 374px; padding: 20px 23px 23px; }
+.translation-service-selector { height: 374px; margin-top: 16px; padding: 20px 23px 23px; }
 .translation-service-selector h3 { margin: 0; color: var(--naverdic-settings-text); font-size: 14px; line-height: 22px; }
 .translation-service-list { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
 .translation-service-row { display: flex; width: 100%; height: 90px; align-items: center; justify-content: space-between; gap: 12px; padding: 0 16px; color: var(--naverdic-settings-text); background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-settings-border); border-radius: 8px; text-align: left; cursor: pointer; }
@@ -768,6 +785,7 @@ onBeforeUnmount(() => {
 .translation-detail-result--error { margin-top: 19px; padding: 10px 12px; color: var(--naverdic-color-danger); background: var(--naverdic-settings-danger-hover); border-radius: 8px; }
 .translation-provider-card__footer { margin-top: auto; padding-top: 18px; border-top: 1px solid var(--naverdic-settings-divider); }
 .translation-external-link { display: inline-flex; align-items: center; gap: 7px; color: var(--naverdic-settings-primary-text); font-size: 11px; font-weight: 700; line-height: 17px; text-decoration: none; }
+.translation-external-link--button { padding: 0; background: transparent; border: 0; text-align: left; cursor: pointer; }
 .translation-external-link > span:first-child { text-decoration: underline; text-underline-offset: 2px; }
 .translation-external-link > span[aria-hidden="true"] { text-decoration: none; }
 @media (max-width: 1050px) {
