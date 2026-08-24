@@ -226,7 +226,7 @@ function createPopupView({
     host.dataset.naverdicPopup = 'true'
     host.style.cssText = [
       'all: initial',
-      'position: absolute',
+      'position: fixed',
       'top: 0',
       'left: 0',
       'width: 0',
@@ -265,7 +265,7 @@ function createPopupView({
     popup.style.color = popupOptions.fontColor
     popup.style.fontSize = `${popupOptions.fontSizePt}pt`
 
-    const mountTarget = documentLike.body || documentLike.documentElement
+    const mountTarget = documentLike.documentElement || documentLike.body
     mountTarget?.appendChild(host)
 
     stylesPromise = Promise.resolve()
@@ -474,7 +474,15 @@ export function createPopupController({
       margin: popupOptions.margin,
       gap: popupOptions.gap
     })
-    popupView.setPosition(position)
+    const viewport = position.viewport
+    popupView.setPosition({
+      ...position,
+      // The calculator works in document coordinates. The fixed host is
+      // anchored to the current visual viewport, so convert only the final
+      // coordinates before applying them to the shadow popup.
+      left: position.left - viewport.left,
+      top: position.top - viewport.top
+    })
   }
 
   function revealWhenReady() {

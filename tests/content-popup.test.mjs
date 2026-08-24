@@ -295,6 +295,38 @@ test('keeps the loading shell hidden and reveals only the settled result', async
   dom.window.close()
 })
 
+test('mounts outside positioned or transformed body coordinate systems', async () => {
+  const dom = new JSDOM('<!doctype html><body></body>', {url: 'https://example.com/'})
+  const {document, window} = dom.window
+  document.body.style.cssText = [
+    'position: relative',
+    'transform: translate(40px, 20px)',
+    'overflow: hidden'
+  ].join(';')
+  const controller = createPopupController({
+    document,
+    window,
+    loadStylesheet: () => Promise.resolve('.naverdic-popup { display: block; }')
+  })
+
+  controller.open({
+    popupType: 'translation',
+    popupAnchor: {getRect: () => ({left: 100, right: 140, top: 100, bottom: 120})}
+  })
+  controller.update(POPUP_STATES.RESULT, 'result')
+  await new Promise(resolve => setImmediate(resolve))
+
+  const host = document.getElementById('popupFrame')
+  const popup = host.shadowRoot.querySelector('#popupShadow')
+  assert.equal(host.parentElement, document.documentElement)
+  assert.equal(host.style.position, 'fixed')
+  assert.equal(popup.style.left, '100px')
+  assert.equal(popup.style.top, '132px')
+
+  controller.close()
+  dom.window.close()
+})
+
 test('installs dictionary interaction while Chrome Translator availability is pending', async () => {
   const dom = new JSDOM(
     '<!doctype html><body><p id="word">hello</p></body>',
