@@ -563,7 +563,7 @@
     "message": "Gemini"
   },
   "SETTINGS_TRANSLATION_GEMINI_DESCRIPTION": {
-    "message": "Sentence translation and summaries"
+    "message": "Google AI API"
   },
   "SETTINGS_TRANSLATION_GEMINI_MODEL": {
     "message": "Model"
@@ -678,6 +678,9 @@
   },
   "SETTINGS_TRANSLATION_STATUS_CONFIGURED": {
     "message": "Ready"
+  },
+  "SETTINGS_TRANSLATION_STATUS_CONFIGURED_INACTIVE": {
+    "message": "Configured"
   },
   "SETTINGS_TRANSLATION_STATUS_UNCONFIGURED": {
     "message": "Not configured"

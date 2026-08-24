@@ -117,6 +117,29 @@ test('renders exactly the three supported services and separates selected from a
   wrapper.unmount()
 })
 
+test('renders the updated service descriptions and selected configured state', async () => {
+  const secrets = createDefaultSecretsV2()
+  secrets.providers.gemini = {apiKey: 'test-key'}
+  const wrapper = mount(TranslationSettings, {
+    props: {
+      draft: createDraft('chrome-translator'),
+      draftSecrets: secrets,
+      translatorRuntime: createChromeRuntime()
+    }
+  })
+  await flushPromises()
+
+  const gemini = wrapper.get('[data-provider-id="gemini"]')
+  assert.match(gemini.text(), /Google AI API/)
+  assert.match(gemini.text(), /Configured/)
+
+  await gemini.trigger('click')
+  assert.equal(gemini.classes('translation-service-row--selected'), true)
+  assert.equal(gemini.get('.translation-service-row__status').classes('translation-service-row__status--configured-selected'), true)
+  assert.match(gemini.text(), /Ready/)
+  wrapper.unmount()
+})
+
 test('keeps Chrome free of API controls and exposes the fixed language pair', async () => {
   const wrapper = mount(TranslationSettings, {
     props: {draft: createDraft('chrome-translator'), draftSecrets: createDefaultSecretsV2(), translatorRuntime: createChromeRuntime()}

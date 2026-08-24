@@ -247,6 +247,8 @@ test('keeps the official Chrome Translator display name and translation panel bo
   const en = JSON.parse(fs.readFileSync(path.join(projectRoot, 'src/_locales/en/messages.json'), 'utf8'))
   assertLocaleMessages(ko, [
     'SETTINGS_TRANSLATION_CHROME_NAME',
+    'SETTINGS_TRANSLATION_GEMINI_DESCRIPTION',
+    'SETTINGS_TRANSLATION_STATUS_CONFIGURED_INACTIVE',
     'SETTINGS_TRANSLATION_ENABLED',
     'SETTINGS_TRANSLATION_TRIGGER_LABEL',
     'SETTINGS_TRANSLATION_TRIGGER_NONE',
@@ -364,7 +366,7 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(shell, /settings-content--translation/)
   assert.match(shell, /settings-content--double-click/)
   assert.match(shell, /\.settings-header__title \{[\s\S]*width: 190px/)
-  assert.match(shell, /\.settings-header__version \{[\s\S]*margin-left: -8px/)
+  assert.match(shell, /\.settings-header__version \{[\s\S]*margin-left: -12px/)
   assert.match(shell, /settings-shell--drag/)
   assert.match(shell, /\.settings-shell--drag \{[\s\S]*margin: 16px auto/)
   assert.match(shell, /\.settings-shell--drag \{[\s\S]*border: 1px solid var\(--naverdic-settings-border\)/)
@@ -441,6 +443,16 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(appearancePage, /serializeSettingsBackup/)
   assert.equal(appearancePage.includes("pageId === 'help'"), false)
   assert.equal(appearancePage.includes('settings-help-page'), false)
+
+  const translationPage = fs.readFileSync(path.join(projectRoot, 'src/components/TranslationSettings.vue'), 'utf8')
+  assert.match(translationPage, /translation-service-selector h3 \{[\s\S]*font-size: 16px; line-height: 24px/)
+  assert.match(translationPage, /translation-service-row--selected::before \{[\s\S]*top: 17px; left: -1px; width: 3px; height: 54px/)
+  assert.match(translationPage, /translation-service-row__copy small \{[\s\S]*font-size: 12px; line-height: 32px/)
+  assert.match(translationPage, /translation-detail-card \{[\s\S]*padding: 15px 23px 14px/)
+  assert.match(translationPage, /translation-provider-card__header p \{[\s\S]*margin: 6px 0 0;[\s\S]*line-height: 32px/)
+  assert.match(translationPage, /translation-provider-card__content \{[\s\S]*padding-top: 12px/)
+  assert.match(translationPage, /translation-detail-field \{[\s\S]*margin-top: 12px/)
+  assert.match(translationPage, /translation-detail-card--chrome \.translation-provider-card__footer \{[\s\S]*top: 434px;[\s\S]*padding-top: 15px/)
 
   const preview = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPreview.vue'), 'utf8')
   assert.match(preview, /settings-live-preview--appearance/)

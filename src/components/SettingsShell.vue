@@ -571,7 +571,7 @@ a {
 }
 
 .settings-header__version {
-  margin-left: -8px;
+  margin-left: -12px;
   color: var(--naverdic-settings-text-subtle);
   font-size: var(--naverdic-font-size-lg);
   font-weight: var(--naverdic-font-weight-medium);

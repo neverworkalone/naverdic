@@ -563,7 +563,7 @@
     "message": "Gemini"
   },
   "SETTINGS_TRANSLATION_GEMINI_DESCRIPTION": {
-    "message": "문장 번역 및 요약"
+    "message": "Google AI API"
   },
   "SETTINGS_TRANSLATION_GEMINI_MODEL": {
     "message": "모델"
@@ -678,6 +678,9 @@
   },
   "SETTINGS_TRANSLATION_STATUS_CONFIGURED": {
     "message": "준비됨"
+  },
+  "SETTINGS_TRANSLATION_STATUS_CONFIGURED_INACTIVE": {
+    "message": "설정됨"
   },
   "SETTINGS_TRANSLATION_STATUS_UNCONFIGURED": {
     "message": "미설정"
