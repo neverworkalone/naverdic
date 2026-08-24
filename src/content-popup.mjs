@@ -27,8 +27,7 @@ const DEFAULT_TEXT = Object.freeze({
   INLINE_POPUP_TRANSLATION_TITLE: 'Translation',
   INLINE_POPUP_LOADING: 'Loading…',
   INLINE_POPUP_NO_RESULT: 'No result found.',
-  INLINE_POPUP_NETWORK_ERROR: 'The result could not be loaded. Please try again.',
-  INLINE_POPUP_AUDIO_UNAVAILABLE: 'Audio is unavailable.'
+  INLINE_POPUP_NETWORK_ERROR: 'The result could not be loaded. Please try again.'
 })
 
 const FALLBACK_CSS = `
@@ -115,18 +114,7 @@ function createTextElement(documentLike, tagName, className, value) {
   return element
 }
 
-function renderAudioUnavailable(documentLike, wrapper, getText) {
-  const unavailable = createTextElement(
-    documentLike,
-    'span',
-    'naverdic-audio-unavailable',
-    getText('INLINE_POPUP_AUDIO_UNAVAILABLE')
-  )
-  unavailable.setAttribute('role', 'status')
-  wrapper.appendChild(unavailable)
-}
-
-function renderDictionary(documentLike, container, entries, getText) {
+function renderDictionary(documentLike, container, entries) {
   let audioShown = false
 
   entries.forEach(entry => {
@@ -169,8 +157,7 @@ function renderDictionary(documentLike, container, entries, getText) {
         }
 
         audio.dataset.failed = 'true'
-        audio.hidden = true
-        renderAudioUnavailable(documentLike, audioWrapper, getText)
+        audioWrapper.remove?.()
       })
       audioWrapper.appendChild(audio)
       title.appendChild(audioWrapper)
@@ -342,7 +329,7 @@ function createPopupView({
         'alert'
       )
     } else if (type === 'dictionary') {
-      renderDictionary(documentLike, body, Array.isArray(data) ? data : [], getText)
+      renderDictionary(documentLike, body, Array.isArray(data) ? data : [])
     } else {
       renderTranslation(documentLike, body, data)
     }

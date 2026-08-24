@@ -92,12 +92,6 @@ audio.naverdic-audio::-webkit-media-controls-volume-control-container {
   display: none !important;
 }
 
-.naverdic-audio-unavailable {
-  margin-left: 5px;
-  font-size: 0.85em;
-  opacity: 0.72;
-}
-
 dd.naverdic-means {
   margin-inline-start: 8px;
 }

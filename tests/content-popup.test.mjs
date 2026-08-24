@@ -201,8 +201,7 @@ test('renders common states inside an isolated shadow popup and closes on outsid
       INLINE_POPUP_TRANSLATION_TITLE: 'Translation',
       INLINE_POPUP_LOADING: 'Loading',
       INLINE_POPUP_NO_RESULT: 'No result',
-      INLINE_POPUP_NETWORK_ERROR: 'Network error',
-      INLINE_POPUP_AUDIO_UNAVAILABLE: 'Audio unavailable'
+      INLINE_POPUP_NETWORK_ERROR: 'Network error'
     }[id] || id)
   })
 
@@ -232,6 +231,12 @@ test('renders common states inside an isolated shadow popup and closes on outsid
   assert.equal(host.shadowRoot.querySelector('#popupShadow').style.width, '360px')
   assert.equal(host.shadowRoot.querySelector('audio').getAttribute('controlslist'), 'nodownload')
   assert.equal(host.shadowRoot.querySelector('audio').id, '')
+
+  const audio = host.shadowRoot.querySelector('audio')
+  audio.dispatchEvent(new window.Event('error'))
+  assert.equal(host.shadowRoot.querySelector('audio'), null)
+  assert.equal(host.shadowRoot.querySelector('.naverdic-audio-wrapper'), null)
+  assert.equal(host.shadowRoot.querySelector('.naverdic-audio-unavailable'), null)
 
   document.body.dispatchEvent(new window.Event('pointerdown', {bubbles: true}))
   assert.equal(controller.isOpen(), false)
@@ -274,8 +279,7 @@ test('keeps the loading shell hidden and reveals only the settled result', async
       INLINE_POPUP_TRANSLATION_TITLE: 'Translation',
       INLINE_POPUP_LOADING: 'Loading',
       INLINE_POPUP_NO_RESULT: 'No result',
-      INLINE_POPUP_NETWORK_ERROR: 'Network error',
-      INLINE_POPUP_AUDIO_UNAVAILABLE: 'Audio unavailable'
+      INLINE_POPUP_NETWORK_ERROR: 'Network error'
     }[id] || id)
   })
 

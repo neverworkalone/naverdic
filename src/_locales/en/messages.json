@@ -158,9 +158,6 @@
   "INLINE_POPUP_NETWORK_ERROR": {
     "message": "The result could not be loaded. Please try again."
   },
-  "INLINE_POPUP_AUDIO_UNAVAILABLE": {
-    "message": "Audio is unavailable."
-  },
   "SAVE": {
     "message": "Save"
   },
