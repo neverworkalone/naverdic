@@ -291,7 +291,9 @@ function createPopupView({
     const titleText = type === 'translation'
       ? getText('INLINE_POPUP_TRANSLATION_TITLE')
       : getText('INLINE_POPUP_DICTIONARY_TITLE')
-    const showHeader = type === 'translation'
+    // The inline shell is content-first for both dictionary and translation.
+    // Keep the type in aria-label, but do not spend popup space on a title row.
+    const showHeader = false
     header.hidden = !showHeader
     header.style.display = showHeader ? '' : 'none'
     title.textContent = showHeader ? titleText : ''

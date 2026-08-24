@@ -244,7 +244,8 @@ test('renders common states inside an isolated shadow popup and closes on outsid
   await new Promise(resolve => setImmediate(resolve))
   const translationPopup = document.getElementById('popupFrame').shadowRoot
     .querySelector('#popupShadow')
-  assert.equal(translationPopup.querySelector('.naverdic-popup__header').hidden, false)
+  assert.equal(translationPopup.querySelector('.naverdic-popup__header').hidden, true)
+  assert.equal(translationPopup.querySelector('.naverdic-popup__title').textContent, '')
   assert.equal(translationPopup.querySelector('.naverdic-popup__body').textContent, longTranslation)
   assert.match(
     document.getElementById('popupFrame').shadowRoot.querySelector('style').textContent,
