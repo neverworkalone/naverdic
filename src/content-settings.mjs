@@ -20,7 +20,9 @@ const RELEVANT_KEYS = new Set([
 
 function providerForSettings(settings) {
   const providerId = settings.translation.providerId
-  return getProviderPreset(providerId) || null
+  return getProviderPreset(providerId, {
+    model: settings.translation.geminiModel
+  }) || null
 }
 
 /**

@@ -107,6 +107,9 @@ test('defines the v2 storage split and nested settings defaults', () => {
     secrets: {area: 'local', key: 'naverdic.secrets.v2'}
   })
   assert.equal(SETTINGS_V2_DEFAULTS.translation.providerId, DEFAULT_PROVIDER_ID)
+  assert.equal(SETTINGS_V2_DEFAULTS.translation.enabled, true)
+  assert.equal(SETTINGS_V2_DEFAULTS.translation.triggerKey, 'ctrl')
+  assert.equal(SETTINGS_V2_DEFAULTS.translation.geminiModel, 'gemini-3.5-flash')
   assert.equal(SETTINGS_V2_DEFAULTS.translation.targetLanguage, 'ko')
   assert.equal(SETTINGS_V2_DEFAULTS.popup.fontSizePt, 11)
   assert.equal(SETTINGS_V2_DEFAULTS.dictionary.drag.triggerKey, 'ctrl')
@@ -244,6 +247,33 @@ test('keeps the official Chrome Translator display name and translation panel bo
   const en = JSON.parse(fs.readFileSync(path.join(projectRoot, 'src/_locales/en/messages.json'), 'utf8'))
   assertLocaleMessages(ko, [
     'SETTINGS_TRANSLATION_CHROME_NAME',
+    'SETTINGS_TRANSLATION_GEMINI_DESCRIPTION',
+    'SETTINGS_TRANSLATION_STATUS_CONFIGURED_INACTIVE',
+    'SETTINGS_TRANSLATION_ENABLED',
+    'SETTINGS_TRANSLATION_TRIGGER_LABEL',
+    'SETTINGS_TRANSLATION_TRIGGER_NONE',
+    'SETTINGS_TRANSLATION_TRIGGER_PRIMARY',
+    'SETTINGS_TRANSLATION_TRIGGER_ALT',
+    'SETTINGS_TRANSLATION_TRIGGER_PRIMARY_ALT',
+    'SETTINGS_TRANSLATION_CHROME_PAGE_DESCRIPTION',
+    'SETTINGS_TRANSLATION_EXTERNAL_PAGE_DESCRIPTION',
+    'SETTINGS_TRANSLATION_CHROME_CARD_DESCRIPTION',
+    'SETTINGS_TRANSLATION_EXTERNAL_CARD_DESCRIPTION',
+    'SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR_VALUE',
+    'SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR_CODE',
+    'SETTINGS_TRANSLATION_CHROME_MODEL_MANAGEMENT',
+    'SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_STATUS',
+    'SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_INDETERMINATE',
+    'SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_TITLE',
+    'SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_VERSION',
+    'SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_ENVIRONMENT',
+    'SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_REQUIREMENTS',
+    'SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_UPDATE',
+    'SETTINGS_TRANSLATION_DEEPL_KEY_LINK',
+    'SETTINGS_TRANSLATION_GEMINI_KEY_LINK',
+    'SETTINGS_TRANSLATION_GEMINI_MODEL_FETCH',
+    'SETTINGS_TRANSLATION_GEMINI_MODEL_LOADING',
+    'SETTINGS_TRANSLATION_GEMINI_MODEL_LIST_FAILURE',
     'SETTINGS_SECTION_POPUP_APPEARANCE',
     'SETTINGS_SECTION_POPUP_APPEARANCE_DESCRIPTION',
     'SETTINGS_NAV_BEHAVIOR',
@@ -320,7 +350,7 @@ test('keeps the official Chrome Translator display name and translation panel bo
     'SETTINGS_PREVIEW_ADVANCED_TITLE',
     'SETTINGS_PREVIEW_ADVANCED_DESCRIPTION'
   ])
-  assert.equal(en.SETTINGS_TRANSLATION_CHROME_NAME.message.includes('Translator API'), true)
+  assert.equal(en.SETTINGS_TRANSLATION_CHROME_NAME.message, 'Chrome built-in translation')
   assert.equal(
     en.SETTINGS_FIELD_DOUBLE_CLICK_SPEED_HINT.message,
     'Longer intervals recognize slower double-clicks.'
@@ -335,6 +365,8 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(shell, /\.settings-shell--double-click \{[\s\S]*box-shadow: var\(--naverdic-settings-shadow\)/)
   assert.match(shell, /settings-content--translation/)
   assert.match(shell, /settings-content--double-click/)
+  assert.match(shell, /\.settings-header__title \{[\s\S]*width: 190px/)
+  assert.match(shell, /\.settings-header__version \{[\s\S]*margin-left: -12px/)
   assert.match(shell, /settings-shell--drag/)
   assert.match(shell, /\.settings-shell--drag \{[\s\S]*margin: 16px auto/)
   assert.match(shell, /\.settings-shell--drag \{[\s\S]*border: 1px solid var\(--naverdic-settings-border\)/)
@@ -412,6 +444,17 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.equal(appearancePage.includes("pageId === 'help'"), false)
   assert.equal(appearancePage.includes('settings-help-page'), false)
 
+  const translationPage = fs.readFileSync(path.join(projectRoot, 'src/components/TranslationSettings.vue'), 'utf8')
+  assert.match(translationPage, /translation-service-selector h3 \{[\s\S]*font-size: 16px; line-height: 24px/)
+  assert.match(translationPage, /translation-service-list \{[\s\S]*gap: 8px; margin-top: 18px/)
+  assert.match(translationPage, /translation-service-row--selected::before \{[\s\S]*top: 17px; left: -1px; width: 3px; height: 54px/)
+  assert.match(translationPage, /translation-service-row__copy small \{[\s\S]*font-size: 12px; line-height: 32px/)
+  assert.match(translationPage, /translation-detail-card \{[\s\S]*padding: 15px 23px 14px/)
+  assert.match(translationPage, /translation-provider-card__header p \{[\s\S]*margin: 6px 0 0;[\s\S]*line-height: 32px/)
+  assert.match(translationPage, /translation-provider-card__content \{[\s\S]*padding-top: 12px/)
+  assert.match(translationPage, /translation-detail-field \{[\s\S]*margin-top: 12px/)
+  assert.match(translationPage, /translation-detail-card--chrome \.translation-provider-card__footer \{[\s\S]*top: 434px;[\s\S]*padding-top: 15px/)
+
   const preview = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPreview.vue'), 'utf8')
   assert.match(preview, /settings-live-preview--appearance/)
   assert.match(preview, /\.settings-live-preview--appearance \{ margin-top: 18px; \}/)
@@ -448,6 +491,17 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(preview, /\.settings-reset-danger-card__button \{[\s\S]*?font-size: 12px;[\s\S]*?font-weight: 700/)
   assert.equal(preview.includes("activePage.id === 'help'"), false)
   assert.equal(preview.includes('settings-help-preview'), false)
+})
+
+test('declares the Chrome download progress placeholder using the locale name', () => {
+  for (const localeName of ['en', 'ko']) {
+    const locale = JSON.parse(fs.readFileSync(path.join(projectRoot, `src/_locales/${localeName}/messages.json`), 'utf8'))
+    const entry = locale.SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_STATUS
+
+    assert.match(entry.message, /\$progress\$/)
+    assert.equal(entry.message.includes('$1$'), false)
+    assert.equal(entry.placeholders.progress.content, '$1')
+  }
 })
 
 test('rejects legacy custom provider definitions', () => {
@@ -565,7 +619,8 @@ test('migrates every v6.6 setting and moves the DeepL key to local secrets', () 
     enabled: true,
     triggerKey: 'none',
     providerId: 'deepl-free',
-    targetLanguage: 'ko'
+    targetLanguage: 'ko',
+    geminiModel: 'gemini-3.5-flash'
   })
   assert.deepEqual(result.secrets, {
     schemaVersion: 2,

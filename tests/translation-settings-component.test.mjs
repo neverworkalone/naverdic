@@ -117,6 +117,29 @@ test('renders exactly the three supported services and separates selected from a
   wrapper.unmount()
 })
 
+test('renders the updated service descriptions and selected configured state', async () => {
+  const secrets = createDefaultSecretsV2()
+  secrets.providers.gemini = {apiKey: 'test-key'}
+  const wrapper = mount(TranslationSettings, {
+    props: {
+      draft: createDraft('chrome-translator'),
+      draftSecrets: secrets,
+      translatorRuntime: createChromeRuntime()
+    }
+  })
+  await flushPromises()
+
+  const gemini = wrapper.get('[data-provider-id="gemini"]')
+  assert.match(gemini.text(), /Google AI API/)
+  assert.match(gemini.text(), /Configured/)
+
+  await gemini.trigger('click')
+  assert.equal(gemini.classes('translation-service-row--selected'), true)
+  assert.equal(gemini.get('.translation-service-row__status').classes('translation-service-row__status--configured-selected'), true)
+  assert.match(gemini.text(), /Ready/)
+  wrapper.unmount()
+})
+
 test('keeps Chrome free of API controls and exposes the fixed language pair', async () => {
   const wrapper = mount(TranslationSettings, {
     props: {draft: createDraft('chrome-translator'), draftSecrets: createDefaultSecretsV2(), translatorRuntime: createChromeRuntime()}
@@ -126,6 +149,84 @@ test('keeps Chrome free of API controls and exposes the fixed language pair', as
   assert.equal(wrapper.find('[data-testid="settings-translation-preset-api-key"]').exists(), false)
   assert.equal(wrapper.find('[data-testid="settings-translation-test"]').exists(), false)
   assert.equal(wrapper.find('[data-testid="settings-translation-delete-key"]').exists(), false)
+  wrapper.unmount()
+})
+
+test('matches the Figma Chrome provider states without the legacy status row', async () => {
+  const downloadable = mount(TranslationSettings, {
+    props: {
+      draft: createDraft('chrome-translator'),
+      draftSecrets: createDefaultSecretsV2(),
+      translatorRuntime: createChromeRuntime({availability: 'downloadable', phase: 'downloadable'})
+    }
+  })
+  await flushPromises()
+  assert.equal(downloadable.get('.translation-detail-card--chrome h3').text(), 'Chrome built-in translation')
+  assert.equal(downloadable.find('.translation-status-line').exists(), false)
+  assert.equal(downloadable.get('[data-testid="settings-translation-chrome-download"]').exists(), true)
+  assert.equal(downloadable.find('.translation-chrome-unavailable-panel').exists(), false)
+  downloadable.unmount()
+
+  const unavailable = mount(TranslationSettings, {
+    props: {
+      draft: createDraft('chrome-translator'),
+      draftSecrets: createDefaultSecretsV2(),
+      translatorRuntime: createChromeRuntime({availability: 'unavailable', phase: 'unavailable', supported: false})
+    }
+  })
+  await flushPromises()
+  assert.equal(unavailable.find('[data-testid="settings-translation-chrome-download"]').exists(), false)
+  assert.equal(unavailable.get('.translation-chrome-unavailable-panel').exists(), true)
+  assert.match(unavailable.get('.translation-chrome-unavailable-panel').text(), /Translator API is unavailable/)
+  unavailable.unmount()
+})
+
+test('opens Chrome model management through the tabs API', async () => {
+  const previousChrome = globalThis.chrome
+  let createdTab
+  exposeDomGlobal('chrome', {
+    tabs: {
+      create(options) {
+        createdTab = options
+        return Promise.resolve()
+      }
+    }
+  })
+
+  try {
+    const wrapper = mount(TranslationSettings, {
+      props: {draft: createDraft('chrome-translator'), draftSecrets: createDefaultSecretsV2(), translatorRuntime: createChromeRuntime()}
+    })
+    await flushPromises()
+    const link = wrapper.get('[data-testid="settings-translation-chrome-model-link"]')
+    assert.equal(link.element.tagName, 'BUTTON')
+    assert.equal(link.get('[aria-hidden="true"]').attributes('aria-hidden'), 'true')
+    await link.trigger('click')
+    assert.deepEqual(createdTab, {url: 'chrome://on-device-translation-internals/'})
+    wrapper.unmount()
+  } finally {
+    if (previousChrome === undefined) {
+      delete globalThis.chrome
+    } else {
+      exposeDomGlobal('chrome', previousChrome)
+    }
+  }
+})
+
+test('renders translation defaults and updates the feature controls in the draft', async () => {
+  const draft = createDraft('chrome-translator')
+  const wrapper = mount(TranslationSettings, {
+    props: {draft, draftSecrets: createDefaultSecretsV2(), translatorRuntime: createChromeRuntime()}
+  })
+  await flushPromises()
+  assert.equal(wrapper.get('[data-testid="settings-translation-enabled"]').element.checked, true)
+  assert.equal(wrapper.get('[data-testid="settings-translation-trigger"]').element.value, 'ctrl')
+  assert.equal(wrapper.findAll('[data-testid="settings-translation-trigger"] option').length, 4)
+  assert.equal(wrapper.get('[data-testid="settings-translation-trigger"] option').text(), 'Drag')
+  await wrapper.get('[data-testid="settings-translation-trigger"]').setValue('ctrlalt')
+  assert.equal(draft.translation.triggerKey, 'ctrlalt')
+  await wrapper.get('[data-testid="settings-translation-enabled"]').setValue(false)
+  assert.equal(draft.translation.enabled, false)
   wrapper.unmount()
 })
 
@@ -152,7 +253,61 @@ test('locks DeepL controls while a connection test is in flight and clears stale
   globalThis.fetch = previousFetch
 })
 
-test('invalidates a successful connection test when the target language changes', async () => {
+test('deactivates an active preset after credential deletion until retest and activation', async () => {
+  const previousFetch = globalThis.fetch
+  globalThis.fetch = async () => ({ok: true, json: async () => ({translations: [{text: 'ok'}]})})
+  const secrets = createDefaultSecretsV2()
+  secrets.providers['deepl-free'] = {apiKey: 'old-key'}
+  const draft = createDraft('deepl-free')
+  const wrapper = mount(TranslationSettings, {props: {draft, draftSecrets: secrets}})
+
+  await wrapper.get('[data-testid="settings-translation-delete-key"]').trigger('click')
+  assert.equal(draft.translation.providerId, 'chrome-translator')
+  assert.equal(wrapper.get('[data-provider-id="deepl"]').classes('translation-service-row--active'), false)
+  assert.equal(wrapper.get('[data-testid="settings-translation-activate"]').attributes('disabled'), '')
+
+  await wrapper.get('[data-testid="settings-translation-preset-api-key"]').setValue('new-key')
+  await wrapper.get('[data-testid="settings-translation-test"]').trigger('click')
+  await flushPromises()
+  assert.equal(draft.translation.providerId, 'chrome-translator')
+  assert.equal(wrapper.get('[data-testid="settings-translation-activate"]').attributes('disabled'), undefined)
+
+  await wrapper.get('[data-testid="settings-translation-activate"]').trigger('click')
+  assert.equal(draft.translation.providerId, 'deepl-free')
+  wrapper.unmount()
+  globalThis.fetch = previousFetch
+})
+
+test('deactivates an active Gemini provider after model changes until retest and activation', async () => {
+  const previousFetch = globalThis.fetch
+  globalThis.fetch = async url => {
+    if (url === 'https://generativelanguage.googleapis.com/v1beta/models') {
+      return {ok: true, json: async () => ({models: [{name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent']}]})}
+    }
+    return {ok: true, json: async () => ({candidates: [{content: {parts: [{text: 'ok'}]}}]})}
+  }
+  const secrets = createDefaultSecretsV2()
+  secrets.providers.gemini = {apiKey: 'test-key'}
+  const draft = createDraft('gemini')
+  const wrapper = mount(TranslationSettings, {props: {draft, draftSecrets: secrets}})
+
+  await wrapper.get('[data-testid="settings-translation-gemini-model-fetch"]').trigger('click')
+  await flushPromises()
+  await wrapper.get('[data-testid="settings-translation-gemini-model"]').setValue('gemini-2.5-flash')
+  assert.equal(draft.translation.providerId, 'chrome-translator')
+  assert.equal(wrapper.get('[data-provider-id="gemini"]').classes('translation-service-row--active'), false)
+  assert.equal(wrapper.get('[data-testid="settings-translation-activate"]').attributes('disabled'), '')
+
+  await wrapper.get('[data-testid="settings-translation-test"]').trigger('click')
+  await flushPromises()
+  assert.equal(wrapper.get('[data-testid="settings-translation-activate"]').attributes('disabled'), undefined)
+  await wrapper.get('[data-testid="settings-translation-activate"]').trigger('click')
+  assert.equal(draft.translation.providerId, 'gemini')
+  wrapper.unmount()
+  globalThis.fetch = previousFetch
+})
+
+test('invalidates a successful Gemini connection test when the model changes', async () => {
   const previousFetch = globalThis.fetch
   globalThis.fetch = async () => ({ok: true, json: async () => ({candidates: [{content: {parts: [{text: 'ok'}]}}]})})
   const secrets = createDefaultSecretsV2()
@@ -162,12 +317,61 @@ test('invalidates a successful connection test when the target language changes'
   await wrapper.get('[data-testid="settings-translation-test"]').trigger('click')
   await flushPromises()
   assert.match(wrapper.get('[data-testid="settings-translation-test-result"]').text(), /Connection test succeeded/)
-  await wrapper.get('[data-testid="settings-translation-target-language"]').setValue('ja')
+  const changedDraft = createDraft()
+  changedDraft.translation.geminiModel = 'gemini-2.5-flash'
+  await wrapper.setProps({draft: changedDraft})
   await flushPromises()
   assert.equal(wrapper.find('[data-testid="settings-translation-test-result"]').exists(), false)
   assert.equal(wrapper.get('[data-testid="settings-translation-activate"]').attributes('disabled'), '')
   wrapper.unmount()
   globalThis.fetch = previousFetch
+})
+
+test('fetches and stores compatible Gemini model choices without exposing the API key', async () => {
+  const previousFetch = globalThis.fetch
+  let request
+  globalThis.fetch = async (url, options) => {
+    request = {url, options}
+    return {
+      ok: true,
+      json: async () => ({models: [
+        {name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent']},
+        {name: 'models/gemini-embedding', supportedGenerationMethods: ['embedContent']}
+      ]})
+    }
+  }
+  const secrets = createDefaultSecretsV2()
+  secrets.providers.gemini = {apiKey: 'private-key'}
+  const draft = createDraft('gemini')
+  const wrapper = mount(TranslationSettings, {props: {draft, draftSecrets: secrets}})
+  await wrapper.get('[data-testid="settings-translation-gemini-model-fetch"]').trigger('click')
+  await flushPromises()
+  assert.equal(request.url, 'https://generativelanguage.googleapis.com/v1beta/models')
+  assert.equal(request.options.headers['x-goog-api-key'], 'private-key')
+  assert.deepEqual([...wrapper.get('[data-testid="settings-translation-gemini-model"]').element.options].map(option => option.value), ['gemini-3.5-flash', 'gemini-2.5-flash'])
+  assert.equal(wrapper.text().includes('private-key'), false)
+  wrapper.unmount()
+  globalThis.fetch = previousFetch
+})
+
+test('formats Gemini model ids for the Figma-aligned selector', async () => {
+  const draft = createDraft('gemini')
+  const wrapper = mount(TranslationSettings, {props: {draft, draftSecrets: createDefaultSecretsV2()}})
+  await flushPromises()
+
+  assert.equal(wrapper.get('[data-testid="settings-translation-gemini-model"] option').text(), 'Gemini 3.5 Flash')
+  assert.equal(wrapper.find('.translation-gemini-model-row small').exists(), false)
+  wrapper.unmount()
+})
+
+test('locks translation controls while loading and saving', async () => {
+  const wrapper = mount(TranslationSettings, {
+    props: {draft: createDraft(), draftSecrets: createDefaultSecretsV2(), isLoading: true}
+  })
+  assert.equal(wrapper.get('[data-testid="settings-translation-enabled"]').attributes('disabled'), '')
+  assert.equal(wrapper.get('[data-testid="settings-translation-trigger"]').attributes('disabled'), '')
+  assert.equal(wrapper.get('[data-provider-id="gemini"]').attributes('disabled'), '')
+  wrapper.unmount()
 })
 
 test('clears an in-flight connection test when settings are reset or saved', async () => {

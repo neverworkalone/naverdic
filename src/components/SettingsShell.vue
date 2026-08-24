@@ -35,6 +35,18 @@ const hasLoadError = ref(false)
 const saveState = ref('idle')
 const translationEditorDirty = ref(false)
 
+const productVersion = computed(() => {
+  try {
+    const version = globalThis.chrome?.runtime?.getManifest?.()?.version
+    if (typeof version === 'string' && version.trim()) {
+      return version
+    }
+  } catch (_error) {
+    // Use the locale fallback when the runtime manifest is unavailable in tests or previews.
+  }
+  return text('SETTINGS_PRODUCT_VERSION')
+})
+
 const currentNavigation = computed(() => navigation.find(item => (
   item.id === activeNavigationId.value
 )) || navigation[0])
@@ -277,9 +289,18 @@ onBeforeUnmount(() => {
     data-testid="settings-shell"
   >
     <header class="settings-header">
+      <img
+        class="settings-header__logo"
+        src="/icon.png"
+        alt=""
+        aria-hidden="true"
+      >
       <h1 class="settings-header__title">
-        {{ text('SETTINGS_PRODUCT_TITLE') }}
+        {{ text('SETTINGS_PRODUCT_NAME') }}
       </h1>
+      <span class="settings-header__version">
+        {{ productVersion }}
+      </span>
 
       <div class="settings-header__actions" aria-live="polite">
         <span
@@ -365,9 +386,6 @@ onBeforeUnmount(() => {
           </template>
         </nav>
 
-        <div class="settings-sidebar__version">
-          {{ text('SETTINGS_SHELL_VERSION') }}
-        </div>
       </aside>
 
       <section
@@ -528,9 +546,18 @@ a {
   display: flex;
   align-items: center;
   min-height: var(--naverdic-settings-header-height);
-  padding: 16px 20px 16px 32px;
+  gap: 12px;
+  padding: 16px 24px 16px 32px;
   background: var(--naverdic-settings-surface);
   border-bottom: 1px solid var(--naverdic-settings-divider);
+}
+
+.settings-header__logo {
+  display: block;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  object-fit: contain;
 }
 
 .settings-header__title {
@@ -539,12 +566,22 @@ a {
   font-size: var(--naverdic-font-size-lg);
   font-weight: var(--naverdic-font-weight-medium);
   line-height: 40px;
+  width: 190px;
+  flex: 0 0 190px;
+}
+
+.settings-header__version {
+  margin-left: -12px;
+  color: var(--naverdic-settings-text-subtle);
+  font-size: var(--naverdic-font-size-lg);
+  font-weight: var(--naverdic-font-weight-medium);
+  line-height: 40px;
 }
 
 .settings-header__actions {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   margin-left: auto;
 }
 
@@ -597,7 +634,7 @@ a {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 24px 0;
+  padding: 24px 0 19px;
   background: var(--naverdic-settings-surface);
 }
 
@@ -620,10 +657,18 @@ a {
 }
 
 .settings-navigation__item--help {
+  position: relative;
   margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid var(--naverdic-settings-divider);
-  border-radius: 0;
+}
+
+.settings-navigation__item--help::before {
+  position: absolute;
+  top: -16px;
+  left: 8px;
+  width: 188px;
+  height: 1px;
+  background: var(--naverdic-settings-divider);
+  content: '';
 }
 
 .settings-navigation__external-icon {
@@ -685,13 +730,6 @@ a {
   height: 20px;
   background: var(--naverdic-settings-primary);
   border-radius: 2px;
-}
-
-.settings-sidebar__version {
-  margin: auto 24px 0;
-  color: var(--naverdic-settings-text-subtle);
-  font-size: var(--naverdic-font-size-xs);
-  line-height: 20px;
 }
 
 .settings-content {
@@ -896,15 +934,23 @@ a {
 
 @media (max-width: 600px) {
   .settings-header {
+    gap: 8px;
     padding: 12px 16px;
   }
 
   .settings-header__title {
-    max-width: 60%;
+    width: auto;
+    flex: 1 1 auto;
+    max-width: none;
     overflow: hidden;
     font-size: 14px;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .settings-header__version {
+    margin-left: 0;
+    font-size: 14px;
   }
 
   .settings-header__actions {
@@ -925,8 +971,7 @@ a {
     border-bottom: 1px solid var(--naverdic-settings-divider);
   }
 
-  .settings-sidebar__heading,
-  .settings-sidebar__version {
+  .settings-sidebar__heading {
     display: none;
   }
 
@@ -950,6 +995,10 @@ a {
     padding-top: 0;
     border-top: 0;
     border-radius: 8px;
+  }
+
+  .settings-navigation__item--help::before {
+    display: none;
   }
 
   .settings-navigation__indicator {

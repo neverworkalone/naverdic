@@ -152,6 +152,12 @@
   "SETTINGS_PRODUCT_TITLE": {
     "message": "Naver English Dictionary · NaverDic 7.0"
   },
+  "SETTINGS_PRODUCT_NAME": {
+    "message": "Naver English Dictionary · NaverDic"
+  },
+  "SETTINGS_PRODUCT_VERSION": {
+    "message": "7.0"
+  },
   "SETTINGS_SIDEBAR_HEADING": {
     "message": "Settings"
   },
@@ -509,7 +515,7 @@
     "message": "Review the contents before deleting."
   },
   "SETTINGS_TRANSLATION_ENABLED": {
-    "message": "Enable sentence translation"
+    "message": "Translation feature"
   },
   "SETTINGS_TRANSLATION_TARGET_LANGUAGE": {
     "message": "Target language"
@@ -530,16 +536,16 @@
     "message": "Choose and manage services used for sentence translation."
   },
   "SETTINGS_TRANSLATION_AVAILABLE_SERVICES": {
-    "message": "Available services"
+    "message": "Service selection"
   },
   "SETTINGS_TRANSLATION_AVAILABLE_SERVICES_HINT": {
     "message": "Manage the built-in service and connected services in one place."
   },
   "SETTINGS_TRANSLATION_CHROME_NAME": {
-    "message": "Chrome built-in translation (Translator API)"
+    "message": "Chrome built-in translation"
   },
   "SETTINGS_TRANSLATION_CHROME_DESCRIPTION": {
-    "message": "Free local translation provided by the browser"
+    "message": "Translator API · Free"
   },
   "SETTINGS_TRANSLATION_CHROME_PREVIEW_DESCRIPTION": {
     "message": "The Chrome Translator API provided by the browser."
@@ -551,19 +557,19 @@
     "message": "DeepL"
   },
   "SETTINGS_TRANSLATION_DEEPL_DESCRIPTION": {
-    "message": "An external service for high-quality translation"
+    "message": "Free / Pro API"
   },
   "SETTINGS_TRANSLATION_GEMINI_NAME": {
     "message": "Gemini"
   },
   "SETTINGS_TRANSLATION_GEMINI_DESCRIPTION": {
-    "message": "Natural sentence translation and summarization"
+    "message": "Google AI API"
   },
   "SETTINGS_TRANSLATION_GEMINI_MODEL": {
     "message": "Model"
   },
   "SETTINGS_TRANSLATION_GEMINI_MODEL_HINT": {
-    "message": "The only currently supported model is gemini-3.5-flash."
+    "message": "Only Flash and Flash-Lite models suitable for translation are shown."
   },
   "SETTINGS_TRANSLATION_DEFAULT_BADGE": {
     "message": "Free built-in"
@@ -602,7 +608,7 @@
     "message": "API key"
   },
   "SETTINGS_TRANSLATION_API_KEY_HINT": {
-    "message": "Keys are stored only in chrome.storage.local."
+    "message": "Credentials are stored only in this device's local storage."
   },
   "SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER": {
     "message": "Enter an API key"
@@ -647,7 +653,7 @@
     "message": "Translation services"
   },
   "SETTINGS_TRANSLATION_SELECTOR_HINT": {
-    "message": "Choose a service and manage its detailed settings."
+    "message": "Configure the translation feature and service."
   },
   "SETTINGS_TRANSLATION_DETAIL_TITLE": {
     "message": "Service details"
@@ -671,6 +677,9 @@
     "message": "Setup needed"
   },
   "SETTINGS_TRANSLATION_STATUS_CONFIGURED": {
+    "message": "Ready"
+  },
+  "SETTINGS_TRANSLATION_STATUS_CONFIGURED_INACTIVE": {
     "message": "Configured"
   },
   "SETTINGS_TRANSLATION_STATUS_UNCONFIGURED": {
@@ -725,7 +734,7 @@
     "message": "Downloading"
   },
   "SETTINGS_TRANSLATION_CHROME_MODEL_READY": {
-    "message": "Ready"
+    "message": "Available"
   },
   "SETTINGS_TRANSLATION_CHROME_MODEL_UNAVAILABLE": {
     "message": "Unavailable"
@@ -741,6 +750,17 @@
   },
   "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS": {
     "message": "Downloading"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_STATUS": {
+    "message": "$progress$% · Downloading.",
+    "placeholders": {
+      "progress": {
+        "content": "$1"
+      }
+    }
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_INDETERMINATE": {
+    "message": "Downloading."
   },
   "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_HINT": {
     "message": "Preparing the translation model."
@@ -760,7 +780,91 @@
   "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_FAILED_HINT": {
     "message": "The model could not be prepared. Try again."
   },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_TITLE": {
+    "message": "The Translator API is unavailable."
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_VERSION": {
+    "message": "The Chrome version does not support the Translator API"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_ENVIRONMENT": {
+    "message": "The operating system or device environment is not supported"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_REQUIREMENTS": {
+    "message": "Chrome's on-device translation requirements are not met"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_UPDATE": {
+    "message": "Update Chrome to the latest version and check again."
+  },
   "SETTINGS_TRANSLATION_CHROME_NOTE": {
-    "message": "No API key is needed. Translation runs through Chrome's Translator API in this page."
+    "message": "If an error occurs, uninstall the Chrome translation model and install it again."
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_LABEL": {
+    "message": "Translation trigger"
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_NONE": {
+    "message": "Drag"
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_PRIMARY": {
+    "message": "$modifier$ + drag",
+    "placeholders": {
+      "modifier": {
+        "content": "$1"
+      }
+    }
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_ALT": {
+    "message": "$modifier$ + drag",
+    "placeholders": {
+      "modifier": {
+        "content": "$1"
+      }
+    }
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_PRIMARY_ALT": {
+    "message": "$primary$ + $secondary$ + drag",
+    "placeholders": {
+      "primary": {
+        "content": "$1"
+      },
+      "secondary": {
+        "content": "$2"
+      }
+    }
+  },
+  "SETTINGS_TRANSLATION_CHROME_PAGE_DESCRIPTION": {
+    "message": "Check and manage the Chrome translation model."
+  },
+  "SETTINGS_TRANSLATION_EXTERNAL_PAGE_DESCRIPTION": {
+    "message": "Manage external translation service connections and credentials."
+  },
+  "SETTINGS_TRANSLATION_CHROME_CARD_DESCRIPTION": {
+    "message": "Chrome's built-in Translator API runs free on-device after the model is downloaded, without an internet connection or usage limits."
+  },
+  "SETTINGS_TRANSLATION_EXTERNAL_CARD_DESCRIPTION": {
+    "message": "Configure the API key and connection status."
+  },
+  "SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR_VALUE": {
+    "message": "English → Korean"
+  },
+  "SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR_CODE": {
+    "message": "en → ko"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_MANAGEMENT": {
+    "message": "Manage translation model"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_KEY_LINK": {
+    "message": "Get a DeepL API key"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_KEY_LINK": {
+    "message": "Get a Gemini API key"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_MODEL_FETCH": {
+    "message": "Fetch model list"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_MODEL_LOADING": {
+    "message": "Fetching…"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_MODEL_LIST_FAILURE": {
+    "message": "Could not fetch the model list. Check the API key and connection."
   }
 }
