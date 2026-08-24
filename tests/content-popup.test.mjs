@@ -229,6 +229,7 @@ test('renders common states inside an isolated shadow popup and closes on outsid
   }])
   assert.equal(host.shadowRoot.querySelector('.naverdic-wordTitle a').textContent, 'hello')
   assert.equal(host.shadowRoot.querySelector('.naverdic-popup__header').hidden, true)
+  assert.equal(host.shadowRoot.querySelector('#popupShadow').style.width, '360px')
   assert.equal(host.shadowRoot.querySelector('audio').getAttribute('controlslist'), 'nodownload')
   assert.equal(host.shadowRoot.querySelector('audio').id, '')
 

@@ -12,13 +12,15 @@ export const POPUP_STATES = Object.freeze({
 })
 
 const DEFAULT_POPUP_OPTIONS = Object.freeze({
-  width: 440,
+  width: 360,
   backgroundColor: '#FFF59D',
   fontColor: '#000000',
   fontSizePt: 11,
   margin: 10,
   gap: 12
 })
+
+const TRANSLATION_POPUP_WIDTH = 440
 
 const DEFAULT_TEXT = Object.freeze({
   INLINE_POPUP_DICTIONARY_TITLE: 'Dictionary',
@@ -208,6 +210,7 @@ function createPopupView({
   options = {}
 } = {}) {
   const popupOptions = {...DEFAULT_POPUP_OPTIONS, ...options}
+  let popupType = 'dictionary'
   let host = null
   let shadowRoot = null
   let popup = null
@@ -217,6 +220,14 @@ function createPopupView({
   let style = null
   let stylesPromise = null
   let layoutChangeHandler = null
+
+  function getPopupWidth(type = popupType) {
+    if (type === 'translation') {
+      return TRANSLATION_POPUP_WIDTH
+    }
+
+    return Number(popupOptions.width) || DEFAULT_POPUP_OPTIONS.width
+  }
 
   function ensureMounted() {
     if (host) {
@@ -263,7 +274,7 @@ function createPopupView({
     popup.appendChild(body)
     shadowRoot.appendChild(popup)
 
-    popup.style.width = `${Number(popupOptions.width) || DEFAULT_POPUP_OPTIONS.width}px`
+    popup.style.width = `${getPopupWidth()}px`
     popup.style.backgroundColor = popupOptions.backgroundColor
     popup.style.color = popupOptions.fontColor
     popup.style.fontSize = `${popupOptions.fontSizePt}pt`
@@ -290,7 +301,9 @@ function createPopupView({
   }
 
   function update({type = 'dictionary', state = POPUP_STATES.LOADING, data} = {}) {
+    popupType = type
     ensureMounted()
+    popup.style.width = `${getPopupWidth()}px`
     const titleText = type === 'translation'
       ? getText('INLINE_POPUP_TRANSLATION_TITLE')
       : getText('INLINE_POPUP_DICTIONARY_TITLE')
@@ -339,13 +352,14 @@ function createPopupView({
 
   function measure() {
     ensureMounted()
-    popup.style.width = `${Number(popupOptions.width) || DEFAULT_POPUP_OPTIONS.width}px`
+    const popupWidth = getPopupWidth()
+    popup.style.width = `${popupWidth}px`
     popup.style.maxHeight = 'none'
     popup.style.setProperty('--naverdic-popup-max-height', '100000px')
     const rect = popup.getBoundingClientRect?.() || {}
     const width = Number(rect.width) > 0
       ? Number(rect.width)
-      : Number(popupOptions.width) || DEFAULT_POPUP_OPTIONS.width
+      : popupWidth
     const height = Number(rect.height) > 0
       ? Number(rect.height)
       : Number(popup.scrollHeight || body.scrollHeight || 0)
@@ -380,6 +394,7 @@ function createPopupView({
   function setOptions(nextOptions = {}) {
     Object.assign(popupOptions, nextOptions)
     if (popup) {
+      popup.style.width = `${getPopupWidth()}px`
       popup.style.backgroundColor = popupOptions.backgroundColor
       popup.style.color = popupOptions.fontColor
       popup.style.fontSize = `${popupOptions.fontSizePt}pt`
@@ -396,6 +411,7 @@ function createPopupView({
     title = null
     body = null
     style = null
+    popupType = 'dictionary'
   }
 
   return {

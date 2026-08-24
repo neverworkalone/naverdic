@@ -33,7 +33,7 @@ import {
 
 export {DEFAULT_OPTIONS, STORAGE_DEFAULTS}
 
-const popupWidth = 440
+const popupWidth = 360
 let popupColor = DEFAULT_OPTIONS.POPUP_BG_COLOR
 let popupFontColor = DEFAULT_OPTIONS.POPUP_FONT_COLOR
 let popupFontsize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
