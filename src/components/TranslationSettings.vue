@@ -69,6 +69,7 @@ function text(key, placeholders = undefined) {
   return message
     .replaceAll('$1$', String(placeholders[0] ?? ''))
     .replaceAll('$2$', String(placeholders[1] ?? ''))
+    .replaceAll('$progress$', String(placeholders[0] ?? ''))
     .replaceAll('$modifier$', String(placeholders[0] ?? ''))
     .replaceAll('$primary$', String(placeholders[0] ?? ''))
     .replaceAll('$secondary$', String(placeholders[1] ?? ''))

@@ -478,6 +478,17 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.equal(preview.includes('settings-help-preview'), false)
 })
 
+test('declares the Chrome download progress placeholder using the locale name', () => {
+  for (const localeName of ['en', 'ko']) {
+    const locale = JSON.parse(fs.readFileSync(path.join(projectRoot, `src/_locales/${localeName}/messages.json`), 'utf8'))
+    const entry = locale.SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_STATUS
+
+    assert.match(entry.message, /\$progress\$/)
+    assert.equal(entry.message.includes('$1$'), false)
+    assert.equal(entry.placeholders.progress.content, '$1')
+  }
+})
+
 test('rejects legacy custom provider definitions', () => {
   const provider = normalizeProviderDefinition({
     id: 'Custom API',

@@ -749,7 +749,7 @@
     "message": "다운로드 중"
   },
   "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_STATUS": {
-    "message": "$1$% · 다운로드 중입니다.",
+    "message": "$progress$% · 다운로드 중입니다.",
     "placeholders": {
       "progress": {
         "content": "$1"

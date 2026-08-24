@@ -749,7 +749,7 @@
     "message": "Downloading"
   },
   "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_STATUS": {
-    "message": "$1$% · Downloading.",
+    "message": "$progress$% · Downloading.",
     "placeholders": {
       "progress": {
         "content": "$1"
