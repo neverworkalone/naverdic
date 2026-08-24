@@ -217,6 +217,38 @@ test('uses the taller Figma result variant for long dictionary entries', async (
   wrapper.unmount()
 })
 
+test('promotes a two-meaning result before the compact card shows a scrollbar', async () => {
+  const wrapper = mountPopup()
+  await wrapper.get('.naverdic-popup-search__input').setValue('test')
+  await wrapper.get('.naverdic-popup-search').trigger('submit')
+  respond(0, {
+    ok: true,
+    data: {
+      searchResultMap: {
+        searchResultListMap: {
+          WORD: {
+            items: [{
+              handleEntry: 'test',
+              meansCollector: [{
+                partOfSpeech: 'noun',
+                means: [
+                  {order: '1', value: '시험, 테스트'},
+                  {order: '2', value: '검사 또는 확인을 위해 시행하는 과정'}
+                ]
+              }]
+            }]
+          }
+        }
+      }
+    }
+  })
+  await flushPromises()
+
+  assert.equal(wrapper.get('.naverdic-popup-shell').classes('naverdic-popup-shell--result-scroll'), true)
+  assert.equal(wrapper.get('.dictionary-result').classes('dictionary-result--scrollable'), true)
+  wrapper.unmount()
+})
+
 test('shows empty and network-error states without leaving stale results', async () => {
   const wrapper = mountPopup()
   const input = wrapper.get('.naverdic-popup-search__input')

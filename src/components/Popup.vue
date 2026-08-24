@@ -199,6 +199,10 @@ body {
   min-height: 308px;
 }
 
+.naverdic-popup-shell--idle {
+  height: 92px;
+}
+
 .naverdic-popup-shell--result-scroll {
   min-height: 400px;
 }
@@ -302,20 +306,17 @@ body {
   margin-top: 4px;
 }
 
-.naverdic-popup-shell--idle .naverdic-popup-footer {
-  margin-top: -2px;
-}
-
 .naverdic-popup-footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 9px;
   width: 340px;
   height: 16px;
   min-height: 16px;
+  padding: 0 9px 0 0;
   color: #636E80;
-  font-size: 12px;
+  font-size: 13px;
   line-height: normal;
   white-space: nowrap;
 }

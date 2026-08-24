@@ -246,14 +246,14 @@ onBeforeUnmount(() => stopAudio())
 
 .dictionary-result__audio-button img {
   display: block;
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
 }
 
 .dictionary-result__pause-icon {
   display: inline-flex;
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   align-items: center;
   justify-content: center;
   gap: 3px;

@@ -14,8 +14,9 @@ export function findAudioEntryIndex(entries) {
 
 /**
  * The toolbar popup has a compact result state and a taller, internally
- * scrollable state. Keep the threshold deterministic so both the shell and
- * the result renderer select the same Figma variant before layout.
+ * scrollable state. The compact Figma variant is sized for one concise
+ * meaning; promote multi-meaning entries before the compact card can show a
+ * scrollbar while the outer shell is still at its shorter height.
  */
 export function shouldUseScrollableResult(entries) {
   if (!Array.isArray(entries)) {
@@ -28,6 +29,6 @@ export function shouldUseScrollableResult(entries) {
       total + String(meaning?.value || '').length
     ), 0)
 
-    return meanings.length >= 3 || textLength > 180
+    return meanings.length >= 2 || textLength > 160
   })
 }

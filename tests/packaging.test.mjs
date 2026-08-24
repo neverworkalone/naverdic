@@ -22,6 +22,7 @@ test('package validator covers manifest entry points and web resources', () => {
 
   assert.equal(manifest.version, RELEASE_MANIFEST_VERSION)
   assert.equal(JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8')).version, RELEASE_PACKAGE_VERSION)
+  assert.equal(manifest.options_ui?.open_in_tab, true)
 
   assert.equal(
     (manifest.content_scripts || []).some(script => Array.isArray(script.css)),

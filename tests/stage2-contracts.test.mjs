@@ -360,10 +360,13 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(toolbarPopup, /html,[\s\S]*body,[\s\S]*#app \{[\s\S]*width: 360px;[\s\S]*min-width: 360px/)
   assert.match(toolbarPopup, /\.naverdic-popup-shell \{[\s\S]*width: 360px;[\s\S]*min-height: 92px;[\s\S]*padding: 10px 10px 8px/)
   assert.match(toolbarPopup, /\.naverdic-popup-shell--result \{[\s\S]*min-height: 308px/)
+  assert.match(toolbarPopup, /\.naverdic-popup-shell--idle \{[\s\S]*height: 92px/)
   assert.match(toolbarPopup, /\.naverdic-popup-shell--result-scroll \{[\s\S]*min-height: 400px/)
   assert.match(toolbarPopup, /\.naverdic-popup-search \{[\s\S]*width: 340px/)
   assert.match(toolbarPopup, /\.naverdic-popup-search__input \{[\s\S]*width: 272px/)
   assert.match(toolbarPopup, /\.naverdic-popup-shell \.dictionary-result \{[\s\S]*width: 340px/)
+  assert.match(toolbarPopup, /\.naverdic-popup-footer \{[\s\S]*gap: 9px;[\s\S]*padding: 0 9px 0 0;[\s\S]*font-size: 13px/)
+  assert.equal(toolbarPopup.includes('.naverdic-popup-shell--idle .naverdic-popup-footer'), false)
 
   const shell = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsShell.vue'), 'utf8')
   assert.match(shell, /settings-shell--double-click/)
@@ -468,6 +471,7 @@ test('keeps the official Chrome Translator display name and translation panel bo
   const dictionaryResult = fs.readFileSync(path.join(projectRoot, 'src/components/DictionaryResult.vue'), 'utf8')
   assert.match(dictionaryResult, /\.dictionary-result \{[\s\S]*height: 216px;[\s\S]*padding: 12px 4px/)
   assert.match(dictionaryResult, /\.dictionary-result--scrollable \{[\s\S]*height: 308px;[\s\S]*max-height: 308px/)
+  assert.match(dictionaryResult, /\.dictionary-result__audio-button img \{[\s\S]*width: 18px;[\s\S]*height: 18px/)
   assert.match(dictionaryResult, /POPUP_AUDIO_PAUSE_LABEL/)
 
   const preview = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPreview.vue'), 'utf8')
