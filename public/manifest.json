@@ -25,12 +25,11 @@
     "matches": [ "<all_urls>" ],
     "run_at": "document_idle",
     "all_frames": true,
-    "css": ["content.css"],
     "js": ["contentWrapper.js"]
   }],
   "web_accessible_resources": [
     {
-      "resources": ["content.js", "content-interaction.mjs", "content-storage.mjs", "content-settings.mjs", "chrome-translator.mjs", "messaging.mjs", "settings.mjs", "settings-v2.mjs", "settings-v2-storage.mjs", "settings-migration-v2.mjs", "translation-provider.mjs", "translation-engine.mjs", "translation-settings.mjs", "translation-testing.mjs", "content.css", "dictionary/parser.mjs", "dictionary/normalizer.mjs"],
+      "resources": ["content.js", "content-data.mjs", "content-position.mjs", "content-popup.mjs", "content-request.mjs", "content-interaction.mjs", "content-storage.mjs", "content-settings.mjs", "chrome-translator.mjs", "messaging.mjs", "settings.mjs", "settings-v2.mjs", "settings-v2-storage.mjs", "settings-migration-v2.mjs", "translation-provider.mjs", "translation-engine.mjs", "translation-settings.mjs", "translation-testing.mjs", "content.css", "dictionary/parser.mjs", "dictionary/normalizer.mjs"],
       "matches": [ "<all_urls>" ]
     }
   ],

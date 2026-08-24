@@ -47,6 +47,22 @@ export default defineConfig({
           dest: '.'
         },
         {
+          src: 'src/content-data.mjs',
+          dest: '.'
+        },
+        {
+          src: 'src/content-position.mjs',
+          dest: '.'
+        },
+        {
+          src: 'src/content-popup.mjs',
+          dest: '.'
+        },
+        {
+          src: 'src/content-request.mjs',
+          dest: '.'
+        },
+        {
           src: 'src/content-interaction.mjs',
           dest: '.'
         },

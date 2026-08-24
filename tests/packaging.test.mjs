@@ -17,6 +17,12 @@ const manifest = JSON.parse(
 test('package validator covers manifest entry points and web resources', () => {
   const files = collectManifestFiles(manifest)
 
+  assert.equal(
+    (manifest.content_scripts || []).some(script => Array.isArray(script.css)),
+    false,
+    'popup CSS should stay inside its Shadow DOM'
+  )
+
   for (const file of [
     'manifest.json',
     'contentWrapper.js',
@@ -24,6 +30,10 @@ test('package validator covers manifest entry points and web resources', () => {
     'popup.html',
     'options.html',
     'content.css',
+    'content-data.mjs',
+    'content-position.mjs',
+    'content-popup.mjs',
+    'content-request.mjs',
     'messaging.mjs',
     'dictionary/parser.mjs',
     'dictionary/normalizer.mjs',

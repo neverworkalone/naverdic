@@ -143,6 +143,24 @@
   "RESET_STATUS": {
     "message": "Options reset."
   },
+  "INLINE_POPUP_DICTIONARY_TITLE": {
+    "message": "Dictionary"
+  },
+  "INLINE_POPUP_TRANSLATION_TITLE": {
+    "message": "Translation"
+  },
+  "INLINE_POPUP_LOADING": {
+    "message": "Loading…"
+  },
+  "INLINE_POPUP_NO_RESULT": {
+    "message": "No result found."
+  },
+  "INLINE_POPUP_NETWORK_ERROR": {
+    "message": "The result could not be loaded. Please try again."
+  },
+  "INLINE_POPUP_AUDIO_UNAVAILABLE": {
+    "message": "Audio is unavailable."
+  },
   "SAVE": {
     "message": "Save"
   },

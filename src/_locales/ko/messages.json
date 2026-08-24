@@ -143,6 +143,24 @@
   "RESET_STATUS": {
     "message": "초기화 되었습니다."
   },
+  "INLINE_POPUP_DICTIONARY_TITLE": {
+    "message": "사전"
+  },
+  "INLINE_POPUP_TRANSLATION_TITLE": {
+    "message": "번역"
+  },
+  "INLINE_POPUP_LOADING": {
+    "message": "불러오는 중…"
+  },
+  "INLINE_POPUP_NO_RESULT": {
+    "message": "결과가 없습니다."
+  },
+  "INLINE_POPUP_NETWORK_ERROR": {
+    "message": "결과를 불러오지 못했습니다. 다시 시도해 주세요."
+  },
+  "INLINE_POPUP_AUDIO_UNAVAILABLE": {
+    "message": "발음을 재생할 수 없습니다."
+  },
   "SAVE": {
     "message": "저장"
   },
