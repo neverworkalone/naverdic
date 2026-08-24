@@ -2,7 +2,6 @@
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { buildNaverApiUrl, parseNaverDictionaryResponse } from '/src/dictionary/parser.mjs'
 import DictionaryResult from '/src/components/DictionaryResult.vue'
-import { shouldUseScrollableResult } from '/src/dictionary/result-model.mjs'
 import {
   POPUP_STATES,
   resolvePopupState
@@ -21,12 +20,9 @@ const inputElement = ref(null)
 let requestRevision = 0
 const hasVisibleResult = computed(() => entries.value.length > 0
   && (state.value === POPUP_STATES.RESULT || state.value === POPUP_STATES.LOADING))
-const resultScrollable = computed(() => hasVisibleResult.value
-  && shouldUseScrollableResult(entries.value))
 const shellClasses = computed(() => ({
   [`naverdic-popup-shell--${state.value}`]: true,
-  'naverdic-popup-shell--result': hasVisibleResult.value,
-  'naverdic-popup-shell--result-scroll': resultScrollable.value
+  'naverdic-popup-shell--result': hasVisibleResult.value
 }))
 
 function setResolvedState(resolved) {
@@ -131,7 +127,7 @@ onMounted(() => {
 
     <div
       class="naverdic-popup-body"
-      :class="{'naverdic-popup-body--scrollable': resultScrollable}"
+      :class="{'naverdic-popup-body--result': hasVisibleResult}"
     >
       <DictionaryResult
         v-if="hasVisibleResult"
@@ -205,13 +201,8 @@ body {
   height: 92px;
 }
 
-.naverdic-popup-shell--loading.naverdic-popup-shell--result:not(.naverdic-popup-shell--result-scroll) {
+.naverdic-popup-shell--loading.naverdic-popup-shell--result {
   height: auto;
-}
-
-.naverdic-popup-shell--result-scroll {
-  height: 400px;
-  min-height: 400px;
 }
 
 .naverdic-popup-search {
@@ -286,7 +277,7 @@ body {
   min-width: 0;
 }
 
-.naverdic-popup-body--scrollable {
+.naverdic-popup-body--result {
   max-height: 336px;
   overflow-x: hidden;
   overflow-y: auto;
@@ -301,17 +292,17 @@ body {
   overflow: visible;
 }
 
-.naverdic-popup-body--scrollable::-webkit-scrollbar {
+.naverdic-popup-body--result::-webkit-scrollbar {
   width: 4px;
   height: 4px;
 }
 
-.naverdic-popup-body--scrollable::-webkit-scrollbar-track {
+.naverdic-popup-body--result::-webkit-scrollbar-track {
   background: rgba(229, 233, 240, 0.9);
   border-radius: 2px;
 }
 
-.naverdic-popup-body--scrollable::-webkit-scrollbar-thumb {
+.naverdic-popup-body--result::-webkit-scrollbar-thumb {
   background: rgba(185, 193, 204, 0.9);
   border-radius: 2px;
 }

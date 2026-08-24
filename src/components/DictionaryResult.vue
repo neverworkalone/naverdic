@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { findAudioEntryIndex, shouldUseScrollableResult } from '/src/dictionary/result-model.mjs'
+import { findAudioEntryIndex } from '/src/dictionary/result-model.mjs'
 import { getText } from '/src/text.js'
 
 const props = defineProps({
@@ -17,7 +17,6 @@ const audioEntryIndex = computed(() => findAudioEntryIndex(props.entries))
 const audioEntry = computed(() => (
   audioEntryIndex.value >= 0 ? props.entries[audioEntryIndex.value] : null
 ))
-const scrollable = computed(() => shouldUseScrollableResult(props.entries))
 
 function entryMeta(entry) {
   return [
@@ -103,7 +102,6 @@ onBeforeUnmount(() => stopAudio())
 <template>
   <section
     class="dictionary-result"
-    :class="{'dictionary-result--scrollable': scrollable}"
     :aria-label="getText('INLINE_POPUP_DICTIONARY_TITLE')"
     role="list"
     data-testid="dictionary-result"
@@ -171,20 +169,12 @@ onBeforeUnmount(() => stopAudio())
   flex-direction: column;
   gap: 8px;
   width: 100%;
-  height: 216px;
   min-height: 216px;
-  max-height: 216px;
   padding: 12px 4px;
-  overflow: auto;
+  overflow: visible;
   border-radius: 8px;
   background: var(--naverdic-color-surface-popup, #F5F6F8);
   color: #384252;
-}
-
-.dictionary-result--scrollable {
-  height: 308px;
-  min-height: 308px;
-  max-height: 308px;
 }
 
 .dictionary-result__entry {
@@ -304,18 +294,4 @@ onBeforeUnmount(() => stopAudio())
   pointer-events: none;
 }
 
-.dictionary-result::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-.dictionary-result::-webkit-scrollbar-track {
-  background: rgba(229, 233, 240, 0.9);
-  border-radius: 2px;
-}
-
-.dictionary-result::-webkit-scrollbar-thumb {
-  background: rgba(185, 193, 204, 0.9);
-  border-radius: 2px;
-}
 </style>

@@ -95,6 +95,24 @@ function dictionaryResponse(word, meaning = 'meaning') {
   }
 }
 
+function dictionaryResponseForItems(items) {
+  return {
+    searchResultMap: {
+      searchResultListMap: {
+        WORD: {
+          items: items.map(item => ({
+            handleEntry: item.word,
+            meansCollector: [{
+              partOfSpeech: 'noun',
+              means: [{order: '1', value: item.meaning}]
+            }]
+          }))
+        }
+      }
+    }
+  }
+}
+
 function respond(index, response) {
   requests[index]?.callback(response)
 }
@@ -214,7 +232,7 @@ test('keeps the previous toolbar result visible while a newer lookup is pending'
   wrapper.unmount()
 })
 
-test('uses the taller Figma result variant for long dictionary entries', async () => {
+test('uses the whole popup body for long dictionary entries', async () => {
   const wrapper = mountPopup()
   await wrapper.get('.naverdic-popup-search__input').setValue('test')
   await wrapper.get('.naverdic-popup-search').trigger('submit')
@@ -242,44 +260,33 @@ test('uses the taller Figma result variant for long dictionary entries', async (
   })
   await flushPromises()
 
-  assert.equal(wrapper.get('.naverdic-popup-shell').classes('naverdic-popup-shell--result-scroll'), true)
-  assert.equal(wrapper.get('.naverdic-popup-body').classes('naverdic-popup-body--scrollable'), true)
+  assert.equal(wrapper.get('.naverdic-popup-shell').classes('naverdic-popup-shell--result'), true)
+  assert.equal(wrapper.get('.naverdic-popup-body').classes('naverdic-popup-body--result'), true)
   assert.equal(wrapper.get('.naverdic-popup-body .naverdic-popup-footer').exists(), true)
-  assert.equal(wrapper.get('.dictionary-result').classes('dictionary-result--scrollable'), true)
   wrapper.unmount()
 })
 
-test('promotes a two-meaning result before the compact card shows a scrollbar', async () => {
+test('renders multiple concise entries in the same whole-body scroll layout', async () => {
   const wrapper = mountPopup()
   await wrapper.get('.naverdic-popup-search__input').setValue('test')
   await wrapper.get('.naverdic-popup-search').trigger('submit')
   respond(0, {
     ok: true,
-    data: {
-      searchResultMap: {
-        searchResultListMap: {
-          WORD: {
-            items: [{
-              handleEntry: 'test',
-              meansCollector: [{
-                partOfSpeech: 'noun',
-                means: [
-                  {order: '1', value: '시험, 테스트'},
-                  {order: '2', value: '검사 또는 확인을 위해 시행하는 과정'}
-                ]
-              }]
-            }]
-          }
-        }
-      }
-    }
+    data: dictionaryResponseForItems([
+      {word: 'one', meaning: '짧은 뜻'},
+      {word: 'two', meaning: '짧은 뜻'},
+      {word: 'three', meaning: '짧은 뜻'},
+      {word: 'four', meaning: '짧은 뜻'},
+      {word: 'five', meaning: '짧은 뜻'},
+      {word: 'six', meaning: '짧은 뜻'}
+    ])
   })
   await flushPromises()
 
-  assert.equal(wrapper.get('.naverdic-popup-shell').classes('naverdic-popup-shell--result-scroll'), true)
-  assert.equal(wrapper.get('.naverdic-popup-body').classes('naverdic-popup-body--scrollable'), true)
+  assert.equal(wrapper.get('.naverdic-popup-shell').classes('naverdic-popup-shell--result'), true)
+  assert.equal(wrapper.get('.naverdic-popup-body').classes('naverdic-popup-body--result'), true)
+  assert.equal(wrapper.findAll('.dictionary-result__entry').length, 6)
   assert.equal(wrapper.get('.naverdic-popup-body .naverdic-popup-footer').exists(), true)
-  assert.equal(wrapper.get('.dictionary-result').classes('dictionary-result--scrollable'), true)
   wrapper.unmount()
 })
 
