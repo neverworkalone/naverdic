@@ -12,9 +12,9 @@ import {createStorageLifecycle} from './content-storage.mjs'
 import {createInlinePopupDataClient} from './content-data.mjs'
 import {createPopupAnchor} from './content-position.mjs'
 import {createPopupController, POPUP_STATES} from './content-popup.mjs'
+import {resolvePopupState} from './popup-state.mjs'
 import {
   createPopupRequestCoordinator,
-  POPUP_REQUEST_STATUSES,
   isAbortError
 } from './content-request.mjs'
 import {createChromeTranslatorRuntime} from './chrome-translator.mjs'
@@ -127,20 +127,16 @@ function renderRequestResult(type, result) {
     return
   }
 
-  if (result.status === POPUP_REQUEST_STATUSES.SUCCESS) {
-    popupController.update(POPUP_STATES.RESULT, result.data)
+  const resolved = resolvePopupState(type, result)
+  if (!resolved) {
     return
   }
 
-  if (result.status === POPUP_REQUEST_STATUSES.EMPTY) {
-    popupController.update(POPUP_STATES.EMPTY)
-    return
-  }
-
-  if (result.status === POPUP_REQUEST_STATUSES.ERROR) {
+  if (resolved.state === POPUP_STATES.ERROR) {
     reportPopupError(type === 'translation' ? 'translation' : 'dictionary lookup', result.error)
-    popupController.update(POPUP_STATES.ERROR)
   }
+
+  popupController.update(resolved.state, resolved.data)
 }
 
 function openPopup(event, key = null, type = 'search') {

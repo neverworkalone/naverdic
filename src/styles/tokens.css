@@ -29,7 +29,7 @@
   --naverdic-color-success: #15803D;
   --naverdic-color-warning: #B45309;
 
-  /* Figma spacing rhythm: 8px controls, 14px popup padding, 22px columns. */
+  /* Figma spacing rhythm: 8px controls, 10px popup padding, 22px columns. */
   --naverdic-space-0: 0;
   --naverdic-space-1: 4px;
   --naverdic-space-2: 8px;

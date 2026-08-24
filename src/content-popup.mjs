@@ -3,13 +3,10 @@ import {
   createPopupAnchor,
   getDocumentViewport
 } from './content-position.mjs'
+import {POPUP_STATES} from './popup-state.mjs'
+import {findAudioEntryIndex} from './dictionary/result-model.mjs'
 
-export const POPUP_STATES = Object.freeze({
-  LOADING: 'loading',
-  RESULT: 'result',
-  EMPTY: 'empty',
-  ERROR: 'error'
-})
+export {POPUP_STATES} from './popup-state.mjs'
 
 const DEFAULT_POPUP_OPTIONS = Object.freeze({
   width: 360,
@@ -115,9 +112,9 @@ function createTextElement(documentLike, tagName, className, value) {
 }
 
 function renderDictionary(documentLike, container, entries, onAudioFailure) {
-  let audioShown = false
+  const audioEntryIndex = findAudioEntryIndex(entries)
 
-  entries.forEach(entry => {
+  entries.forEach((entry, entryIndex) => {
     const title = createTextElement(documentLike, 'div', 'naverdic-wordTitle')
     const wordLink = documentLike.createElement('a')
     wordLink.href = entry.dictionaryUrl || '#'
@@ -130,9 +127,7 @@ function renderDictionary(documentLike, container, entries, onAudioFailure) {
       appendTextWithLineBreaks(documentLike, title, ` [${entry.partOfSpeech}]`)
     }
 
-    if (!audioShown && entry.audioUrl) {
-      audioShown = true
-
+    if (entryIndex === audioEntryIndex) {
       if (entry.phoneticSymbol) {
         appendTextWithLineBreaks(
           documentLike,

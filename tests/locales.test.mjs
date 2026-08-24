@@ -31,3 +31,22 @@ test('locale files are valid, duplicate-free, and have matching message keys', (
 
   assert.deepEqual(Object.keys(locales[0]).sort(), Object.keys(locales[1]).sort())
 })
+
+test('provides complete toolbar popup labels in both locales', () => {
+  const locales = localeFiles.map(filePath => JSON.parse(fs.readFileSync(filePath, 'utf8')))
+  for (const locale of locales) {
+    for (const key of [
+      'SEARCH',
+      'POPUP_SEARCH_LABEL',
+      'POPUP_SEARCH_PLACEHOLDER',
+      'POPUP_PRODUCT_LABEL',
+      'POPUP_AUDIO_LABEL',
+      'POPUP_AUDIO_PAUSE_LABEL'
+    ]) {
+      assert.equal(typeof locale[key]?.message, 'string')
+      assert.notEqual(locale[key].message.trim(), '')
+    }
+  }
+
+  assert.notEqual(locales[0].SEARCH.message, 'OK')
+})

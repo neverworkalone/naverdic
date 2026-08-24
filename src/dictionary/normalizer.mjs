@@ -92,7 +92,7 @@ export function normalizePhoneticEntry(value) {
   }
 
   return {
-    phoneticSymbol: normalizeString(value.phoneticSymbol),
+    phoneticSymbol: stripInlineMarkup(value.phoneticSymbol),
     audioUrl
   }
 }

@@ -59,6 +59,10 @@ export default defineConfig({
           dest: '.'
         },
         {
+          src: 'src/popup-state.mjs',
+          dest: '.'
+        },
+        {
           src: 'src/content-request.mjs',
           dest: '.'
         },
@@ -108,6 +112,10 @@ export default defineConfig({
         },
         {
           src: 'src/dictionary/normalizer.mjs',
+          dest: 'dictionary'
+        },
+        {
+          src: 'src/dictionary/result-model.mjs',
           dest: 'dictionary'
         },
         {

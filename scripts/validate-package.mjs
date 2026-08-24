@@ -7,6 +7,12 @@ const SOURCE_ENTRYPOINTS = [
   'src/content.js'
 ]
 
+export const RELEASE_MANIFEST_VERSION = '7.0'
+export const RELEASE_PACKAGE_VERSION = '7.0.0'
+export const PACKAGE_ASSETS = Object.freeze([
+  'audio-play.svg'
+])
+
 const FORBIDDEN_PACKAGE_PATHS = [
   /^(src|tests|node_modules|\.git)(\/|$)/,
   /(^|\/)(package\.json|yarn\.lock|vite\.config\.js|pack\.sh|pack\.py)$/,
@@ -177,7 +183,8 @@ export function validatePackageDirectory({projectRoot, packageDir}) {
 
   const expectedFiles = new Set([
     ...collectManifestFiles(manifest),
-    ...collectSourceDependencies(projectRoot)
+    ...collectSourceDependencies(projectRoot),
+    ...PACKAGE_ASSETS
   ])
   const differences = missingAndExtra(expectedFiles, actualFiles)
 
@@ -196,6 +203,9 @@ export function validatePackageDirectory({projectRoot, packageDir}) {
     const manifestVersion = String(manifest.version || '')
     if (!manifestVersion || !packageVersion.startsWith(`${manifestVersion}.`)) {
       errors.push(`Version mismatch: manifest ${manifestVersion || '(missing)'} vs package ${packageVersion || '(missing)'}.`)
+    }
+    if (manifestVersion !== RELEASE_MANIFEST_VERSION || packageVersion !== RELEASE_PACKAGE_VERSION) {
+      errors.push(`Release version mismatch: expected manifest ${RELEASE_MANIFEST_VERSION} and package ${RELEASE_PACKAGE_VERSION}; received manifest ${manifestVersion || '(missing)'} and package ${packageVersion || '(missing)'}.`)
     }
   }
 

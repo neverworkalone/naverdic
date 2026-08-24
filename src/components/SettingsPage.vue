@@ -742,6 +742,10 @@ watch(() => props.draftRevision, () => {
   margin-top: 12px;
 }
 
+.settings-page[data-page-id='translation-service'] {
+  margin-top: 0;
+}
+
 .settings-page[data-page-id='appearance'] {
   margin-top: 18px;
 }
