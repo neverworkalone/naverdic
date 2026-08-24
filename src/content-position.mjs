@@ -1,6 +1,6 @@
 const DEFAULT_POPUP_MARGIN = 10
 const DEFAULT_POPUP_GAP = 12
-const DEFAULT_POPUP_WIDTH = 360
+const DEFAULT_POPUP_WIDTH = 440
 
 function finiteNumber(value, fallback = 0) {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback

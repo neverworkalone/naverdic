@@ -42,6 +42,10 @@
   scrollbar-width: thin;
 }
 
+.naverdic-popup[data-type="translation"] .naverdic-popup__body {
+  line-height: 1.45;
+}
+
 .naverdic-popup__status {
   margin: 0;
   padding: 14px 4px;

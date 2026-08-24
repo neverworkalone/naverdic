@@ -12,7 +12,7 @@ export const POPUP_STATES = Object.freeze({
 })
 
 const DEFAULT_POPUP_OPTIONS = Object.freeze({
-  width: 360,
+  width: 440,
   backgroundColor: '#FFF59D',
   fontColor: '#000000',
   fontSizePt: 11,
@@ -57,6 +57,9 @@ const FALLBACK_CSS = `
   max-height: calc(var(--naverdic-popup-max-height, 480px) - 42px);
   overflow: auto;
   overscroll-behavior: contain;
+}
+.naverdic-popup[data-type="translation"] .naverdic-popup__body {
+  line-height: 1.45;
 }
 `
 

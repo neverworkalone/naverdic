@@ -246,6 +246,7 @@ test('renders common states inside an isolated shadow popup and closes on outsid
     .querySelector('#popupShadow')
   assert.equal(translationPopup.querySelector('.naverdic-popup__header').hidden, true)
   assert.equal(translationPopup.querySelector('.naverdic-popup__title').textContent, '')
+  assert.equal(translationPopup.style.width, '440px')
   assert.equal(translationPopup.querySelector('.naverdic-popup__body').textContent, longTranslation)
   assert.match(
     document.getElementById('popupFrame').shadowRoot.querySelector('style').textContent,
@@ -305,8 +306,7 @@ test('mounts outside positioned or transformed body coordinate systems', async (
   ].join(';')
   const controller = createPopupController({
     document,
-    window,
-    loadStylesheet: () => Promise.resolve('.naverdic-popup { display: block; }')
+    window
   })
 
   controller.open({
@@ -320,6 +320,7 @@ test('mounts outside positioned or transformed body coordinate systems', async (
   const popup = host.shadowRoot.querySelector('#popupShadow')
   assert.equal(host.parentElement, document.documentElement)
   assert.equal(host.style.position, 'fixed')
+  assert.match(host.shadowRoot.querySelector('style').textContent, /line-height: 1\.45/)
   assert.equal(popup.style.left, '100px')
   assert.equal(popup.style.top, '132px')
 
