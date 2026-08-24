@@ -574,9 +574,9 @@ export function createPopupController({
     popupView.mount()
     popupView.update({type, state: POPUP_STATES.LOADING})
     popupView.setVisibility('hidden')
+    visibilityRevision += 1
     bindListeners()
     reposition()
-    revealWhenReady()
   }
 
   function update(state, data) {
@@ -586,8 +586,11 @@ export function createPopupController({
 
     popupView.update({type, state, data})
     popupView.setVisibility('hidden')
+    visibilityRevision += 1
     reposition()
-    revealWhenReady()
+    if (state !== POPUP_STATES.LOADING) {
+      revealWhenReady()
+    }
   }
 
   function close(reason = 'programmatic', {notify = true} = {}) {

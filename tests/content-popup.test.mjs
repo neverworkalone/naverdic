@@ -215,6 +215,7 @@ test('renders common states inside an isolated shadow popup and closes on outsid
   assert.ok(host)
   assert.ok(host.shadowRoot)
   assert.equal(host.shadowRoot.querySelector('#popupShadow').dataset.state, POPUP_STATES.LOADING)
+  assert.equal(host.shadowRoot.querySelector('#popupShadow').style.visibility, 'hidden')
   assert.equal(host.shadowRoot.querySelector('.naverdic-popup__header').hidden, true)
   assert.ok(host.shadowRoot.querySelector('style'))
 
@@ -254,7 +255,7 @@ test('renders common states inside an isolated shadow popup and closes on outsid
   dom.window.close()
 })
 
-test('keeps the popup hidden until its stylesheet has settled', async () => {
+test('keeps the loading shell hidden and reveals only the settled result', async () => {
   const dom = new JSDOM('<!doctype html><body></body>', {url: 'https://example.com/'})
   const {document, window} = dom.window
   let resolveStyles
@@ -283,6 +284,10 @@ test('keeps the popup hidden until its stylesheet has settled', async () => {
   assert.equal(popup.style.visibility, 'hidden')
 
   resolveStyles('.naverdic-popup { display: block; }')
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(popup.style.visibility, 'hidden')
+
+  controller.update(POPUP_STATES.RESULT, 'loaded')
   await new Promise(resolve => setImmediate(resolve))
   assert.equal(popup.style.visibility, 'visible')
   controller.close()
