@@ -754,7 +754,7 @@ onBeforeUnmount(() => {
 .translation-feature-card__trigger select { width: 200px; min-width: 0; height: 40px; padding: 0 10px; color: var(--naverdic-settings-text); background: var(--naverdic-input-background-default); border: 1px solid var(--naverdic-input-border-default); border-radius: var(--naverdic-radius-sm); font: inherit; font-size: 13px; font-weight: 400; }
 .translation-service-selector { height: 374px; margin-top: 16px; padding: 20px 23px 23px; }
 .translation-service-selector h3 { margin: 0; color: var(--naverdic-settings-text); font-size: 16px; line-height: 24px; }
-.translation-service-list { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+.translation-service-list { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
 .translation-service-row { position: relative; display: flex; width: 100%; height: 90px; align-items: center; justify-content: space-between; gap: 12px; padding: 0 15px; color: var(--naverdic-settings-text); background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-settings-border); border-radius: 8px; text-align: left; cursor: pointer; }
 .translation-service-row:hover { background: #f8fafd; }
 .translation-service-row--selected { background: #f0f6ff; }

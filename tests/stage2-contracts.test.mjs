@@ -446,6 +446,7 @@ test('keeps the official Chrome Translator display name and translation panel bo
 
   const translationPage = fs.readFileSync(path.join(projectRoot, 'src/components/TranslationSettings.vue'), 'utf8')
   assert.match(translationPage, /translation-service-selector h3 \{[\s\S]*font-size: 16px; line-height: 24px/)
+  assert.match(translationPage, /translation-service-list \{[\s\S]*gap: 8px; margin-top: 18px/)
   assert.match(translationPage, /translation-service-row--selected::before \{[\s\S]*top: 17px; left: -1px; width: 3px; height: 54px/)
   assert.match(translationPage, /translation-service-row__copy small \{[\s\S]*font-size: 12px; line-height: 32px/)
   assert.match(translationPage, /translation-detail-card \{[\s\S]*padding: 15px 23px 14px/)
