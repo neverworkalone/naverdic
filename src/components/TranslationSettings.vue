@@ -2,7 +2,7 @@
 import {computed, onActivated, onBeforeUnmount, reactive, ref, watch} from 'vue'
 import {getText} from '/src/text.js'
 import {getTriggerLabels} from '/src/content-interaction.mjs'
-import {CHROME_TRANSLATOR_ERROR_CODES, CHROME_TRANSLATOR_PHASES, createChromeTranslatorRuntime} from '/src/chrome-translator.mjs'
+import {CHROME_TRANSLATOR_PHASES, createChromeTranslatorRuntime} from '/src/chrome-translator.mjs'
 import {CHROME_TRANSLATOR_PROVIDER_ID, DEFAULT_PROVIDER_ID, getProviderPreset, normalizeGeminiModelId, PROVIDER_AUTH_MODES} from '/src/translation-provider.mjs'
 import {getProviderCredential} from '/src/translation-settings.mjs'
 import {canActivateTranslationProvider, getTranslationSettingsPanel, TRANSLATION_SETTINGS_PANELS} from '/src/translation-settings-state.mjs'
@@ -360,14 +360,13 @@ function chromeModelStatusKey() {
   return 'SETTINGS_TRANSLATION_CHROME_MODEL_NEEDED'
 }
 
-function chromeGuidanceKey() {
-  const state = chromeState.value
-  if (state.phase === CHROME_TRANSLATOR_PHASES.UNSUPPORTED) return 'SETTINGS_TRANSLATION_CHROME_UNSUPPORTED_GUIDANCE'
-  if (state.phase === CHROME_TRANSLATOR_PHASES.UNAVAILABLE) return 'SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_GUIDANCE'
-  if (state.phase === CHROME_TRANSLATOR_PHASES.FAILED) return 'SETTINGS_TRANSLATION_CHROME_DOWNLOAD_FAILED_HINT'
-  if (state.errorCode === CHROME_TRANSLATOR_ERROR_CODES.NETWORK) return 'SETTINGS_TRANSLATION_CHROME_NETWORK_ERROR'
-  if (state.errorCode === CHROME_TRANSLATOR_ERROR_CODES.NOT_ALLOWED) return 'SETTINGS_TRANSLATION_CHROME_PERMISSION_ERROR'
-  return 'SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_HINT'
+function chromeModelStatusClass() {
+  const phase = chromeState.value.phase
+  if (phase === CHROME_TRANSLATOR_PHASES.AVAILABLE) return 'translation-detail-badge--connected'
+  if ([CHROME_TRANSLATOR_PHASES.FAILED, CHROME_TRANSLATOR_PHASES.UNAVAILABLE, CHROME_TRANSLATOR_PHASES.UNSUPPORTED].includes(phase)) {
+    return 'translation-detail-badge--error'
+  }
+  return ''
 }
 
 function chromeCanDownload() {
@@ -377,6 +376,22 @@ function chromeCanDownload() {
 function chromeProgressWidth() {
   const value = Number(chromeState.value.progress)
   return Number.isFinite(value) ? Math.round(Math.max(0, Math.min(1, value)) * 100) + '%' : '0%'
+}
+
+function chromeDownloadStatusText() {
+  const value = Number(chromeState.value.progress)
+  if (!Number.isFinite(value)) {
+    return text('SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_INDETERMINATE')
+  }
+  return text('SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_STATUS', [Math.round(Math.max(0, Math.min(1, value)) * 100)])
+}
+
+function chromeUnavailableReasonKeys() {
+  return [
+    'SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_VERSION',
+    'SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_ENVIRONMENT',
+    'SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_REQUIREMENTS'
+  ]
 }
 
 function connectionControlsDisabled(id = selectedProviderId.value) {
@@ -618,34 +633,31 @@ onBeforeUnmount(() => {
                 <h3>{{ text('SETTINGS_TRANSLATION_CHROME_NAME') }}</h3>
                 <p>{{ text('SETTINGS_TRANSLATION_CHROME_CARD_DESCRIPTION') }}</p>
               </div>
-              <span class="translation-detail-badge" :class="detailBadgeClass()">{{ text(detailBadgeKey()) }}</span>
             </div>
 
             <div class="translation-provider-card__content">
               <div class="translation-model-heading">
                 <span>{{ text('SETTINGS_TRANSLATION_CHROME_MODEL') }}</span>
-                <span class="translation-detail-badge translation-detail-badge--model" :class="{ 'translation-detail-badge--error': [CHROME_TRANSLATOR_PHASES.UNAVAILABLE, CHROME_TRANSLATOR_PHASES.UNSUPPORTED, CHROME_TRANSLATOR_PHASES.FAILED].includes(chromeState.phase) }">{{ text(chromeModelStatusKey()) }}</span>
+                <span class="translation-detail-badge translation-detail-badge--model" :class="chromeModelStatusClass()">{{ text(chromeModelStatusKey()) }}</span>
               </div>
               <div class="translation-fixed-pair">
                 <strong>{{ text('SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR_VALUE') }}</strong>
                 <code>{{ text('SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR_CODE') }}</code>
               </div>
-              <div class="translation-status-line">
-                <span>{{ text('SETTINGS_TRANSLATION_CHROME_BROWSER') }}</span>
-                <strong :class="{ 'is-ready': chromeState.supported, 'is-error': !chromeState.supported }">{{ text(chromeState.supported ? 'SETTINGS_TRANSLATION_CHROME_SUPPORTED' : 'SETTINGS_TRANSLATION_CHROME_UNSUPPORTED') }}</strong>
-              </div>
 
               <div v-if="chromeState.phase === CHROME_TRANSLATOR_PHASES.DOWNLOADING" class="translation-download-progress" data-testid="settings-translation-chrome-progress">
-                <div class="translation-download-progress__labels"><span>{{ text('SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS') }}</span><span v-if="!chromeState.indeterminate && chromeState.progress !== null">{{ Math.round(chromeState.progress * 100) }}%</span></div>
+                <p class="translation-download-progress__status">{{ chromeDownloadStatusText() }}</p>
                 <div class="translation-download-progress__track"><span class="translation-download-progress__bar" :class="{ 'translation-download-progress__bar--indeterminate': chromeState.indeterminate }" :style="{ width: chromeState.indeterminate ? undefined : chromeProgressWidth() }" /></div>
-                <p>{{ text(chromeGuidanceKey()) }}</p>
               </div>
-              <div v-else-if="chromeState.phase !== CHROME_TRANSLATOR_PHASES.AVAILABLE" class="translation-detail-callout" :class="{ 'translation-detail-callout--error': [CHROME_TRANSLATOR_PHASES.FAILED, CHROME_TRANSLATOR_PHASES.UNAVAILABLE, CHROME_TRANSLATOR_PHASES.UNSUPPORTED].includes(chromeState.phase) }" role="alert">{{ text(chromeGuidanceKey()) }}</div>
+              <div v-else-if="[CHROME_TRANSLATOR_PHASES.UNAVAILABLE, CHROME_TRANSLATOR_PHASES.UNSUPPORTED].includes(chromeState.phase)" class="translation-chrome-unavailable-panel" role="alert">
+                <h4>{{ text('SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_TITLE') }}</h4>
+                <ul><li v-for="key in chromeUnavailableReasonKeys()" :key="key">{{ text(key) }}</li></ul>
+                <p>{{ text('SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_UPDATE') }}</p>
+              </div>
 
-              <div class="translation-detail-actions">
+              <div v-if="chromeCanDownload() || (chromeState.phase === CHROME_TRANSLATOR_PHASES.AVAILABLE && activeProviderId !== CHROME_TRANSLATOR_PROVIDER_ID)" class="translation-detail-actions">
                 <button v-if="chromeCanDownload()" type="button" class="translation-primary-button" :disabled="formControlsDisabled" data-testid="settings-translation-chrome-download" @click="downloadChromeModel">{{ text(chromeState.phase === CHROME_TRANSLATOR_PHASES.FAILED ? 'SETTINGS_TRANSLATION_CHROME_RETRY' : 'SETTINGS_TRANSLATION_CHROME_DOWNLOAD_BUTTON') }}</button>
                 <button v-if="chromeState.phase === CHROME_TRANSLATOR_PHASES.AVAILABLE && activeProviderId !== CHROME_TRANSLATOR_PROVIDER_ID" type="button" class="translation-primary-button" :disabled="formControlsDisabled" data-testid="settings-translation-activate" @click="activateSelectedProvider">{{ text('SETTINGS_TRANSLATION_ACTIVATE') }}</button>
-                <span v-if="activeProviderId === CHROME_TRANSLATOR_PROVIDER_ID" class="translation-active-label">{{ text('SETTINGS_TRANSLATION_ACTIVE') }}</span>
               </div>
             </div>
 
@@ -678,7 +690,6 @@ onBeforeUnmount(() => {
                   </select>
                   <button type="button" class="translation-secondary-button" :disabled="geminiModelsDisabled()" data-testid="settings-translation-gemini-model-fetch" @click="loadGeminiModels">{{ text(geminiModelState.status === 'loading' ? 'SETTINGS_TRANSLATION_GEMINI_MODEL_LOADING' : 'SETTINGS_TRANSLATION_GEMINI_MODEL_FETCH') }}</button>
                 </div>
-                <small>{{ text('SETTINGS_TRANSLATION_GEMINI_MODEL_HINT') }}</small>
                 <p v-if="geminiModelState.errorKey" class="translation-detail-result translation-detail-result--error" role="alert" data-testid="settings-translation-gemini-model-error">{{ text(geminiModelState.errorKey) }}</p>
               </div>
 
@@ -747,16 +758,18 @@ onBeforeUnmount(() => {
 .translation-service-row__status--configured, .translation-service-row__status--testing, .translation-service-row__status--downloading, .translation-detail-badge--connected { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
 .translation-service-row__status--unconfigured, .translation-detail-badge--required { color: var(--naverdic-settings-text-muted); background: var(--naverdic-settings-page); }
 .translation-service-row__status--unavailable, .translation-service-row__status--error, .translation-detail-badge--error { color: var(--naverdic-color-danger); background: var(--naverdic-settings-danger-hover); }
-.translation-detail-card { display: flex; height: 510px; min-height: 510px; flex-direction: column; padding: 16px 23px 20px; overflow: hidden; }
+.translation-detail-card { position: relative; display: flex; height: 510px; min-height: 510px; flex-direction: column; padding: 16px 23px 20px; overflow: hidden; box-shadow: none; }
 .translation-provider-card__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .translation-provider-card__header h3 { margin: 0; color: var(--naverdic-settings-text); font-size: 17px; line-height: 26px; }
 .translation-provider-card__header p { max-width: 300px; margin: 4px 0 0; color: var(--naverdic-settings-text-muted); font-size: 12px; line-height: 17px; }
 .translation-provider-card__content { min-height: 0; flex: 1 1 auto; padding-top: 32px; }
 .translation-model-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--naverdic-settings-text); font-size: 11px; font-weight: 700; line-height: 18px; }
 .translation-detail-badge--model { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
-.translation-fixed-pair { display: flex; height: 54px; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; padding: 0 14px; background: var(--naverdic-settings-page); border-radius: 8px; }
+.translation-detail-badge--model.translation-detail-badge--connected { color: var(--naverdic-settings-success); background: #EBF8F2; }
+.translation-detail-badge--model.translation-detail-badge--error { color: var(--naverdic-color-danger); background: var(--naverdic-settings-danger-hover); }
+.translation-fixed-pair { display: flex; height: 54px; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; padding: 0 15px; background: #F8FAFD; border: 1px solid var(--naverdic-settings-border); border-radius: 8px; }
 .translation-fixed-pair strong { color: var(--naverdic-settings-text); font-size: 13px; line-height: 20px; }
-.translation-fixed-pair code { color: var(--naverdic-settings-primary-text); font-size: 10px; }
+.translation-fixed-pair code { color: var(--naverdic-settings-primary-text); font-size: 12px; font-weight: 500; }
 .translation-status-line { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; color: var(--naverdic-settings-text-muted); font-size: 10px; line-height: 16px; }
 .translation-status-line strong { color: var(--naverdic-settings-text); font-size: 11px; }
 .translation-status-line strong.is-ready { color: var(--naverdic-settings-primary-text); }
@@ -772,6 +785,8 @@ onBeforeUnmount(() => {
 .translation-detail-callout--error { color: var(--naverdic-color-danger); background: var(--naverdic-settings-danger-hover); }
 .translation-detail-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; }
 .translation-detail-actions > button { min-height: 38px; }
+.translation-detail-actions > [data-testid="settings-translation-test"] { width: 110px; }
+.translation-detail-actions > [data-testid="settings-translation-activate"] { width: 124px; }
 .translation-primary-button, .translation-secondary-button, .translation-text-button { min-height: 36px; padding: 0 13px; border-radius: var(--naverdic-radius-sm); font-size: 11px; font-weight: 700; cursor: pointer; }
 .translation-primary-button { color: #fff; background: var(--naverdic-settings-primary); border: 1px solid var(--naverdic-settings-primary); }
 .translation-secondary-button { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-settings-primary-light, #bfdbfe); }
@@ -788,8 +803,7 @@ onBeforeUnmount(() => {
 .translation-gemini-model-row > div { display: grid; min-width: 0; grid-template-columns: minmax(0, 246px) minmax(0, 122px); gap: 12px; }
 .translation-gemini-model-row select { width: 100%; min-width: 0; height: 44px; padding: 0 10px; color: var(--naverdic-settings-text); background: var(--naverdic-input-background-default); border: 1px solid var(--naverdic-input-border-default); border-radius: var(--naverdic-radius-sm); font: inherit; font-size: 12px; font-weight: 500; }
 .translation-gemini-model-row .translation-secondary-button { width: 100%; min-width: 0; }
-.translation-gemini-model-row small { margin-top: 2px; color: var(--naverdic-settings-text-muted); font-size: 11px; font-weight: 400; line-height: 16px; }
-.translation-detail-field { display: flex; min-width: 0; flex-direction: column; gap: 6px; margin-top: 18px; color: var(--naverdic-settings-text); font-size: 12px; font-weight: 500; line-height: 20px; }
+.translation-detail-field { display: flex; min-width: 0; flex-direction: column; gap: 6px; margin-top: 16px; color: var(--naverdic-settings-text); font-size: 12px; font-weight: 500; line-height: 20px; }
 .translation-secret-field { display: flex; min-width: 0; height: 44px; align-items: center; gap: 6px; padding: 7px 15px 7px 7px; background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-input-border-default); border-radius: var(--naverdic-radius-sm); }
 .translation-secret-field input { width: 100%; min-width: 0; height: 28px; padding: 0 6px; color: var(--naverdic-settings-text); background: transparent; border: 0; border-radius: 0; font: inherit; font-size: 13px; font-weight: 400; }
 .translation-secret-field button { flex: 0 0 auto; min-width: 58px; height: 28px; padding: 0 8px; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-input-border-default); border-radius: 7px; font-size: 11px; font-weight: 700; cursor: pointer; }
@@ -804,6 +818,29 @@ onBeforeUnmount(() => {
 .translation-external-link--button { padding: 0; background: transparent; border: 0; text-align: left; cursor: pointer; }
 .translation-external-link > span:first-child { text-decoration: underline; text-underline-offset: 2px; }
 .translation-external-link > span[aria-hidden="true"] { text-decoration: none; }
+
+/* Provider-specific card geometry follows the current Figma provider states. */
+.translation-detail-card--chrome { display: block; padding: 0; }
+.translation-detail-card--chrome .translation-provider-card__header { position: absolute; inset: 16px 23px auto; display: block; }
+.translation-detail-card--chrome .translation-provider-card__header p { max-width: none; margin-top: 6px; line-height: 17px; }
+.translation-detail-card--chrome .translation-provider-card__content { position: static; height: 100%; padding: 0; }
+.translation-detail-card--chrome .translation-model-heading { position: absolute; top: 115px; left: 23px; right: 23px; height: 24px; color: var(--naverdic-settings-nav-text); font-size: 12px; font-weight: 500; line-height: 20px; }
+.translation-detail-card--chrome .translation-detail-badge--model { width: 108px; height: 24px; min-height: 24px; justify-content: center; padding: 0; font-size: 10px; line-height: 24px; }
+.translation-detail-card--chrome .translation-fixed-pair { position: absolute; top: 147px; left: 23px; right: 23px; margin: 0; }
+.translation-detail-card--chrome .translation-download-progress { position: absolute; top: 219px; left: 23px; right: 23px; margin: 0; }
+.translation-detail-card--chrome .translation-download-progress__status { margin: 0; color: var(--naverdic-settings-text-muted); font-size: 11px; line-height: 20px; }
+.translation-detail-card--chrome .translation-download-progress__track { margin-top: 8px; }
+.translation-detail-card--chrome .translation-detail-actions { position: absolute; top: 221px; left: 23px; right: 23px; margin: 0; }
+.translation-detail-card--chrome .translation-detail-actions > button { width: 124px; }
+.translation-chrome-unavailable-panel { position: absolute; top: 219px; left: 23px; right: 23px; height: 140px; padding: 14px 16px; color: var(--naverdic-settings-text-muted); background: var(--naverdic-settings-danger-hover); border-radius: 8px; }
+.translation-chrome-unavailable-panel h4 { margin: 0; color: var(--naverdic-color-danger); font-size: 12px; font-weight: 700; line-height: 22px; }
+.translation-chrome-unavailable-panel ul { height: 58px; margin: 6px 0 0; padding: 0; list-style: none; font-size: 11px; line-height: 18px; }
+.translation-chrome-unavailable-panel li::before { content: '• '; }
+.translation-chrome-unavailable-panel p { margin: 8px 0 0; font-size: 11px; line-height: 20px; }
+.translation-detail-card--chrome .translation-provider-card__footer { position: absolute; top: 408px; left: 23px; right: 23px; margin: 0; padding-top: 24px; }
+.translation-detail-card--chrome .translation-external-link { font-size: 12px; font-weight: 500; line-height: 16px; }
+.translation-detail-card--chrome .translation-provider-card__footer p { margin-top: 7px; font-size: 11px; line-height: 18px; }
+.translation-detail-card:not(.translation-detail-card--chrome) .translation-external-link { font-size: 12px; font-weight: 500; line-height: 16px; }
 @media (max-width: 1050px) {
   .translation-settings__layout { grid-template-columns: minmax(0, 1fr); }
 }
@@ -815,5 +852,6 @@ onBeforeUnmount(() => {
   .translation-gemini-model-row > div { grid-template-columns: minmax(0, 1fr); }
   .translation-gemini-model-row select { width: 100%; }
   .translation-gemini-model-row .translation-secondary-button { width: 100%; }
+  .translation-detail-card--chrome .translation-provider-card__header { right: 23px; }
 }
 </style>

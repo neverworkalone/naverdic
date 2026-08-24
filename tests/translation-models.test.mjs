@@ -13,6 +13,10 @@ test('filters Gemini model list to generateContent Flash models', async () => {
         json: async () => ({models: [
           {name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent']},
           {name: 'models/gemini-2.5-flash-lite', supportedGenerationMethods: ['generateContent']},
+          {name: 'models/gemini-2.5-flash-preview-09-2025', supportedGenerationMethods: ['generateContent']},
+          {name: 'models/gemini-flash-latest', supportedGenerationMethods: ['generateContent']},
+          {name: 'models/gemini-2.5-flash-image', supportedGenerationMethods: ['generateContent']},
+          {name: 'models/gemini-2.5-flash-image-preview', supportedGenerationMethods: ['generateContent']},
           {name: 'models/gemini-embedding', supportedGenerationMethods: ['embedContent']}
         ]})
       }

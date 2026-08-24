@@ -129,6 +129,35 @@ test('keeps Chrome free of API controls and exposes the fixed language pair', as
   wrapper.unmount()
 })
 
+test('matches the Figma Chrome provider states without the legacy status row', async () => {
+  const downloadable = mount(TranslationSettings, {
+    props: {
+      draft: createDraft('chrome-translator'),
+      draftSecrets: createDefaultSecretsV2(),
+      translatorRuntime: createChromeRuntime({availability: 'downloadable', phase: 'downloadable'})
+    }
+  })
+  await flushPromises()
+  assert.equal(downloadable.get('.translation-detail-card--chrome h3').text(), 'Chrome built-in translation')
+  assert.equal(downloadable.find('.translation-status-line').exists(), false)
+  assert.equal(downloadable.get('[data-testid="settings-translation-chrome-download"]').exists(), true)
+  assert.equal(downloadable.find('.translation-chrome-unavailable-panel').exists(), false)
+  downloadable.unmount()
+
+  const unavailable = mount(TranslationSettings, {
+    props: {
+      draft: createDraft('chrome-translator'),
+      draftSecrets: createDefaultSecretsV2(),
+      translatorRuntime: createChromeRuntime({availability: 'unavailable', phase: 'unavailable', supported: false})
+    }
+  })
+  await flushPromises()
+  assert.equal(unavailable.find('[data-testid="settings-translation-chrome-download"]').exists(), false)
+  assert.equal(unavailable.get('.translation-chrome-unavailable-panel').exists(), true)
+  assert.match(unavailable.get('.translation-chrome-unavailable-panel').text(), /Translator API is unavailable/)
+  unavailable.unmount()
+})
+
 test('opens Chrome model management through the tabs API', async () => {
   const previousChrome = globalThis.chrome
   let createdTab
@@ -254,6 +283,7 @@ test('formats Gemini model ids for the Figma-aligned selector', async () => {
   await flushPromises()
 
   assert.equal(wrapper.get('[data-testid="settings-translation-gemini-model"] option').text(), 'Gemini 3.5 Flash')
+  assert.equal(wrapper.find('.translation-gemini-model-row small').exists(), false)
   wrapper.unmount()
 })
 

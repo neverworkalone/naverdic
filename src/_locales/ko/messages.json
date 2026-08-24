@@ -542,7 +542,7 @@
     "message": "기본 서비스와 추가 연결 서비스를 한 곳에서 관리합니다."
   },
   "SETTINGS_TRANSLATION_CHROME_NAME": {
-    "message": "Chrome 내장 번역 (Translator API)"
+    "message": "Chrome 내장 번역"
   },
   "SETTINGS_TRANSLATION_CHROME_DESCRIPTION": {
     "message": "Translator API · 무료"
@@ -731,7 +731,7 @@
     "message": "다운로드 중"
   },
   "SETTINGS_TRANSLATION_CHROME_MODEL_READY": {
-    "message": "준비 완료"
+    "message": "사용 가능"
   },
   "SETTINGS_TRANSLATION_CHROME_MODEL_UNAVAILABLE": {
     "message": "사용 불가"
@@ -747,6 +747,17 @@
   },
   "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS": {
     "message": "다운로드 중"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_STATUS": {
+    "message": "$1$% · 다운로드 중입니다.",
+    "placeholders": {
+      "progress": {
+        "content": "$1"
+      }
+    }
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_INDETERMINATE": {
+    "message": "다운로드 중입니다."
   },
   "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_HINT": {
     "message": "번역 모델을 준비하고 있습니다."
@@ -766,8 +777,23 @@
   "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_FAILED_HINT": {
     "message": "모델을 준비하지 못했습니다. 다시 시도하세요."
   },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_TITLE": {
+    "message": "Translator API를 사용할 수 없습니다."
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_VERSION": {
+    "message": "Chrome 버전이 Translator API를 지원하지 않음"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_ENVIRONMENT": {
+    "message": "지원되지 않는 운영체제 또는 기기 환경"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_REQUIREMENTS": {
+    "message": "Chrome의 온디바이스 번역 실행 조건을 충족하지 않음"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_UPDATE": {
+    "message": "Chrome을 최신 버전으로 업데이트한 뒤 다시 확인해 보세요."
+  },
   "SETTINGS_TRANSLATION_CHROME_NOTE": {
-    "message": "API 키가 필요하지 않습니다. 번역은 이 페이지의 Chrome Translator API에서 처리됩니다."
+    "message": "오류가 발생하면 Chrome 번역 모델을 Uninstall한 후 다시 설치해 보세요."
   },
   "SETTINGS_TRANSLATION_TRIGGER_LABEL": {
     "message": "번역 트리거"

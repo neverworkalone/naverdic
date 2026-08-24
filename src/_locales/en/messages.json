@@ -542,7 +542,7 @@
     "message": "Manage the built-in service and connected services in one place."
   },
   "SETTINGS_TRANSLATION_CHROME_NAME": {
-    "message": "Chrome built-in translation (Translator API)"
+    "message": "Chrome built-in translation"
   },
   "SETTINGS_TRANSLATION_CHROME_DESCRIPTION": {
     "message": "Translator API · Free"
@@ -731,7 +731,7 @@
     "message": "Downloading"
   },
   "SETTINGS_TRANSLATION_CHROME_MODEL_READY": {
-    "message": "Ready"
+    "message": "Available"
   },
   "SETTINGS_TRANSLATION_CHROME_MODEL_UNAVAILABLE": {
     "message": "Unavailable"
@@ -747,6 +747,17 @@
   },
   "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS": {
     "message": "Downloading"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_STATUS": {
+    "message": "$1$% · Downloading.",
+    "placeholders": {
+      "progress": {
+        "content": "$1"
+      }
+    }
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_INDETERMINATE": {
+    "message": "Downloading."
   },
   "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_HINT": {
     "message": "Preparing the translation model."
@@ -766,8 +777,23 @@
   "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_FAILED_HINT": {
     "message": "The model could not be prepared. Try again."
   },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_TITLE": {
+    "message": "The Translator API is unavailable."
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_VERSION": {
+    "message": "The Chrome version does not support the Translator API"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_ENVIRONMENT": {
+    "message": "The operating system or device environment is not supported"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_REQUIREMENTS": {
+    "message": "Chrome's on-device translation requirements are not met"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_UPDATE": {
+    "message": "Update Chrome to the latest version and check again."
+  },
   "SETTINGS_TRANSLATION_CHROME_NOTE": {
-    "message": "No API key is needed. Translation runs through Chrome's Translator API in this page."
+    "message": "If an error occurs, uninstall the Chrome translation model and install it again."
   },
   "SETTINGS_TRANSLATION_TRIGGER_LABEL": {
     "message": "Translation trigger"

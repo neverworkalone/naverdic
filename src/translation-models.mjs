@@ -13,7 +13,23 @@ function modelIdFromName(value) {
 }
 
 function isFlashModel(model) {
-  return /flash(?:-lite)?/i.test(model)
+  return /(?:^|-)flash(?:-lite)?(?:-|$)/i.test(model)
+}
+
+function isVersionedGeminiModel(model) {
+  return /^gemini-\d+(?:\.\d+)*-/i.test(model)
+}
+
+function isPreviewModel(model) {
+  return /(?:^|-)preview(?:-|$)/i.test(model)
+}
+
+function isImageModel(model) {
+  return /(?:^|-)image(?:-|$)/i.test(model)
+}
+
+function isSelectableGeminiModel(model) {
+  return isVersionedGeminiModel(model) && isFlashModel(model) && !isPreviewModel(model) && !isImageModel(model)
 }
 
 function timeoutValue(value) {
@@ -78,7 +94,7 @@ export async function fetchGeminiModels(apiKey, {
       ? payload.models
         .filter(model => Array.isArray(model?.supportedGenerationMethods) && model.supportedGenerationMethods.includes('generateContent'))
         .map(model => modelIdFromName(model.name))
-        .filter(model => model && isFlashModel(model))
+        .filter(model => model && isSelectableGeminiModel(model))
         .map(model => normalizeGeminiModelId(model, ''))
         .filter(Boolean)
       : []
