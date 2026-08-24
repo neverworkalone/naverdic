@@ -773,7 +773,7 @@
     "message": "Translation trigger"
   },
   "SETTINGS_TRANSLATION_TRIGGER_NONE": {
-    "message": "None"
+    "message": "Drag"
   },
   "SETTINGS_TRANSLATION_TRIGGER_PRIMARY": {
     "message": "$modifier$ + drag",

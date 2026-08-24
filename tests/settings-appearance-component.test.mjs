@@ -825,14 +825,25 @@ test('renders help as a bottom external link without changing the active page', 
   wrapper.unmount()
 })
 
-test('renders the Figma-aligned product header with a separate current version', async () => {
-  const wrapper = mount(SettingsShell)
-  await flushPromises()
+test('renders the Figma-aligned product header with the runtime manifest version', async () => {
+  const previousChrome = globalThis.chrome
+  exposeDomGlobal('chrome', {runtime: {getManifest: () => ({version: '7.0.2'})}})
 
-  assert.equal(wrapper.get('.settings-header__logo').attributes('src'), '/icon.png')
-  assert.equal(wrapper.get('.settings-header__title').text(), koText('SETTINGS_PRODUCT_NAME'))
-  assert.equal(wrapper.get('.settings-header__version').text(), koText('SETTINGS_PRODUCT_VERSION'))
-  wrapper.unmount()
+  try {
+    const wrapper = mount(SettingsShell)
+    await flushPromises()
+
+    assert.equal(wrapper.get('.settings-header__logo').attributes('src'), '/icon.png')
+    assert.equal(wrapper.get('.settings-header__title').text(), koText('SETTINGS_PRODUCT_NAME'))
+    assert.equal(wrapper.get('.settings-header__version').text(), '7.0.2')
+    wrapper.unmount()
+  } finally {
+    if (previousChrome === undefined) {
+      delete globalThis.chrome
+    } else {
+      exposeDomGlobal('chrome', previousChrome)
+    }
+  }
 })
 
 test('resets the translation provider to Chrome built-in translation', async () => {

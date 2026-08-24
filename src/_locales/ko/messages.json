@@ -773,7 +773,7 @@
     "message": "번역 트리거"
   },
   "SETTINGS_TRANSLATION_TRIGGER_NONE": {
-    "message": "없음"
+    "message": "드래그"
   },
   "SETTINGS_TRANSLATION_TRIGGER_PRIMARY": {
     "message": "$modifier$ + 드래그",

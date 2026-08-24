@@ -479,6 +479,17 @@ function geminiModelOptions() {
   return [...new Set([current, ...geminiModels.value])]
 }
 
+function geminiModelLabel(model) {
+  const normalized = normalizeGeminiModelId(model)
+  const parts = normalized.split('-')
+  if (parts[0] !== 'gemini' || parts.length < 2) {
+    return normalized
+  }
+
+  const variant = parts.slice(2).map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('-')
+  return ['Gemini', parts[1], variant].filter(Boolean).join(' ')
+}
+
 function geminiModelsDisabled() {
   return formControlsDisabled.value || anyConnectionTesting.value || !providerCredential(providerForId('gemini'))
 }
@@ -663,7 +674,7 @@ onBeforeUnmount(() => {
                 <label for="settings-translation-gemini-model">{{ text('SETTINGS_TRANSLATION_GEMINI_MODEL') }}</label>
                 <div>
                   <select id="settings-translation-gemini-model" :value="translation.geminiModel" :disabled="formControlsDisabled" data-testid="settings-translation-gemini-model" @change="updateGeminiModel">
-                    <option v-for="model in geminiModelOptions()" :key="model" :value="model">{{ model }}</option>
+                    <option v-for="model in geminiModelOptions()" :key="model" :value="model">{{ geminiModelLabel(model) }}</option>
                   </select>
                   <button type="button" class="translation-secondary-button" :disabled="geminiModelsDisabled()" data-testid="settings-translation-gemini-model-fetch" @click="loadGeminiModels">{{ text(geminiModelState.status === 'loading' ? 'SETTINGS_TRANSLATION_GEMINI_MODEL_LOADING' : 'SETTINGS_TRANSLATION_GEMINI_MODEL_FETCH') }}</button>
                 </div>
@@ -676,10 +687,11 @@ onBeforeUnmount(() => {
                 <div class="translation-secret-field">
                   <input id="settings-translation-preset-api-key" :value="providerCredential(selectedProvider)" :type="showApiKey ? 'text' : 'password'" autocomplete="new-password" :placeholder="text('SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER')" :disabled="connectionControlsDisabled(selectedProvider.id)" data-testid="settings-translation-preset-api-key" @input="updateProviderCredential">
                   <button type="button" :aria-label="text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY')" :disabled="connectionControlsDisabled(selectedProvider.id)" @click="showApiKey = !showApiKey">{{ text(showApiKey ? 'SETTINGS_TRANSLATION_HIDE_KEY' : 'SETTINGS_TRANSLATION_SHOW_KEY') }}</button>
+                  <button v-if="providerCredential(selectedProvider)" type="button" class="translation-secret-field__delete" :disabled="connectionControlsDisabled(selectedProvider.id)" data-testid="settings-translation-delete-key" @click="deleteProviderCredential">{{ text('SETTINGS_TRANSLATION_DELETE_KEY') }}</button>
                 </div>
-                <button v-if="providerCredential(selectedProvider)" type="button" class="translation-text-button" :disabled="connectionControlsDisabled(selectedProvider.id)" data-testid="settings-translation-delete-key" @click="deleteProviderCredential">{{ text('SETTINGS_TRANSLATION_DELETE_KEY') }}</button>
               </label>
 
+              <div class="translation-detail-divider" aria-hidden="true" />
               <div class="translation-detail-actions">
                 <button type="button" class="translation-secondary-button" :disabled="connectionControlsDisabled(selectedProvider.id)" data-testid="settings-translation-test" @click="testPresetConnection">{{ text(selectedConnectionState().status === 'testing' ? 'SETTINGS_TRANSLATION_TESTING' : 'SETTINGS_TRANSLATION_TEST') }}</button>
                 <button v-if="activeProviderId !== selectedProviderId" type="button" class="translation-primary-button" :disabled="formControlsDisabled || !canActivateSelected()" data-testid="settings-translation-activate" @click="activateSelectedProvider">{{ text('SETTINGS_TRANSLATION_ACTIVATE') }}</button>
@@ -709,7 +721,7 @@ onBeforeUnmount(() => {
 .translation-feature-card, .translation-service-selector, .translation-detail-card { min-width: 0; background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-settings-border); border-radius: var(--naverdic-radius-md); box-shadow: var(--naverdic-card-shadow-default); }
 .translation-feature-card { height: 120px; padding: 20px 23px 0; }
 .translation-feature-card__header { display: flex; height: 37px; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--naverdic-settings-divider); }
-.translation-feature-card h3 { margin: 0; color: var(--naverdic-settings-text); font-size: 14px; line-height: 22px; }
+.translation-feature-card h3 { margin: 0; color: var(--naverdic-settings-text); font-size: 16px; line-height: 24px; }
 .translation-switch { position: relative; display: inline-flex; width: 40px; height: 22px; flex: 0 0 40px; cursor: pointer; }
 .translation-switch input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .translation-switch__track { display: flex; width: 40px; height: 22px; align-items: center; padding: 3px; background: var(--naverdic-settings-divider); border-radius: 99px; transition: background 120ms ease; }
@@ -718,8 +730,8 @@ onBeforeUnmount(() => {
 .translation-switch input:checked + .translation-switch__track .translation-switch__thumb { transform: translateX(18px); }
 .translation-switch input:focus-visible + .translation-switch__track { outline: 2px solid var(--naverdic-color-focus); outline-offset: 2px; }
 .translation-switch__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.translation-feature-card__trigger { display: flex; height: 62px; align-items: center; justify-content: space-between; gap: 16px; color: var(--naverdic-settings-text); font-size: 11px; font-weight: 700; line-height: 18px; }
-.translation-feature-card__trigger select { width: 200px; min-width: 0; height: 40px; padding: 0 10px; color: var(--naverdic-settings-text); background: var(--naverdic-input-background-default); border: 1px solid var(--naverdic-input-border-default); border-radius: var(--naverdic-radius-sm); font: inherit; font-size: 11px; }
+.translation-feature-card__trigger { display: flex; height: 62px; align-items: center; justify-content: space-between; gap: 16px; color: var(--naverdic-settings-text); font-size: 13px; font-weight: 500; line-height: 20px; }
+.translation-feature-card__trigger select { width: 200px; min-width: 0; height: 40px; padding: 0 10px; color: var(--naverdic-settings-text); background: var(--naverdic-input-background-default); border: 1px solid var(--naverdic-input-border-default); border-radius: var(--naverdic-radius-sm); font: inherit; font-size: 13px; font-weight: 400; }
 .translation-service-selector { height: 374px; margin-top: 16px; padding: 20px 23px 23px; }
 .translation-service-selector h3 { margin: 0; color: var(--naverdic-settings-text); font-size: 14px; line-height: 22px; }
 .translation-service-list { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
@@ -735,11 +747,11 @@ onBeforeUnmount(() => {
 .translation-service-row__status--configured, .translation-service-row__status--testing, .translation-service-row__status--downloading, .translation-detail-badge--connected { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
 .translation-service-row__status--unconfigured, .translation-detail-badge--required { color: var(--naverdic-settings-text-muted); background: var(--naverdic-settings-page); }
 .translation-service-row__status--unavailable, .translation-service-row__status--error, .translation-detail-badge--error { color: var(--naverdic-color-danger); background: var(--naverdic-settings-danger-hover); }
-.translation-detail-card { display: flex; height: 510px; min-height: 510px; flex-direction: column; padding: 20px 23px; overflow: hidden; }
+.translation-detail-card { display: flex; height: 510px; min-height: 510px; flex-direction: column; padding: 16px 23px 20px; overflow: hidden; }
 .translation-provider-card__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.translation-provider-card__header h3 { margin: 0; color: var(--naverdic-settings-text); font-size: 17px; line-height: 24px; }
-.translation-provider-card__header p { max-width: 300px; margin: 4px 0 0; color: var(--naverdic-settings-text-muted); font-size: 10px; line-height: 17px; }
-.translation-provider-card__content { min-height: 0; flex: 1 1 auto; padding-top: 36px; }
+.translation-provider-card__header h3 { margin: 0; color: var(--naverdic-settings-text); font-size: 17px; line-height: 26px; }
+.translation-provider-card__header p { max-width: 300px; margin: 4px 0 0; color: var(--naverdic-settings-text-muted); font-size: 12px; line-height: 17px; }
+.translation-provider-card__content { min-height: 0; flex: 1 1 auto; padding-top: 32px; }
 .translation-model-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--naverdic-settings-text); font-size: 11px; font-weight: 700; line-height: 18px; }
 .translation-detail-badge--model { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); }
 .translation-fixed-pair { display: flex; height: 54px; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; padding: 0 14px; background: var(--naverdic-settings-page); border-radius: 8px; }
@@ -759,6 +771,7 @@ onBeforeUnmount(() => {
 .translation-detail-callout { margin-top: 16px; padding: 10px 12px; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-info); border-radius: 8px; font-size: 10px; line-height: 17px; }
 .translation-detail-callout--error { color: var(--naverdic-color-danger); background: var(--naverdic-settings-danger-hover); }
 .translation-detail-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; }
+.translation-detail-actions > button { min-height: 38px; }
 .translation-primary-button, .translation-secondary-button, .translation-text-button { min-height: 36px; padding: 0 13px; border-radius: var(--naverdic-radius-sm); font-size: 11px; font-weight: 700; cursor: pointer; }
 .translation-primary-button { color: #fff; background: var(--naverdic-settings-primary); border: 1px solid var(--naverdic-settings-primary); }
 .translation-secondary-button { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-settings-primary-light, #bfdbfe); }
@@ -770,16 +783,19 @@ onBeforeUnmount(() => {
 .translation-plan-switch > div { display: flex; width: 100%; padding: 3px; background: var(--naverdic-settings-page); border-radius: 7px; }
 .translation-plan-switch button { width: 50%; height: 38px; padding: 0 10px; color: var(--naverdic-settings-text-muted); background: transparent; border: 0; border-radius: 5px; font-size: 10px; font-weight: 700; cursor: pointer; }
 .translation-plan-switch button.is-selected { color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-surface); box-shadow: var(--naverdic-card-shadow-default); }
-.translation-gemini-model-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; }
-.translation-gemini-model-row > label { color: var(--naverdic-settings-text); font-size: 11px; font-weight: 700; line-height: 18px; }
-.translation-gemini-model-row > div { display: flex; min-width: 0; gap: 8px; }
-.translation-gemini-model-row select { width: 246px; min-width: 0; height: 44px; padding: 0 10px; color: var(--naverdic-settings-text); background: var(--naverdic-input-background-default); border: 1px solid var(--naverdic-input-border-default); border-radius: var(--naverdic-radius-sm); font: inherit; font-size: 11px; }
-.translation-gemini-model-row .translation-secondary-button { min-width: 122px; }
-.translation-gemini-model-row small { grid-column: 1 / -1; color: var(--naverdic-settings-text-muted); font-size: 10px; font-weight: 400; line-height: 16px; }
-.translation-detail-field { display: flex; min-width: 0; flex-direction: column; gap: 8px; margin-top: 24px; color: var(--naverdic-settings-text); font-size: 11px; font-weight: 700; line-height: 18px; }
-.translation-secret-field { display: flex; gap: 8px; }
-.translation-secret-field input { width: 100%; min-width: 0; height: 44px; padding: 0 10px; color: var(--naverdic-settings-text); background: var(--naverdic-input-background-default); border: 1px solid var(--naverdic-input-border-default); border-radius: var(--naverdic-radius-sm); font: inherit; font-size: 11px; }
-.translation-secret-field button { flex: 0 0 auto; min-width: 48px; height: 44px; padding: 0 8px; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-input-border-default); border-radius: var(--naverdic-radius-sm); font-size: 10px; cursor: pointer; }
+.translation-gemini-model-row { display: flex; min-width: 0; flex-direction: column; }
+.translation-gemini-model-row > label { margin-bottom: 6px; color: var(--naverdic-settings-text); font-size: 12px; font-weight: 500; line-height: 20px; }
+.translation-gemini-model-row > div { display: grid; min-width: 0; grid-template-columns: minmax(0, 246px) minmax(0, 122px); gap: 12px; }
+.translation-gemini-model-row select { width: 100%; min-width: 0; height: 44px; padding: 0 10px; color: var(--naverdic-settings-text); background: var(--naverdic-input-background-default); border: 1px solid var(--naverdic-input-border-default); border-radius: var(--naverdic-radius-sm); font: inherit; font-size: 12px; font-weight: 500; }
+.translation-gemini-model-row .translation-secondary-button { width: 100%; min-width: 0; }
+.translation-gemini-model-row small { margin-top: 2px; color: var(--naverdic-settings-text-muted); font-size: 11px; font-weight: 400; line-height: 16px; }
+.translation-detail-field { display: flex; min-width: 0; flex-direction: column; gap: 6px; margin-top: 18px; color: var(--naverdic-settings-text); font-size: 12px; font-weight: 500; line-height: 20px; }
+.translation-secret-field { display: flex; min-width: 0; height: 44px; align-items: center; gap: 6px; padding: 7px 15px 7px 7px; background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-input-border-default); border-radius: var(--naverdic-radius-sm); }
+.translation-secret-field input { width: 100%; min-width: 0; height: 28px; padding: 0 6px; color: var(--naverdic-settings-text); background: transparent; border: 0; border-radius: 0; font: inherit; font-size: 13px; font-weight: 400; }
+.translation-secret-field button { flex: 0 0 auto; min-width: 58px; height: 28px; padding: 0 8px; color: var(--naverdic-settings-primary-text); background: var(--naverdic-settings-surface); border: 1px solid var(--naverdic-input-border-default); border-radius: 7px; font-size: 11px; font-weight: 700; cursor: pointer; }
+.translation-secret-field__delete { min-width: 66px !important; color: var(--naverdic-color-danger) !important; }
+.translation-detail-divider { height: 1px; margin-top: 18px; background: var(--naverdic-settings-divider); }
+.translation-detail-divider + .translation-detail-actions { margin-top: 15px; }
 .translation-detail-result { margin: 12px 0 0; font-size: 10px; line-height: 17px; }
 .translation-detail-result--success { color: var(--naverdic-settings-primary-text); }
 .translation-detail-result--error { margin-top: 19px; padding: 10px 12px; color: var(--naverdic-color-danger); background: var(--naverdic-settings-danger-hover); border-radius: 8px; }
@@ -796,8 +812,7 @@ onBeforeUnmount(() => {
   .translation-feature-card__trigger select { width: min(200px, 55%); }
   .translation-service-row { padding: 0 12px; }
   .translation-detail-card { height: auto; min-height: 510px; }
-  .translation-gemini-model-row { grid-template-columns: minmax(0, 1fr); }
-  .translation-gemini-model-row > div { flex-direction: column; }
+  .translation-gemini-model-row > div { grid-template-columns: minmax(0, 1fr); }
   .translation-gemini-model-row select { width: 100%; }
   .translation-gemini-model-row .translation-secondary-button { width: 100%; }
 }

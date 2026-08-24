@@ -35,6 +35,18 @@ const hasLoadError = ref(false)
 const saveState = ref('idle')
 const translationEditorDirty = ref(false)
 
+const productVersion = computed(() => {
+  try {
+    const version = globalThis.chrome?.runtime?.getManifest?.()?.version
+    if (typeof version === 'string' && version.trim()) {
+      return version
+    }
+  } catch (_error) {
+    // Use the locale fallback when the runtime manifest is unavailable in tests or previews.
+  }
+  return text('SETTINGS_PRODUCT_VERSION')
+})
+
 const currentNavigation = computed(() => navigation.find(item => (
   item.id === activeNavigationId.value
 )) || navigation[0])
@@ -287,7 +299,7 @@ onBeforeUnmount(() => {
         {{ text('SETTINGS_PRODUCT_NAME') }}
       </h1>
       <span class="settings-header__version">
-        {{ text('SETTINGS_PRODUCT_VERSION') }}
+        {{ productVersion }}
       </span>
 
       <div class="settings-header__actions" aria-live="polite">

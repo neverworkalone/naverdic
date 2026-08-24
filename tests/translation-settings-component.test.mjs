@@ -170,6 +170,7 @@ test('renders translation defaults and updates the feature controls in the draft
   assert.equal(wrapper.get('[data-testid="settings-translation-enabled"]').element.checked, true)
   assert.equal(wrapper.get('[data-testid="settings-translation-trigger"]').element.value, 'ctrl')
   assert.equal(wrapper.findAll('[data-testid="settings-translation-trigger"] option').length, 4)
+  assert.equal(wrapper.get('[data-testid="settings-translation-trigger"] option').text(), 'Drag')
   await wrapper.get('[data-testid="settings-translation-trigger"]').setValue('ctrlalt')
   assert.equal(draft.translation.triggerKey, 'ctrlalt')
   await wrapper.get('[data-testid="settings-translation-enabled"]').setValue(false)
@@ -245,6 +246,15 @@ test('fetches and stores compatible Gemini model choices without exposing the AP
   assert.equal(wrapper.text().includes('private-key'), false)
   wrapper.unmount()
   globalThis.fetch = previousFetch
+})
+
+test('formats Gemini model ids for the Figma-aligned selector', async () => {
+  const draft = createDraft('gemini')
+  const wrapper = mount(TranslationSettings, {props: {draft, draftSecrets: createDefaultSecretsV2()}})
+  await flushPromises()
+
+  assert.equal(wrapper.get('[data-testid="settings-translation-gemini-model"] option').text(), 'Gemini 3.5 Flash')
+  wrapper.unmount()
 })
 
 test('locks translation controls while loading and saving', async () => {
