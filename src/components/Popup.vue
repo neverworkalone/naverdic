@@ -185,7 +185,6 @@ body {
   padding: 10px 10px 8px;
   overflow: hidden;
   border: 1px solid #E2E6EC;
-  border-radius: 10px;
   background: var(--naverdic-color-surface-popup, #F5F6F8);
 }
 

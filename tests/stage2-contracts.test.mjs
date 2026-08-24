@@ -360,6 +360,7 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(toolbarPopup, /html,[\s\S]*body,[\s\S]*#app \{[\s\S]*width: 360px;[\s\S]*min-width: 360px/)
   assert.match(toolbarPopup, /html,[\s\S]*body,[\s\S]*#app \{[\s\S]*background: transparent/)
   assert.match(toolbarPopup, /\.naverdic-popup-shell \{[\s\S]*width: 360px;[\s\S]*min-height: 92px;[\s\S]*padding: 10px 10px 8px/)
+  assert.equal(toolbarPopup.includes('border-radius: 10px;'), false)
   assert.equal(toolbarPopup.includes('background: var(--naverdic-color-canvas'), false)
   assert.equal(toolbarPopup.includes('box-shadow: 0 4px 14px rgba(26, 36, 51, 0.12)'), false)
   assert.match(toolbarPopup, /\.naverdic-popup-shell--result \{[\s\S]*min-height: 308px/)
