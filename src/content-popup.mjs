@@ -114,7 +114,7 @@ function createTextElement(documentLike, tagName, className, value) {
   return element
 }
 
-function renderDictionary(documentLike, container, entries) {
+function renderDictionary(documentLike, container, entries, onAudioFailure) {
   let audioShown = false
 
   entries.forEach(entry => {
@@ -158,6 +158,7 @@ function renderDictionary(documentLike, container, entries) {
 
         audio.dataset.failed = 'true'
         audioWrapper.remove?.()
+        onAudioFailure?.()
       })
       audioWrapper.appendChild(audio)
       title.appendChild(audioWrapper)
@@ -329,7 +330,12 @@ function createPopupView({
         'alert'
       )
     } else if (type === 'dictionary') {
-      renderDictionary(documentLike, body, Array.isArray(data) ? data : [])
+      renderDictionary(
+        documentLike,
+        body,
+        Array.isArray(data) ? data : [],
+        () => layoutChangeHandler?.()
+      )
     } else {
       renderTranslation(documentLike, body, data)
     }

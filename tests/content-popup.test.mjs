@@ -301,6 +301,42 @@ test('keeps the loading shell hidden and reveals only the settled result', async
   dom.window.close()
 })
 
+test('repositions an above-anchor popup after failed audio is removed', async () => {
+  const dom = new JSDOM('<!doctype html><body></body>', {url: 'https://example.com/'})
+  const {document, window} = dom.window
+  Object.defineProperty(window, 'innerWidth', {configurable: true, value: 1000})
+  Object.defineProperty(window, 'innerHeight', {configurable: true, value: 800})
+  const controller = createPopupController({
+    document,
+    window,
+    loadStylesheet: () => Promise.resolve('')
+  })
+
+  controller.open({
+    popupType: 'dictionary',
+    popupAnchor: {getRect: () => ({left: 300, right: 340, top: 650, bottom: 670})}
+  })
+  const popup = document.getElementById('popupFrame').shadowRoot.querySelector('#popupShadow')
+  let popupHeight = 200
+  popup.getBoundingClientRect = () => ({width: 360, height: popupHeight})
+  controller.update(POPUP_STATES.RESULT, [{
+    word: 'hello',
+    dictionaryUrl: 'https://en.dict.naver.com/#/search?query=hello',
+    phoneticSymbol: 'həˈloʊ',
+    audioUrl: 'https://example.com/hello.mp3',
+    meanings: [{order: '1', value: '안녕하세요'}]
+  }])
+  assert.equal(popup.style.top, '438px')
+
+  popupHeight = 180
+  popup.querySelector('audio').dispatchEvent(new window.Event('error'))
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(popup.style.top, '458px')
+
+  controller.close()
+  dom.window.close()
+})
+
 test('mounts outside positioned or transformed body coordinate systems', async () => {
   const dom = new JSDOM('<!doctype html><body></body>', {url: 'https://example.com/'})
   const {document, window} = dom.window
