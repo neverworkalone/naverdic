@@ -13,7 +13,8 @@ import {
   normalizeHttpUrl,
   normalizeMeanings,
   normalizeString,
-  normalizeStringList
+  normalizeStringList,
+  stripInlineMarkup
 } from '../src/dictionary/normalizer.mjs'
 
 function response(items) {
@@ -199,6 +200,11 @@ test('normalizes scalar and array values consistently', () => {
     '12',
     'false'
   ])
+  assert.equal(
+    stripInlineMarkup('(↔<span class="related_word" lang="en">go out</span>)'),
+    '(↔go out)'
+  )
+  assert.equal(stripInlineMarkup('first<br>second'), 'first\nsecond')
 })
 
 test('normalizes missing and invalid entry fields to the stable contract', () => {
@@ -246,7 +252,7 @@ test('ignores invalid sibling entries while preserving valid response order', ()
   assert.deepEqual(result[1].meanings, [])
 })
 
-test('keeps HTML-looking response values as plain data', () => {
+test('keeps headwords as text and removes markup from dictionary meanings', () => {
   const word = '<img src=x onerror=alert(1)>'
   const meaning = '<script>alert(1)</script>'
   const result = parseNaverDictionaryResponse(response([{
@@ -255,8 +261,28 @@ test('keeps HTML-looking response values as plain data', () => {
   }]))
 
   assert.equal(result[0].word, word)
-  assert.equal(result[0].meanings[0].value, meaning)
+  assert.equal(result[0].meanings[0].value, 'alert(1)')
   assert.ok(!result[0].dictionaryUrl.includes('<'))
+})
+
+test('removes related-word span markup from the come dictionary response', () => {
+  const result = parseNaverDictionaryResponse(response([{
+    handleEntry: 'come',
+    meansCollector: [{
+      partOfSpeech: '동사',
+      means: [
+        {order: 1, value: '(밀물이) 밀려[들어]오다 (↔<span class="related_word" lang="en">go out</span>)'},
+        {order: 2, value: '(경주에서 몇 위로) 들어오다'},
+        {order: 3, value: '유행하다 (↔<span class="related_word" lang="en">go out</span>)'}
+      ]
+    }]
+  }]))
+
+  assert.deepEqual(result[0].meanings, [
+    {order: '1', value: '(밀물이) 밀려[들어]오다 (↔go out)'},
+    {order: '2', value: '(경주에서 몇 위로) 들어오다'},
+    {order: '3', value: '유행하다 (↔go out)'}
+  ])
 })
 
 test('encodes API and dictionary query values', () => {

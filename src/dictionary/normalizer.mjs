@@ -9,12 +9,27 @@ function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
+const INLINE_HTML_BREAK_PATTERN = /<br\s*\/?>/gi
+const INLINE_HTML_TAG_PATTERN = /<\/?[a-z][^>]*>/gi
+
 export function normalizeString(value) {
   if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') {
     return ''
   }
 
   return String(value).trim()
+}
+
+/**
+ * Naver's meaning strings may contain presentational tags such as
+ * `<span class="related_word">`. Popup rendering intentionally uses text
+ * nodes, so normalize those tags out while preserving their readable text.
+ */
+export function stripInlineMarkup(value) {
+  return normalizeString(value)
+    .replace(INLINE_HTML_BREAK_PATTERN, '\n')
+    .replace(INLINE_HTML_TAG_PATTERN, '')
+    .trim()
 }
 
 export function normalizeStringList(value) {
@@ -52,7 +67,7 @@ export function normalizeMeaning(value) {
 
   return {
     order: normalizeString(value.order),
-    value: normalizeString(value.value)
+    value: stripInlineMarkup(value.value)
   }
 }
 
