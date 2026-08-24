@@ -6,7 +6,19 @@
     "message": "Enter your own words or select an English word from a webpage to show the definition of the English word. Drag a sentence from a webpage to translate it to DeepL."
   },
   "SEARCH": {
-    "message": "OK"
+    "message": "Search"
+  },
+  "POPUP_SEARCH_LABEL": {
+    "message": "Search dictionary"
+  },
+  "POPUP_SEARCH_PLACEHOLDER": {
+    "message": "Enter a word"
+  },
+  "POPUP_PRODUCT_LABEL": {
+    "message": "Naver English Dictionary · NaverDic"
+  },
+  "POPUP_AUDIO_LABEL": {
+    "message": "Play pronunciation"
   },
   "SETTING": {
     "message": "Setting"

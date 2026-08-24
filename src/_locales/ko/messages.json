@@ -8,6 +8,18 @@
   "SEARCH": {
     "message": "검색"
   },
+  "POPUP_SEARCH_LABEL": {
+    "message": "사전 검색"
+  },
+  "POPUP_SEARCH_PLACEHOLDER": {
+    "message": "단어를 입력하세요"
+  },
+  "POPUP_PRODUCT_LABEL": {
+    "message": "네이버 영어사전 · NaverDic"
+  },
+  "POPUP_AUDIO_LABEL": {
+    "message": "발음 재생"
+  },
   "SETTING": {
     "message": "설정"
   },
