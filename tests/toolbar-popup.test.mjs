@@ -151,6 +151,8 @@ test('matches the v7 toolbar shell and renders a dictionary result', async () =>
   await wrapper.get('.naverdic-popup-search__input').setValue('test')
   await wrapper.get('.naverdic-popup-search').trigger('submit')
   assert.equal(shell.attributes('data-state'), 'loading')
+  assert.equal(shell.attributes('aria-busy'), 'true')
+  assert.equal(wrapper.find('.naverdic-popup-status').exists(), false)
   assert.equal(requests.length, 1)
   assert.equal(requests[0].request.action, 'endic')
   assert.match(requests[0].request.url, /query=test$/)
@@ -159,6 +161,7 @@ test('matches the v7 toolbar shell and renders a dictionary result', async () =>
   await flushPromises()
 
   assert.equal(shell.attributes('data-state'), 'result')
+  assert.equal(shell.attributes('aria-busy'), 'false')
   assert.equal(wrapper.get('.dictionary-result__word').text(), 'test')
   assert.equal(wrapper.get('.dictionary-result__meaning').text(), '1. 시험, 테스트')
   assert.equal(wrapper.find('.dictionary-result__audio-button').exists(), false)

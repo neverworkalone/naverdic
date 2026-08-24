@@ -131,11 +131,6 @@ onMounted(() => {
       :entries="entries"
     />
     <p
-      v-else-if="state === POPUP_STATES.LOADING"
-      class="naverdic-popup-status"
-      role="status"
-    >{{ getText('INLINE_POPUP_LOADING') }}</p>
-    <p
       v-else-if="state === POPUP_STATES.EMPTY"
       class="naverdic-popup-status"
       role="status"
@@ -148,7 +143,7 @@ onMounted(() => {
 
     <div
       class="naverdic-popup-divider"
-      :class="{'naverdic-popup-divider--initial': state === POPUP_STATES.IDLE}"
+      :class="{'naverdic-popup-divider--initial': state === POPUP_STATES.IDLE || state === POPUP_STATES.LOADING}"
       aria-hidden="true"
     />
     <footer class="naverdic-popup-footer">
@@ -199,7 +194,8 @@ body {
   min-height: 308px;
 }
 
-.naverdic-popup-shell--idle {
+.naverdic-popup-shell--idle,
+.naverdic-popup-shell--loading {
   height: 92px;
 }
 
@@ -239,7 +235,7 @@ body {
 
 .naverdic-popup-search__input:focus-visible {
   border-color: #3F81F5;
-  box-shadow: 0 0 0 3px rgba(63, 129, 245, 0.2);
+  box-shadow: 0 0 0 2px rgba(63, 129, 245, 0.15);
 }
 
 .naverdic-popup-search__button {

@@ -170,6 +170,18 @@ test('finds a later audio entry and keeps its phonetic symbol paired with it', (
   assert.equal(result[0].audioUrl, 'https://audio.example/right.mp3')
 })
 
+test('strips inline markup from phonetic symbols', () => {
+  const result = parseNaverDictionaryResponse(response([{
+    handleEntry: 'test',
+    searchPhoneticSymbolList: [{
+      symbolValue: '<strong>test</strong>',
+      symbolFile: 'https://audio.example/test.mp3'
+    }]
+  }]))
+
+  assert.equal(result[0].phoneticSymbol, 'test')
+})
+
 test('does not let missing meanings or invalid audio URLs throw', () => {
   const result = parseNaverDictionaryResponse(response([{
     handleEntry: 'partial',
