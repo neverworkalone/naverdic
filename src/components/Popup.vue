@@ -166,11 +166,11 @@ body,
   width: 360px;
   min-width: 360px;
   margin: 0;
+  background: transparent;
 }
 
 body {
   min-height: 92px;
-  background: var(--naverdic-color-canvas, #E5E5E5);
   color: var(--naverdic-color-text, #1F2937);
   font-family: var(--naverdic-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
   font-size: 14px;
@@ -187,7 +187,6 @@ body {
   border: 1px solid #E2E6EC;
   border-radius: 10px;
   background: var(--naverdic-color-surface-popup, #F5F6F8);
-  box-shadow: 0 4px 14px rgba(26, 36, 51, 0.12);
 }
 
 .naverdic-popup-shell--result {
@@ -319,7 +318,7 @@ body {
 
 .naverdic-popup-footer a {
   color: #3F81F5;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
 }
 

@@ -358,7 +358,10 @@ test('keeps the official Chrome Translator display name and translation panel bo
 
   const toolbarPopup = fs.readFileSync(path.join(projectRoot, 'src/components/Popup.vue'), 'utf8')
   assert.match(toolbarPopup, /html,[\s\S]*body,[\s\S]*#app \{[\s\S]*width: 360px;[\s\S]*min-width: 360px/)
+  assert.match(toolbarPopup, /html,[\s\S]*body,[\s\S]*#app \{[\s\S]*background: transparent/)
   assert.match(toolbarPopup, /\.naverdic-popup-shell \{[\s\S]*width: 360px;[\s\S]*min-height: 92px;[\s\S]*padding: 10px 10px 8px/)
+  assert.equal(toolbarPopup.includes('background: var(--naverdic-color-canvas'), false)
+  assert.equal(toolbarPopup.includes('box-shadow: 0 4px 14px rgba(26, 36, 51, 0.12)'), false)
   assert.match(toolbarPopup, /\.naverdic-popup-shell--result \{[\s\S]*min-height: 308px/)
   assert.match(toolbarPopup, /\.naverdic-popup-shell--idle,[\s\S]*\.naverdic-popup-shell--loading \{[\s\S]*height: 92px/)
   assert.match(toolbarPopup, /\.naverdic-popup-shell--result-scroll \{[\s\S]*min-height: 400px/)
@@ -366,6 +369,7 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(toolbarPopup, /\.naverdic-popup-search__input \{[\s\S]*width: 272px/)
   assert.match(toolbarPopup, /\.naverdic-popup-shell \.dictionary-result \{[\s\S]*width: 340px/)
   assert.match(toolbarPopup, /\.naverdic-popup-footer \{[\s\S]*gap: 9px;[\s\S]*padding: 0 9px 0 0;[\s\S]*font-size: 13px/)
+  assert.match(toolbarPopup, /\.naverdic-popup-footer a \{[\s\S]*font-weight: 600/)
   assert.match(toolbarPopup, /\.naverdic-popup-search__input:focus-visible \{[\s\S]*border-color: #3F81F5;[\s\S]*box-shadow: 0 0 0 2px rgba\(63, 129, 245, 0\.15\)/)
   assert.equal(toolbarPopup.includes('.naverdic-popup-shell--idle .naverdic-popup-footer'), false)
 
