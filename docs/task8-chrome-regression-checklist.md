@@ -5,7 +5,7 @@ v6.6 설치본을 보존한 상태에서 v7.0 ZIP을 확장 프로그램 개발�
 ## 자동 검증
 
 - [x] `yarn lint`
-- [x] `yarn test` — 158 tests passed
+- [x] `yarn test` — 159 tests passed
 - [x] `bash pack.sh` — `naverdic_7.0.zip` 생성
 - [x] ZIP 압축 해제 후 package validator 재실행 — 44 files passed
 - [x] manifest `7.0` / package `7.0.0` 일치
