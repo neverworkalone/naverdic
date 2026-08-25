@@ -1,9 +1,9 @@
 {
   "APP_NAME": {
-    "message": "Naver English Dictionary - NaverDic"
+    "message": "Naver English Dictionary · NaverDic"
   },
   "APP_DESCRIPTION": {
-    "message": "Enter your own words or select an English word from a webpage to show the definition of the English word. Drag a sentence from a webpage to translate it with Chrome built-in translation, DeepL, or Gemini."
+    "message": "Enter a word directly, or double-click or select an English word on a webpage to look up its meaning. Select a sentence or paragraph to translate it with Chrome's built-in Translator, DeepL, or Gemini."
   },
   "SEARCH": {
     "message": "Search"
