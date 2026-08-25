@@ -1,9 +1,9 @@
 {
   "APP_NAME": {
-    "message": "네이버 영어사전 - NaverDic"
+    "message": "네이버 영어사전 · NaverDic"
   },
   "APP_DESCRIPTION": {
-    "message": "직접 단어를 입력하거나 웹페이지의 영어 단어를 선택해 영단어의 뜻을 보여줍니다. 웹페이지의 문장을 드래그하면 Chrome 내장 번역, DeepL 또는 Gemini로 번역합니다."
+    "message": "단어를 직접 입력하거나 웹페이지의 영어 단어를 더블클릭·선택해 뜻을 확인합니다. 문장이나 단락을 드래그하면 Chrome 내장 번역, DeepL 또는 Gemini로 번역합니다."
   },
   "SEARCH": {
     "message": "검색"
