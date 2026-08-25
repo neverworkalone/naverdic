@@ -833,7 +833,7 @@ test('renders the Figma-aligned product header with the runtime manifest version
     const wrapper = mount(SettingsShell)
     await flushPromises()
 
-    assert.equal(wrapper.get('.settings-header__logo').attributes('src'), '/icon.png')
+    assert.equal(wrapper.get('.settings-header__logo').attributes('src'), '/icon128.png')
     assert.equal(wrapper.get('.settings-header__title').text(), koText('SETTINGS_PRODUCT_NAME'))
     assert.equal(wrapper.get('.settings-header__version').text(), '7.0.2')
     wrapper.unmount()

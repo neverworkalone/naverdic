@@ -1,8 +1,10 @@
 const TRIGGER_KEYS = ['none', 'ctrl', 'alt', 'ctrlalt']
 
 /**
- * This table is the only source of truth for setting keys, defaults, storage
- * value kinds, and the form field names used by Options.vue.
+ * This table is the only source of truth for the v6.6 setting keys, defaults,
+ * storage value kinds, and legacy form field names used by migration and the
+ * content runtime adapter. The form names remain part of the exported schema
+ * descriptor even though the old Options component is no longer shipped.
  */
 const SETTING_DEFINITIONS = [
   {key: 'dclick', optionKey: 'DCLICK', formKey: 'dClick', kind: 'boolean', defaultValue: true},
@@ -111,10 +113,6 @@ function normalizeValue(definition, value) {
   }
 }
 
-export function getDefaultSettings() {
-  return {...STORAGE_DEFAULTS}
-}
-
 export function normalizeSetting(key, value) {
   const definition = getDefinition(key)
   return definition ? normalizeValue(definition, value) : undefined
@@ -132,27 +130,4 @@ export function normalizeSettings(values) {
     definition.key,
     normalizeValue(definition, source[definition.key])
   ]))
-}
-
-export function createOptionForm(values = STORAGE_DEFAULTS) {
-  const normalized = normalizeSettings(values)
-
-  return Object.fromEntries(SETTING_DEFINITIONS.map(definition => [
-    definition.formKey,
-    normalized[definition.key]
-  ]))
-}
-
-export function optionFormFromSettings(values) {
-  return createOptionForm(values)
-}
-
-export function settingsFromOptionForm(form) {
-  const source = form && typeof form === 'object' ? form : {}
-  const values = Object.fromEntries(SETTING_DEFINITIONS.map(definition => [
-    definition.key,
-    source[definition.formKey]
-  ]))
-
-  return normalizeSettings(values)
 }

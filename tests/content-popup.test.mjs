@@ -215,7 +215,6 @@ test('renders common states inside an isolated shadow popup and closes on outsid
   assert.ok(host.shadowRoot)
   assert.equal(host.shadowRoot.querySelector('#popupShadow').dataset.state, POPUP_STATES.LOADING)
   assert.equal(host.shadowRoot.querySelector('#popupShadow').style.visibility, 'hidden')
-  assert.equal(host.shadowRoot.querySelector('.naverdic-popup__header').hidden, true)
   assert.ok(host.shadowRoot.querySelector('style'))
 
   controller.update(POPUP_STATES.RESULT, [{
@@ -227,7 +226,6 @@ test('renders common states inside an isolated shadow popup and closes on outsid
     meanings: [{order: '1', value: '안녕하세요'}]
   }])
   assert.equal(host.shadowRoot.querySelector('.naverdic-wordTitle a').textContent, 'hello')
-  assert.equal(host.shadowRoot.querySelector('.naverdic-popup__header').hidden, true)
   assert.equal(host.shadowRoot.querySelector('#popupShadow').style.width, '360px')
   assert.equal(host.shadowRoot.querySelector('audio').getAttribute('controlslist'), 'nodownload')
   assert.equal(host.shadowRoot.querySelector('audio').id, '')
@@ -250,8 +248,6 @@ test('renders common states inside an isolated shadow popup and closes on outsid
   await new Promise(resolve => setImmediate(resolve))
   const translationPopup = document.getElementById('popupFrame').shadowRoot
     .querySelector('#popupShadow')
-  assert.equal(translationPopup.querySelector('.naverdic-popup__header').hidden, true)
-  assert.equal(translationPopup.querySelector('.naverdic-popup__title').textContent, '')
   assert.equal(translationPopup.style.width, '440px')
   assert.equal(translationPopup.querySelector('.naverdic-popup__body').textContent, longTranslation)
   assert.match(

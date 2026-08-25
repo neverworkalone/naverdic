@@ -6,9 +6,6 @@ import {
   isDeniedSite
 } from './content-interaction.mjs'
 import {createContentSettingsLifecycle} from './content-settings.mjs'
-// Keep the v6.6 lifecycle module in the content dependency graph for unpacked
-// compatibility; v7 reads the split settings envelopes above.
-import {createStorageLifecycle} from './content-storage.mjs'
 import {createInlinePopupDataClient} from './content-data.mjs'
 import {createPopupAnchor} from './content-position.mjs'
 import {createPopupController, POPUP_STATES} from './content-popup.mjs'
@@ -46,7 +43,6 @@ let interactionConfigurationRevision = 0
 let popupController = null
 let popupRequestCoordinator = null
 let popupDataClient = null
-void createStorageLifecycle
 
 function getPopupController() {
   if (!popupController) {

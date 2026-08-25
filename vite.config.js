@@ -71,10 +71,6 @@ export default defineConfig({
           dest: '.'
         },
         {
-          src: 'src/content-storage.mjs',
-          dest: '.'
-        },
-        {
           src: 'src/content-settings.mjs',
           dest: '.'
         },
