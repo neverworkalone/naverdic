@@ -228,7 +228,7 @@ after(async () => {
 
 test('keeps appearance defaults and validates six-digit HEX colors', () => {
   assert.deepEqual(APPEARANCE_DEFAULTS, {
-    backgroundColor: '#FFF59D',
+    backgroundColor: '#F5F6F8',
     fontColor: '#000000',
     fontSizePt: 11
   })
@@ -243,7 +243,7 @@ test('renders the appearance defaults, scope guidance, and theme link', async ()
   const wrapper = mountAppearance()
   await flushPromises()
 
-  assert.equal(wrapper.get('[data-testid="settings-popup-background-color"]').element.value, '#FFF59D')
+  assert.equal(wrapper.get('[data-testid="settings-popup-background-color"]').element.value, '#F5F6F8')
   assert.equal(wrapper.get('[data-testid="settings-popup-font-color"]').element.value, '#000000')
   assert.equal(wrapper.get('[data-testid="settings-popup-font-size"]').text(), '11 pt')
   assert.equal(
@@ -355,7 +355,7 @@ test('updates the live popup preview for appearance changes', async () => {
   })
   assert.equal(wrapper.classes().includes('settings-live-preview--appearance'), true)
   const popup = wrapper.get('.settings-live-preview__popup')
-  assert.equal(popup.element.style.backgroundColor, 'rgb(255, 245, 157)')
+  assert.equal(popup.element.style.backgroundColor, 'rgb(245, 246, 248)')
   assert.equal(popup.element.style.color, 'rgb(0, 0, 0)')
   assert.equal(popup.element.style.fontSize, '11pt')
 
@@ -706,7 +706,7 @@ test('rejects invalid imports, preserves draft values, and locks advanced contro
   await flushPromises()
 
   assert.equal(wrapper.get('[data-testid="settings-advanced-import-error"]').text(), koText('SETTINGS_ADVANCED_IMPORT_ERROR'))
-  assert.equal(draft.popup.backgroundColor, '#FFF59D')
+  assert.equal(draft.popup.backgroundColor, '#F5F6F8')
 
   await wrapper.setProps({isLoading: true})
   assert.equal(wrapper.get('[data-testid="settings-advanced-export"]').element.disabled, true)
@@ -833,7 +833,7 @@ test('renders the Figma-aligned product header with the runtime manifest version
     const wrapper = mount(SettingsShell)
     await flushPromises()
 
-    assert.equal(wrapper.get('.settings-header__logo').attributes('src'), '/icon.png')
+    assert.equal(wrapper.get('.settings-header__logo').attributes('src'), '/icon128.png')
     assert.equal(wrapper.get('.settings-header__title').text(), koText('SETTINGS_PRODUCT_NAME'))
     assert.equal(wrapper.get('.settings-header__version').text(), '7.0.2')
     wrapper.unmount()

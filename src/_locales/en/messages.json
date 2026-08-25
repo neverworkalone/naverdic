@@ -3,7 +3,7 @@
     "message": "Naver English Dictionary - NaverDic"
   },
   "APP_DESCRIPTION": {
-    "message": "Enter your own words or select an English word from a webpage to show the definition of the English word. Drag a sentence from a webpage to translate it to DeepL."
+    "message": "Enter your own words or select an English word from a webpage to show the definition of the English word. Drag a sentence from a webpage to translate it with Chrome built-in translation, DeepL, or Gemini."
   },
   "SEARCH": {
     "message": "Search"
@@ -25,39 +25,6 @@
   },
   "SETTING": {
     "message": "Setting"
-  },
-  "VERSION": {
-    "message": "Version"
-  },
-  "DEEPL": {
-    "message": "DeepL Translate"
-  },
-  "POPUP_SETTING": {
-    "message": "Popup setting"
-  },
-  "POPUP_THEME_GUIDE": {
-    "message": "Theme guide"
-  },
-  "POPUP_BGCOLOR": {
-    "message": "Popup bgcolor: "
-  },
-  "POPUP_FONTCOLOR": {
-    "message": "font color: "
-  },
-  "POPUP_FONTSIZE": {
-    "message": "font size(pt): "
-  },
-  "DCLICK_DESC": {
-    "message": "Show popup on double click."
-  },
-  "DRAG_DESC": {
-    "message": "Show popup on dragging."
-  },
-  "DEEPL_TRANSLATION": {
-    "message": "use DeepL translation"
-  },
-  "TRIGGER": {
-    "message": "Trigger: "
   },
   "DCLICK" : {
     "message": "Double click"
@@ -134,30 +101,6 @@
       }
     }
   },
-  "URL_SETTING": {
-    "message": "Use Deny list"
-  },
-  "URL_DESC": {
-    "message": "Comma serparated URLs for deny list. i.e) google.com,naver.com"
-  },
-  "DEEPL_AUTH_KEY": {
-    "message": "Auth Key: "
-  },
-  "DEEPL_DESC": {
-    "message": "Please check DeepL instruction to use it."
-  },
-  "DEEPL_INSTRUCTION": {
-    "message": "DeepL instruction"
-  },
-  "DEEPL_API": {
-    "message": "Go to DeepL API"
-  },
-  "SAVE_STATUS": {
-    "message": "Saved. Please reload opened windows."
-  },
-  "RESET_STATUS": {
-    "message": "Options reset."
-  },
   "INLINE_POPUP_DICTIONARY_TITLE": {
     "message": "Dictionary"
   },
@@ -172,15 +115,6 @@
   },
   "INLINE_POPUP_NETWORK_ERROR": {
     "message": "The result could not be loaded. Please try again."
-  },
-  "SAVE": {
-    "message": "Save"
-  },
-  "RESET": {
-    "message": "Reset"
-  },
-  "SETTINGS_PRODUCT_TITLE": {
-    "message": "Naver English Dictionary · NaverDic 7.0"
   },
   "SETTINGS_PRODUCT_NAME": {
     "message": "Naver English Dictionary · NaverDic"
@@ -295,18 +229,6 @@
   },
   "SETTINGS_SHELL_SAVE": {
     "message": "Save"
-  },
-  "SETTINGS_SHELL_VERSION": {
-    "message": "NaverDic 7.0"
-  },
-  "SETTINGS_SHELL_PLACEHOLDER_TITLE": {
-    "message": "Settings"
-  },
-  "SETTINGS_SHELL_PLACEHOLDER_DESCRIPTION": {
-    "message": "Controls for this screen will be connected in the next TASK."
-  },
-  "SETTINGS_SHELL_DRAFT_NOTE": {
-    "message": "Values entered here stay in memory while you move between screens and are applied only when you save."
   },
   "SETTINGS_SHELL_PREVIEW_TITLE": {
     "message": "Preview"
@@ -547,41 +469,14 @@
   "SETTINGS_TRANSLATION_ENABLED": {
     "message": "Translation feature"
   },
-  "SETTINGS_TRANSLATION_TARGET_LANGUAGE": {
-    "message": "Target language"
-  },
-  "SETTINGS_TRANSLATION_TARGET_LANGUAGE_HINT": {
-    "message": "Enter the language code for results, such as ko or en."
-  },
-  "SETTINGS_TRANSLATION_PROVIDER": {
-    "message": "Default translation provider"
-  },
-  "SETTINGS_TRANSLATION_PROVIDER_HINT": {
-    "message": "Choose the provider used for sentence translation."
-  },
-  "SETTINGS_TRANSLATION_CARD_TITLE": {
-    "message": "Translation services"
-  },
-  "SETTINGS_TRANSLATION_CARD_DESCRIPTION": {
-    "message": "Choose and manage services used for sentence translation."
-  },
   "SETTINGS_TRANSLATION_AVAILABLE_SERVICES": {
     "message": "Service selection"
-  },
-  "SETTINGS_TRANSLATION_AVAILABLE_SERVICES_HINT": {
-    "message": "Manage the built-in service and connected services in one place."
   },
   "SETTINGS_TRANSLATION_CHROME_NAME": {
     "message": "Chrome built-in translation"
   },
   "SETTINGS_TRANSLATION_CHROME_DESCRIPTION": {
     "message": "Translator API · Free"
-  },
-  "SETTINGS_TRANSLATION_CHROME_PREVIEW_DESCRIPTION": {
-    "message": "The Chrome Translator API provided by the browser."
-  },
-  "SETTINGS_TRANSLATION_CHROME_PREVIEW_HINT": {
-    "message": "The Chrome Translator API does not require an API key."
   },
   "SETTINGS_TRANSLATION_DEEPL_NAME": {
     "message": "DeepL"
@@ -598,32 +493,8 @@
   "SETTINGS_TRANSLATION_GEMINI_MODEL": {
     "message": "Model"
   },
-  "SETTINGS_TRANSLATION_GEMINI_MODEL_HINT": {
-    "message": "Only Flash and Flash-Lite models suitable for translation are shown."
-  },
-  "SETTINGS_TRANSLATION_DEFAULT_BADGE": {
-    "message": "Free built-in"
-  },
-  "SETTINGS_TRANSLATION_EXTERNAL_BADGE": {
-    "message": "External service"
-  },
-  "SETTINGS_TRANSLATION_EXTERNAL_PREVIEW_HINT": {
-    "message": "External services are available after an API key is entered."
-  },
   "SETTINGS_TRANSLATION_ACTIVE": {
     "message": "In use"
-  },
-  "SETTINGS_TRANSLATION_CONFIGURE": {
-    "message": "Settings"
-  },
-  "SETTINGS_TRANSLATION_USE": {
-    "message": "Use"
-  },
-  "SETTINGS_TRANSLATION_EXTERNAL_NOTE": {
-    "message": "External services become available after you save an API key."
-  },
-  "SETTINGS_TRANSLATION_PRESET_DESCRIPTION": {
-    "message": "Enter a credential and verify the connection."
   },
   "SETTINGS_TRANSLATION_DEEPL_VARIANT": {
     "message": "DeepL plan"
@@ -646,9 +517,6 @@
   "SETTINGS_TRANSLATION_API_KEY_MISSING": {
     "message": "Enter an API key before testing the connection."
   },
-  "SETTINGS_TRANSLATION_API_KEY_EMPTY": {
-    "message": "Not entered"
-  },
   "SETTINGS_TRANSLATION_SHOW_KEY": {
     "message": "Show"
   },
@@ -667,18 +535,6 @@
   "SETTINGS_TRANSLATION_TEST_FAILURE": {
     "message": "Connection test failed. Check the settings and API key."
   },
-  "SETTINGS_TRANSLATION_TEST_UNSUPPORTED": {
-    "message": "Chrome built-in Translator cannot be tested from this screen."
-  },
-  "SETTINGS_TRANSLATION_PROVIDER_UNKNOWN": {
-    "message": "Selected service"
-  },
-  "SETTINGS_TRANSLATION_PROVIDER_UNKNOWN_DESCRIPTION": {
-    "message": "Check the settings for the selected translation service."
-  },
-  "SETTINGS_TRANSLATION_SERVICE_SETTINGS": {
-    "message": "Service settings"
-  },
   "SETTINGS_TRANSLATION_SELECTOR_TITLE": {
     "message": "Translation services"
   },
@@ -687,12 +543,6 @@
   },
   "SETTINGS_TRANSLATION_DETAIL_TITLE": {
     "message": "Service details"
-  },
-  "SETTINGS_TRANSLATION_DETAIL_HINT": {
-    "message": "Manage settings for the selected translation service."
-  },
-  "SETTINGS_TRANSLATION_STATUS_READY": {
-    "message": "Available"
   },
   "SETTINGS_TRANSLATION_STATUS_DOWNLOADING": {
     "message": "Preparing"
@@ -703,9 +553,6 @@
   "SETTINGS_TRANSLATION_STATUS_ERROR": {
     "message": "Error"
   },
-  "SETTINGS_TRANSLATION_STATUS_SETUP": {
-    "message": "Setup needed"
-  },
   "SETTINGS_TRANSLATION_STATUS_CONFIGURED": {
     "message": "Ready"
   },
@@ -714,12 +561,6 @@
   },
   "SETTINGS_TRANSLATION_STATUS_UNCONFIGURED": {
     "message": "Not configured"
-  },
-  "SETTINGS_TRANSLATION_STATUS_CONNECTED": {
-    "message": "Connected"
-  },
-  "SETTINGS_TRANSLATION_STATUS_PERMISSION": {
-    "message": "Permission needed"
   },
   "SETTINGS_TRANSLATION_CONNECTED_BADGE": {
     "message": "Connected"
@@ -736,23 +577,8 @@
   "SETTINGS_TRANSLATION_ACTIVATE": {
     "message": "Use this service"
   },
-  "SETTINGS_TRANSLATION_CHROME_DETAIL_DESCRIPTION": {
-    "message": "Uses Chrome's official Translator API."
-  },
-  "SETTINGS_TRANSLATION_CHROME_LOCAL_BADGE": {
-    "message": "Free · Local processing"
-  },
-  "SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR": {
-    "message": "Language pair"
-  },
-  "SETTINGS_TRANSLATION_CHROME_BROWSER": {
-    "message": "Browser support"
-  },
   "SETTINGS_TRANSLATION_CHROME_MODEL": {
     "message": "Translation model"
-  },
-  "SETTINGS_TRANSLATION_CHROME_SUPPORTED": {
-    "message": "Supported"
   },
   "SETTINGS_TRANSLATION_CHROME_UNSUPPORTED": {
     "message": "Not supported"
@@ -778,9 +604,6 @@
   "SETTINGS_TRANSLATION_CHROME_RETRY": {
     "message": "Try again"
   },
-  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS": {
-    "message": "Downloading"
-  },
   "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_STATUS": {
     "message": "$progress$% · Downloading.",
     "placeholders": {
@@ -791,24 +614,6 @@
   },
   "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_INDETERMINATE": {
     "message": "Downloading."
-  },
-  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_HINT": {
-    "message": "Preparing the translation model."
-  },
-  "SETTINGS_TRANSLATION_CHROME_UNSUPPORTED_GUIDANCE": {
-    "message": "Available in desktop Chrome 138 or later."
-  },
-  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_GUIDANCE": {
-    "message": "The en → ko model is unavailable in this environment."
-  },
-  "SETTINGS_TRANSLATION_CHROME_NETWORK_ERROR": {
-    "message": "The model download failed. Check your network connection."
-  },
-  "SETTINGS_TRANSLATION_CHROME_PERMISSION_ERROR": {
-    "message": "The browser did not allow the model download. Try again."
-  },
-  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_FAILED_HINT": {
-    "message": "The model could not be prepared. Try again."
   },
   "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_TITLE": {
     "message": "The Translator API is unavailable."

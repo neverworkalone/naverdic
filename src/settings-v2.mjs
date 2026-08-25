@@ -32,44 +32,33 @@ export const SETTINGS_MENU = Object.freeze([
   Object.freeze({
     id: SETTINGS_PAGE_IDS.DICTIONARY,
     kind: 'page',
-    order: 10,
-    labelKey: 'SETTINGS_MENU_DICTIONARY',
-    descriptionKey: 'SETTINGS_PAGE_DICTIONARY_DESCRIPTION'
+    order: 10
   }),
   Object.freeze({
     id: SETTINGS_PAGE_IDS.TRANSLATION,
     kind: 'page',
-    order: 20,
-    labelKey: 'SETTINGS_MENU_TRANSLATION',
-    descriptionKey: 'SETTINGS_PAGE_TRANSLATION_DESCRIPTION'
+    order: 20
   }),
   Object.freeze({
     id: SETTINGS_PAGE_IDS.POPUP,
     kind: 'page',
-    order: 30,
-    labelKey: 'SETTINGS_MENU_POPUP',
-    descriptionKey: 'SETTINGS_PAGE_POPUP_DESCRIPTION'
+    order: 30
   }),
   Object.freeze({
     id: SETTINGS_PAGE_IDS.SITES,
     kind: 'page',
-    order: 40,
-    labelKey: 'SETTINGS_MENU_SITES',
-    descriptionKey: 'SETTINGS_PAGE_SITES_DESCRIPTION'
+    order: 40
   }),
   Object.freeze({
     id: SETTINGS_PAGE_IDS.ADVANCED,
     kind: 'page',
     order: 50,
-    labelKey: 'SETTINGS_MENU_ADVANCED',
-    descriptionKey: 'SETTINGS_PAGE_ADVANCED_DESCRIPTION',
     actions: Object.freeze(['reset'])
   }),
   Object.freeze({
     id: SETTINGS_PAGE_IDS.HELP,
     kind: 'external',
     order: 90,
-    labelKey: 'SETTINGS_MENU_HELP',
     url: 'https://neverworkalone.github.io/naverdic/',
     external: true
   })
@@ -294,7 +283,7 @@ export const SETTINGS_SCHEMA_V2 = Object.freeze([
   Object.freeze({path: 'dictionary.doubleClick.speedMs', type: 'positive-integer', storage: 'sync', defaultValue: 400}),
   Object.freeze({path: 'dictionary.drag.enabled', type: 'boolean', storage: 'sync', defaultValue: true}),
   Object.freeze({path: 'dictionary.drag.triggerKey', type: 'trigger', storage: 'sync', defaultValue: 'ctrl', values: TRIGGER_KEYS}),
-  Object.freeze({path: 'popup.backgroundColor', type: 'string', storage: 'sync', defaultValue: '#FFF59D'}),
+  Object.freeze({path: 'popup.backgroundColor', type: 'string', storage: 'sync', defaultValue: '#F5F6F8'}),
   Object.freeze({path: 'popup.fontColor', type: 'string', storage: 'sync', defaultValue: '#000000'}),
   Object.freeze({path: 'popup.fontSizePt', type: 'positive-integer', storage: 'sync', defaultValue: 11}),
   Object.freeze({path: 'sites.denyListEnabled', type: 'boolean', storage: 'sync', defaultValue: false}),
@@ -323,7 +312,7 @@ export const SETTINGS_V2_DEFAULTS = deepFreeze({
     }
   },
   popup: {
-    backgroundColor: '#FFF59D',
+    backgroundColor: '#F5F6F8',
     fontColor: '#000000',
     fontSizePt: 11
   },

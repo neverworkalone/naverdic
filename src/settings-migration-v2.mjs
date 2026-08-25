@@ -93,7 +93,9 @@ export function migrateV66ToV2(values) {
   if (sourceKeys.length > 0) {
     settings.translation.providerId = DEFAULT_PROVIDER_ID
   }
-  settings.popup.backgroundColor = legacy.popup_bgcolor
+  if (hasOwn(source, 'popup_bgcolor')) {
+    settings.popup.backgroundColor = legacy.popup_bgcolor
+  }
   settings.popup.fontColor = legacy.popup_fontcolor
   settings.popup.fontSizePt = finiteNumber(
     legacy.popup_fontsize,

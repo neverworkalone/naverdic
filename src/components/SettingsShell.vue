@@ -291,7 +291,7 @@ onBeforeUnmount(() => {
     <header class="settings-header">
       <img
         class="settings-header__logo"
-        src="/icon.png"
+        src="/icon128.png"
         alt=""
         aria-hidden="true"
       >
@@ -421,15 +421,7 @@ onBeforeUnmount(() => {
             :reset-draft="resetDraft"
             :on-draft-revision="bumpDraftRevision"
             :translation-pending-change="setTranslationEditorDirty"
-          >
-            <div class="settings-placeholder-card" data-testid="settings-page-placeholder">
-              <h3>{{ text('SETTINGS_SHELL_PLACEHOLDER_TITLE') }}</h3>
-              <p>{{ text('SETTINGS_SHELL_PLACEHOLDER_DESCRIPTION') }}</p>
-              <div class="settings-placeholder-card__note">
-                {{ text('SETTINGS_SHELL_DRAFT_NOTE') }}
-              </div>
-            </div>
-          </slot>
+          />
         </div>
 
         <aside
@@ -804,69 +796,6 @@ a {
 .settings-shell--advanced .settings-page-heading h2,
 .settings-shell--advanced .settings-preview-heading h2 {
   font-size: 24px;
-}
-
-.settings-placeholder-card {
-  min-height: 220px;
-  margin-top: 12px;
-  padding: 24px;
-  background: var(--naverdic-settings-surface);
-  border: 1px solid var(--naverdic-settings-border);
-  border-radius: 10px;
-}
-
-.settings-placeholder-card h3 {
-  margin: 0 0 8px;
-  color: var(--naverdic-settings-text);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 24px;
-}
-
-.settings-placeholder-card p {
-  margin: 0;
-  color: var(--naverdic-settings-text-muted);
-  font-size: 12px;
-  line-height: 20px;
-}
-
-.settings-placeholder-card__note {
-  margin-top: 24px;
-  padding: 12px 14px;
-  color: var(--naverdic-settings-primary-text);
-  background: var(--naverdic-settings-info);
-  border-radius: 8px;
-  font-size: 11px;
-  line-height: 18px;
-}
-
-.settings-placeholder-card__actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
-.settings-placeholder-card__reset {
-  min-height: 34px;
-  padding: 0 16px;
-  color: var(--naverdic-color-text-disabled);
-  background: var(--naverdic-input-background-disabled);
-  border: 1px solid var(--naverdic-settings-border);
-  border-radius: var(--naverdic-radius-sm);
-  font-size: var(--naverdic-font-size-sm);
-  font-weight: var(--naverdic-font-weight-medium);
-  cursor: not-allowed;
-}
-
-.settings-placeholder-card__reset:not(:disabled) {
-  color: var(--naverdic-color-danger);
-  background: var(--naverdic-settings-surface);
-  border-color: var(--naverdic-color-danger);
-  cursor: pointer;
-}
-
-.settings-placeholder-card__reset:not(:disabled):hover {
-  background: var(--naverdic-settings-danger-hover);
 }
 
 @media (max-width: 1050px) {

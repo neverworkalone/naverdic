@@ -11,6 +11,16 @@ function isRecord(value) {
 
 const INLINE_HTML_BREAK_PATTERN = /<br\s*\/?>/gi
 const INLINE_HTML_TAG_PATTERN = /<\/?[a-z][^>]*>/gi
+const HTML_ENTITY_PATTERN = /&(?:#x[\da-f]+|#\d+|amp|lt|gt|quot|apos|nbsp);/gi
+
+const HTML_ENTITY_VALUES = Object.freeze({
+  '&amp;': '&',
+  '&apos;': "'",
+  '&gt;': '>',
+  '&lt;': '<',
+  '&nbsp;': '\u00a0',
+  '&quot;': '"'
+})
 
 export function normalizeString(value) {
   if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') {
@@ -20,15 +30,48 @@ export function normalizeString(value) {
   return String(value).trim()
 }
 
+function decodeHtmlEntity(entity) {
+  const token = entity.slice(1, -1)
+  if (token.startsWith('#x') || token.startsWith('#X')) {
+    const codePoint = Number.parseInt(token.slice(2), 16)
+    return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+      ? String.fromCodePoint(codePoint)
+      : entity
+  }
+
+  if (token.startsWith('#')) {
+    const codePoint = Number.parseInt(token.slice(1), 10)
+    return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+      ? String.fromCodePoint(codePoint)
+      : entity
+  }
+
+  return HTML_ENTITY_VALUES[entity.toLowerCase()] || entity
+}
+
+function decodeHtmlEntities(value) {
+  let decoded = value
+  for (let pass = 0; pass < 2; pass += 1) {
+    const next = decoded.replace(HTML_ENTITY_PATTERN, decodeHtmlEntity)
+    if (next === decoded) {
+      break
+    }
+    decoded = next
+  }
+  return decoded
+}
+
 /**
  * Naver's meaning strings may contain presentational tags such as
- * `<span class="related_word">`. Popup rendering intentionally uses text
- * nodes, so normalize those tags out while preserving their readable text.
+ * `<span class="related_word">` and HTML-escaped usage delimiters. Popup
+ * rendering intentionally uses text nodes, so normalize those values into
+ * readable text without exposing markup or entity syntax.
  */
 export function stripInlineMarkup(value) {
-  return normalizeString(value)
+  return decodeHtmlEntities(normalizeString(value))
     .replace(INLINE_HTML_BREAK_PATTERN, '\n')
     .replace(INLINE_HTML_TAG_PATTERN, '')
+    .replace(/[<>]/g, '')
     .trim()
 }
 

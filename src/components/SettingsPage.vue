@@ -723,16 +723,6 @@ watch(() => props.draftRevision, () => {
       />
     </section>
 
-    <section
-      v-if="!['appearance', 'double-click', 'behavior', 'blocked-sites', 'translation-service', 'advanced', 'help'].includes(pageId)"
-      class="settings-card settings-card--placeholder"
-    >
-      <h3>{{ text('SETTINGS_SHELL_PLACEHOLDER_TITLE') }}</h3>
-      <p>{{ text('SETTINGS_SHELL_PLACEHOLDER_DESCRIPTION') }}</p>
-      <div class="settings-placeholder-card__note">
-        {{ text('SETTINGS_SHELL_DRAFT_NOTE') }}
-      </div>
-    </section>
   </div>
 </template>
 
@@ -1288,8 +1278,7 @@ watch(() => props.draftRevision, () => {
   border-bottom: 1px solid var(--naverdic-settings-divider);
 }
 
-.settings-card__heading h3,
-.settings-card--placeholder h3 {
+.settings-card__heading h3 {
   margin: 0;
   color: var(--naverdic-settings-text);
   font-size: 15px;
@@ -1297,8 +1286,7 @@ watch(() => props.draftRevision, () => {
   line-height: 24px;
 }
 
-.settings-card__heading p,
-.settings-card--placeholder p {
+.settings-card__heading p {
   margin: 4px 0 0;
   color: var(--naverdic-settings-text-muted);
   font-size: 12px;
@@ -1626,10 +1614,6 @@ watch(() => props.draftRevision, () => {
   line-height: 17px;
 }
 
-.settings-card--placeholder {
-  min-height: 220px;
-}
-
 .settings-advanced-data-card {
   position: relative;
   height: 282px;
@@ -1799,16 +1783,6 @@ watch(() => props.draftRevision, () => {
   color: var(--naverdic-color-danger);
   font-size: 10px;
   line-height: 14px;
-}
-
-.settings-placeholder-card__note {
-  margin-top: 24px;
-  padding: 12px 14px;
-  color: var(--naverdic-settings-primary-text);
-  background: var(--naverdic-settings-info);
-  border-radius: var(--naverdic-radius-sm);
-  font-size: 11px;
-  line-height: 18px;
 }
 
 /* Keep the double-click rhythm independent from the shared settings rows. */

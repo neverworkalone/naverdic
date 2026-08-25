@@ -20,18 +20,6 @@
   overflow-wrap: anywhere;
 }
 
-.naverdic-popup__header {
-  flex: 0 0 auto;
-  margin: 0 0 8px;
-  padding: 0 1px;
-  font-weight: bold;
-}
-
-.naverdic-popup__title {
-  font-size: 0.9em;
-  opacity: 0.72;
-}
-
 .naverdic-popup__body {
   box-sizing: border-box;
   min-width: 0;
@@ -90,8 +78,4 @@ audio.naverdic-audio::-webkit-media-controls-time-remaining-display,
 audio.naverdic-audio::-webkit-media-controls-timeline,
 audio.naverdic-audio::-webkit-media-controls-volume-control-container {
   display: none !important;
-}
-
-dd.naverdic-means {
-  margin-inline-start: 8px;
 }

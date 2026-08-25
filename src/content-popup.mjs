@@ -10,7 +10,7 @@ export {POPUP_STATES} from './popup-state.mjs'
 
 const DEFAULT_POPUP_OPTIONS = Object.freeze({
   width: 360,
-  backgroundColor: '#FFF59D',
+  backgroundColor: '#F5F6F8',
   fontColor: '#000000',
   fontSizePt: 11,
   margin: 10,
@@ -41,12 +41,6 @@ const FALLBACK_CSS = `
   overflow: hidden;
   overflow-wrap: anywhere;
   pointer-events: auto;
-}
-.naverdic-popup__header {
-  flex: 0 0 auto;
-  margin: 0 0 8px;
-  padding: 0 1px;
-  font-weight: bold;
 }
 .naverdic-popup__body {
   box-sizing: border-box;
@@ -197,8 +191,6 @@ function createPopupView({
   let host = null
   let shadowRoot = null
   let popup = null
-  let header = null
-  let title = null
   let body = null
   let style = null
   let stylesPromise = null
@@ -245,13 +237,6 @@ function createPopupView({
     popup.setAttribute('aria-live', 'polite')
     popup.setAttribute('aria-label', getText('INLINE_POPUP_DICTIONARY_TITLE'))
 
-    header = documentLike.createElement('div')
-    header.className = 'naverdic-popup__header'
-    title = documentLike.createElement('div')
-    title.className = 'naverdic-popup__title'
-    header.appendChild(title)
-    popup.appendChild(header)
-
     body = documentLike.createElement('div')
     body.className = 'naverdic-popup__body'
     popup.appendChild(body)
@@ -290,12 +275,6 @@ function createPopupView({
     const titleText = type === 'translation'
       ? getText('INLINE_POPUP_TRANSLATION_TITLE')
       : getText('INLINE_POPUP_DICTIONARY_TITLE')
-    // The inline shell is content-first for both dictionary and translation.
-    // Keep the type in aria-label, but do not spend popup space on a title row.
-    const showHeader = false
-    header.hidden = !showHeader
-    header.style.display = showHeader ? '' : 'none'
-    title.textContent = showHeader ? titleText : ''
     popup.dataset.type = type
     popup.dataset.state = state
     popup.setAttribute('aria-label', titleText)
@@ -395,8 +374,6 @@ function createPopupView({
     host = null
     shadowRoot = null
     popup = null
-    header = null
-    title = null
     body = null
     style = null
     popupType = 'dictionary'

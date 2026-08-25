@@ -24,7 +24,7 @@ function handleReset() {
 }
 
 const popupStyle = computed(() => ({
-  backgroundColor: resolveCssColor(props.draft.popup?.backgroundColor, '#FFF59D'),
+  backgroundColor: resolveCssColor(props.draft.popup?.backgroundColor, '#F5F6F8'),
   color: resolveCssColor(props.draft.popup?.fontColor, '#000000'),
   fontSize: (Number(props.draft.popup?.fontSizePt) > 0 ? Number(props.draft.popup.fontSizePt) : 11) + 'pt'
 }))
