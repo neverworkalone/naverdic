@@ -281,8 +281,8 @@ export const SETTINGS_SCHEMA_V2 = Object.freeze([
   Object.freeze({path: 'dictionary.doubleClick.enabled', type: 'boolean', storage: 'sync', defaultValue: true}),
   Object.freeze({path: 'dictionary.doubleClick.triggerKey', type: 'trigger', storage: 'sync', defaultValue: 'none', values: TRIGGER_KEYS}),
   Object.freeze({path: 'dictionary.doubleClick.speedMs', type: 'positive-integer', storage: 'sync', defaultValue: 400}),
-  Object.freeze({path: 'dictionary.drag.enabled', type: 'boolean', storage: 'sync', defaultValue: true}),
-  Object.freeze({path: 'dictionary.drag.triggerKey', type: 'trigger', storage: 'sync', defaultValue: 'ctrl', values: TRIGGER_KEYS}),
+  Object.freeze({path: 'dictionary.drag.enabled', type: 'boolean', storage: 'sync', defaultValue: false}),
+  Object.freeze({path: 'dictionary.drag.triggerKey', type: 'trigger', storage: 'sync', defaultValue: 'alt', values: TRIGGER_KEYS}),
   Object.freeze({path: 'popup.backgroundColor', type: 'string', storage: 'sync', defaultValue: '#F5F6F8'}),
   Object.freeze({path: 'popup.fontColor', type: 'string', storage: 'sync', defaultValue: '#000000'}),
   Object.freeze({path: 'popup.fontSizePt', type: 'positive-integer', storage: 'sync', defaultValue: 11}),
@@ -307,8 +307,8 @@ export const SETTINGS_V2_DEFAULTS = deepFreeze({
       speedMs: 400
     },
     drag: {
-      enabled: true,
-      triggerKey: 'ctrl'
+      enabled: false,
+      triggerKey: 'alt'
     }
   },
   popup: {
@@ -339,12 +339,11 @@ export function createDefaultSettingsV2() {
 }
 
 // The compatibility defaults keep the v2 contract stable for callers that
-// normalize incomplete settings. New installs and resets use the Figma state
-// for the translation provider and drag trigger instead.
+// normalize incomplete settings. New installs and resets keep drag lookup off
+// by default and use Alt/Option as its trigger when enabled.
 export function createInitialSettingsV2() {
   const settings = createDefaultSettingsV2()
   settings.translation.providerId = CHROME_TRANSLATOR_PROVIDER_ID
-  settings.dictionary.drag.triggerKey = 'none'
   return settings
 }
 

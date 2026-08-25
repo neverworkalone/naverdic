@@ -48,7 +48,7 @@ test('parses and normalizes a backup without changing the current schema contrac
   assert.equal(parsed.settings.popup.backgroundColor, '#abcdef')
   assert.equal(parsed.settings.dictionary.doubleClick.speedMs, 300)
   assert.equal(parsed.settings.dictionary.drag.enabled, false)
-  assert.equal(parsed.settings.dictionary.drag.triggerKey, 'none')
+  assert.equal(parsed.settings.dictionary.drag.triggerKey, 'alt')
   assert.deepEqual(parsed.secrets.providers['deepl-free'], {apiKey: 'local-key'})
 })
 
