@@ -1,15 +1,17 @@
-# Naver English Dictionary (NaverDic 7.0)
+# 네이버 영어사전 · NaverDic
 
-A Chrome extension for looking up English words with Naver Dictionary and translating sentences with Chrome's built-in Translator, DeepL, or Gemini.
+A Chrome extension for quickly looking up English words with Naver Dictionary and translating selected text with Chrome's built-in Translator, DeepL, or Gemini.
 
 ## Features
 
-- Search for a word by entering it directly
-- Look up an English word by double-clicking it on a webpage
+- Search for English words by entering them directly
+- Look up a word by double-clicking it on a webpage
 - Select a word or phrase to search for its meaning
 - Translate selected sentences and paragraphs with Chrome's built-in Translator, DeepL, or Gemini
-- Customize dictionary and translation triggers, popup appearance, and blocked sites
-- Manage translation credentials locally and back up settings from the Advanced page
+- Customize double-click and selection triggers
+- Customize popup colors and text size
+- Disable NaverDic on selected websites
+- Export, import, and reset settings
 
 ## Install
 
@@ -39,7 +41,7 @@ yarn build
 yarn package
 ```
 
-The package command builds and validates `naverdic_7.0.zip`.
+The package command builds and validates `naverdic_<version>.zip`.
 
 ### Run the webpage development server
 
