@@ -22,12 +22,10 @@ cd "$PROJECT_ROOT"
 "$ESBUILD_BIN" --bundle src/content.css --minify --outfile="$DIST_DIR/content.css"
 
 # index.html and its index-* chunks are the repository's development demo, not
-# extension entry points. These public demo assets are not needed by Chrome.
+# extension entry points. The demo HTML and favicon are not needed by Chrome.
 rm -f \
   "$DIST_DIR/index.html" \
-  "$DIST_DIR/favicon.ico" \
-  "$DIST_DIR/logo.png" \
-  "$DIST_DIR/icon.png"
+  "$DIST_DIR/favicon.ico"
 for index_asset in "$DIST_DIR"/assets/index-*; do
   if [[ -f "$index_asset" ]]; then
     rm -f "$index_asset"
