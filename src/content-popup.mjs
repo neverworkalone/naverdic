@@ -10,7 +10,7 @@ export {POPUP_STATES} from './popup-state.mjs'
 
 const DEFAULT_POPUP_OPTIONS = Object.freeze({
   width: 360,
-  backgroundColor: '#FFF59D',
+  backgroundColor: '#F5F6F8',
   fontColor: '#000000',
   fontSizePt: 11,
   margin: 10,

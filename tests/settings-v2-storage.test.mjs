@@ -110,6 +110,7 @@ test('uses the Figma drag trigger for a new install without stored settings', as
   assert.equal(loaded.hasV2Settings, false)
   assert.equal(loaded.settings.translation.providerId, 'chrome-translator')
   assert.equal(loaded.settings.dictionary.drag.triggerKey, 'none')
+  assert.equal(loaded.settings.popup.backgroundColor, '#F5F6F8')
   assert.equal(loaded.migrationNeeded, true)
 })
 

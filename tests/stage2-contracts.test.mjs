@@ -202,7 +202,7 @@ test('creates independent default settings and local secret objects', () => {
   settings.popup.backgroundColor = '#000000'
   secrets.providers.example = {apiKey: 'local-only'}
 
-  assert.equal(SETTINGS_V2_DEFAULTS.popup.backgroundColor, '#FFF59D')
+  assert.equal(SETTINGS_V2_DEFAULTS.popup.backgroundColor, '#F5F6F8')
   assert.deepEqual(createDefaultSecretsV2(), {schemaVersion: 2, providers: {}})
 })
 

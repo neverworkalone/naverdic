@@ -283,7 +283,7 @@ export const SETTINGS_SCHEMA_V2 = Object.freeze([
   Object.freeze({path: 'dictionary.doubleClick.speedMs', type: 'positive-integer', storage: 'sync', defaultValue: 400}),
   Object.freeze({path: 'dictionary.drag.enabled', type: 'boolean', storage: 'sync', defaultValue: true}),
   Object.freeze({path: 'dictionary.drag.triggerKey', type: 'trigger', storage: 'sync', defaultValue: 'ctrl', values: TRIGGER_KEYS}),
-  Object.freeze({path: 'popup.backgroundColor', type: 'string', storage: 'sync', defaultValue: '#FFF59D'}),
+  Object.freeze({path: 'popup.backgroundColor', type: 'string', storage: 'sync', defaultValue: '#F5F6F8'}),
   Object.freeze({path: 'popup.fontColor', type: 'string', storage: 'sync', defaultValue: '#000000'}),
   Object.freeze({path: 'popup.fontSizePt', type: 'positive-integer', storage: 'sync', defaultValue: 11}),
   Object.freeze({path: 'sites.denyListEnabled', type: 'boolean', storage: 'sync', defaultValue: false}),
@@ -312,7 +312,7 @@ export const SETTINGS_V2_DEFAULTS = deepFreeze({
     }
   },
   popup: {
-    backgroundColor: '#FFF59D',
+    backgroundColor: '#F5F6F8',
     fontColor: '#000000',
     fontSizePt: 11
   },

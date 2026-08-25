@@ -15,6 +15,7 @@ import {
   isAbortError
 } from './content-request.mjs'
 import {createChromeTranslatorRuntime} from './chrome-translator.mjs'
+import {SETTINGS_V2_DEFAULTS} from './settings-v2.mjs'
 import {
   MESSAGE_ERROR_CODES,
   reportMessageFailure
@@ -31,7 +32,7 @@ import {
 export {DEFAULT_OPTIONS, STORAGE_DEFAULTS}
 
 const popupWidth = 360
-let popupColor = DEFAULT_OPTIONS.POPUP_BG_COLOR
+let popupColor = SETTINGS_V2_DEFAULTS.popup.backgroundColor
 let popupFontColor = DEFAULT_OPTIONS.POPUP_FONT_COLOR
 let popupFontsize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
 
@@ -189,7 +190,7 @@ function applyOptions(items) {
   activeInteractionController = null
   removePopup()
 
-  popupColor = nextItems.popup_bgcolor || DEFAULT_OPTIONS.POPUP_BG_COLOR
+  popupColor = nextItems.popup_bgcolor || SETTINGS_V2_DEFAULTS.popup.backgroundColor
   popupFontColor = nextItems.popup_fontcolor || DEFAULT_OPTIONS.POPUP_FONT_COLOR
   popupFontsize = nextItems.popup_fontsize || DEFAULT_OPTIONS.POPUP_FONT_SIZE
   popupController?.setOptions({
