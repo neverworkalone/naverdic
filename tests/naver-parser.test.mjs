@@ -13,7 +13,8 @@ import {
   normalizeHttpUrl,
   normalizeMeanings,
   normalizeString,
-  normalizeStringList
+  normalizeStringList,
+  stripInlineMarkup
 } from '../src/dictionary/normalizer.mjs'
 
 function response(items) {
@@ -169,6 +170,18 @@ test('finds a later audio entry and keeps its phonetic symbol paired with it', (
   assert.equal(result[0].audioUrl, 'https://audio.example/right.mp3')
 })
 
+test('strips inline markup from phonetic symbols', () => {
+  const result = parseNaverDictionaryResponse(response([{
+    handleEntry: 'test',
+    searchPhoneticSymbolList: [{
+      symbolValue: '<strong>test</strong>',
+      symbolFile: 'https://audio.example/test.mp3'
+    }]
+  }]))
+
+  assert.equal(result[0].phoneticSymbol, 'test')
+})
+
 test('does not let missing meanings or invalid audio URLs throw', () => {
   const result = parseNaverDictionaryResponse(response([{
     handleEntry: 'partial',
@@ -199,6 +212,18 @@ test('normalizes scalar and array values consistently', () => {
     '12',
     'false'
   ])
+  assert.equal(
+    stripInlineMarkup('(↔<span class="related_word" lang="en">go out</span>)'),
+    '(↔go out)'
+  )
+  assert.equal(stripInlineMarkup('first<br>second'), 'first\nsecond')
+  assert.equal(
+    stripInlineMarkup('&lt;이미 연결되었거나 쉽게 알 수 있는 사람·사물 앞에 붙음&gt;'),
+    '이미 연결되었거나 쉽게 알 수 있는 사람·사물 앞에 붙음'
+  )
+  assert.equal(stripInlineMarkup('&lt;strong&gt;test&lt;/strong&gt;'), 'test')
+  assert.equal(stripInlineMarkup('A &amp; B'), 'A & B')
+  assert.equal(stripInlineMarkup('&#x3c;사용법&#x3e;'), '사용법')
 })
 
 test('normalizes missing and invalid entry fields to the stable contract', () => {
@@ -246,7 +271,7 @@ test('ignores invalid sibling entries while preserving valid response order', ()
   assert.deepEqual(result[1].meanings, [])
 })
 
-test('keeps HTML-looking response values as plain data', () => {
+test('keeps headwords as text and removes markup from dictionary meanings', () => {
   const word = '<img src=x onerror=alert(1)>'
   const meaning = '<script>alert(1)</script>'
   const result = parseNaverDictionaryResponse(response([{
@@ -255,8 +280,46 @@ test('keeps HTML-looking response values as plain data', () => {
   }]))
 
   assert.equal(result[0].word, word)
-  assert.equal(result[0].meanings[0].value, meaning)
+  assert.equal(result[0].meanings[0].value, 'alert(1)')
   assert.ok(!result[0].dictionaryUrl.includes('<'))
+})
+
+test('removes related-word span markup from the come dictionary response', () => {
+  const result = parseNaverDictionaryResponse(response([{
+    handleEntry: 'come',
+    meansCollector: [{
+      partOfSpeech: '동사',
+      means: [
+        {order: 1, value: '(밀물이) 밀려[들어]오다 (↔<span class="related_word" lang="en">go out</span>)'},
+        {order: 2, value: '(경주에서 몇 위로) 들어오다'},
+        {order: 3, value: '유행하다 (↔<span class="related_word" lang="en">go out</span>)'}
+      ]
+    }]
+  }]))
+
+  assert.deepEqual(result[0].meanings, [
+    {order: '1', value: '(밀물이) 밀려[들어]오다 (↔go out)'},
+    {order: '2', value: '(경주에서 몇 위로) 들어오다'},
+    {order: '3', value: '유행하다 (↔go out)'}
+  ])
+})
+
+test('decodes escaped usage delimiters from the the dictionary response', () => {
+  const result = parseNaverDictionaryResponse(response([{
+    handleEntry: 'the',
+    meansCollector: [{
+      partOfSpeech: '정관사',
+      means: [
+        {order: 1, value: '&lt;이미 연결되었거나 쉽게 알 수 있는 사람·사물 앞에 붙음&gt;'},
+        {order: 2, value: '&lt;유일한 존재·해당 유형 중 일반적이거나 두드러지는 사람·사물 앞에 붙음&gt;'}
+      ]
+    }]
+  }]))
+
+  assert.deepEqual(result[0].meanings, [
+    {order: '1', value: '이미 연결되었거나 쉽게 알 수 있는 사람·사물 앞에 붙음'},
+    {order: '2', value: '유일한 존재·해당 유형 중 일반적이거나 두드러지는 사람·사물 앞에 붙음'}
+  ])
 })
 
 test('encodes API and dictionary query values', () => {

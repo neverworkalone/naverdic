@@ -20,6 +20,7 @@ import {
   registerBackgroundListener,
   validateMessageRequest
 } from '../src/background-handler.mjs'
+import {getProviderPreset} from '../src/translation-provider.mjs'
 
 function jsonResponse(data, overrides = {}) {
   return {
@@ -54,7 +55,7 @@ test('documents the existing actions and creates their request envelopes', () =>
     TRANSLATION: 'translation'
   })
   assert.ok(MESSAGE_CONTRACTS.endic.request.includes("action: 'endic'"))
-  assert.ok(MESSAGE_CONTRACTS.translation.response.includes('DeepLTranslationResponse'))
+  assert.ok(MESSAGE_CONTRACTS.translation.response.includes('TranslationResponse'))
 
   assert.deepEqual(dictionaryRequest(), {
     action: 'endic',
@@ -131,6 +132,28 @@ test('returns a shared success response for dictionary and translation requests'
   assert.deepEqual(JSON.parse(calls[1].options.body), {
     text: ['hello'],
     target_lang: 'ko'
+  })
+})
+
+test('routes provider-backed translation messages through the selected adapter', async () => {
+  const provider = getProviderPreset('gemini')
+  const response = await handleBackgroundMessage({
+    action: MESSAGE_ACTIONS.TRANSLATION,
+    provider,
+    key: 'gemini-secret',
+    data: {text: ['hello'], targetLanguage: 'ko'}
+  }, {
+    fetchFn: async (_url, options) => {
+      assert.equal(options.headers['x-goog-api-key'], 'gemini-secret')
+      return jsonResponse({
+        candidates: [{content: {parts: [{text: '안녕하세요'}]}}]
+      })
+    }
+  })
+
+  assert.deepEqual(response, {
+    ok: true,
+    data: {candidates: [{content: {parts: [{text: '안녕하세요'}]}}]}
   })
 })
 

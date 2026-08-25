@@ -1,4 +1,3 @@
-import { buildNaverApiUrl, parseNaverDictionaryResponse } from './dictionary/parser.mjs'
 import {
   checkTrigger,
   createInteractionController,
@@ -6,243 +5,199 @@ import {
   getSelectionText,
   isDeniedSite
 } from './content-interaction.mjs'
-import { createStorageLifecycle } from './content-storage.mjs'
+import {createContentSettingsLifecycle} from './content-settings.mjs'
+import {createInlinePopupDataClient} from './content-data.mjs'
+import {createPopupAnchor} from './content-position.mjs'
+import {createPopupController, POPUP_STATES} from './content-popup.mjs'
+import {resolvePopupState} from './popup-state.mjs'
+import {
+  createPopupRequestCoordinator,
+  isAbortError
+} from './content-request.mjs'
+import {createChromeTranslatorRuntime} from './chrome-translator.mjs'
+import {SETTINGS_V2_DEFAULTS} from './settings-v2.mjs'
 import {
   MESSAGE_ERROR_CODES,
-  createDictionaryRequest,
-  createTranslationRequest,
-  reportMessageFailure,
-  sendRuntimeMessage
+  reportMessageFailure
 } from './messaging.mjs'
 import {
   DEFAULT_OPTIONS,
-  normalizeSettings,
   STORAGE_DEFAULTS
 } from './settings.mjs'
+import {
+  CHROME_TRANSLATOR_PROVIDER_ID,
+  getProviderPreset
+} from './translation-provider.mjs'
 
-export { DEFAULT_OPTIONS, STORAGE_DEFAULTS }
+export {DEFAULT_OPTIONS, STORAGE_DEFAULTS}
 
-const marginLeft = 10
-const marginRight = 30
-const marginY = 20
 const popupWidth = 360
-let popupColor = DEFAULT_OPTIONS.POPUP_BG_COLOR
+let popupColor = SETTINGS_V2_DEFAULTS.popup.backgroundColor
 let popupFontColor = DEFAULT_OPTIONS.POPUP_FONT_COLOR
 let popupFontsize = DEFAULT_OPTIONS.POPUP_FONT_SIZE
 
 let activeInteractionController = null
 let storageLifecycle = null
+let chromeTranslatorRuntime = null
+let activeTranslationProviderId = ''
+let interactionConfigurationRevision = 0
+let popupController = null
+let popupRequestCoordinator = null
+let popupDataClient = null
 
-
-function appendTextWithLineBreaks(element, value) {
-  const lines = String(value).split(/(?:\r\n|\r|\n)/g)
-  lines.forEach((line, index) => {
-    if (index > 0) {
-      element.appendChild(document.createElement('br'))
-    }
-    element.appendChild(document.createTextNode(line))
-  })
-}
-
-function renderDictionary(container, entries) {
-  let audioShown = false
-
-  entries.forEach(entry => {
-    const title = document.createElement('div')
-    title.className = 'naverdic-wordTitle'
-
-    const wordLink = document.createElement('a')
-    wordLink.href = entry.dictionaryUrl
-    wordLink.target = '_blank'
-    wordLink.rel = 'noopener noreferrer'
-    appendTextWithLineBreaks(wordLink, entry.word)
-    title.appendChild(wordLink)
-
-    if (entry.partOfSpeech) {
-      appendTextWithLineBreaks(title, ` [${entry.partOfSpeech}]`)
-    }
-
-    if (!audioShown && entry.audioUrl) {
-      audioShown = true
-
-      if (entry.phoneticSymbol) {
-        const phonetic = document.createElement('span')
-        appendTextWithLineBreaks(phonetic, ` [${entry.phoneticSymbol}]`)
-        title.appendChild(phonetic)
-      }
-
-      const audioWrapper = document.createElement('span')
-      const audio = document.createElement('audio')
-      audio.className = 'naverdic-audio'
-      audio.controls = true
-      audio.src = entry.audioUrl
-      audio.id = 'proaudio1'
-      audio.setAttribute('controlslist', 'nodownload nooption')
-      audioWrapper.appendChild(audio)
-      title.appendChild(audioWrapper)
-    }
-
-    container.appendChild(title)
-
-    entry.meanings.forEach((meaning, meaningIndex) => {
-      const meaningElement = document.createElement('div')
-      meaningElement.className = meaningIndex === entry.meanings.length - 1
-        ? 'naverdic-wordMeans-last'
-        : 'naverdic-wordMeans'
-      appendTextWithLineBreaks(meaningElement, `${meaning.order}. ${meaning.value}`)
-      container.appendChild(meaningElement)
-    })
-  })
-}
-
-function renderTranslation(container, text) {
-  appendTextWithLineBreaks(container, text)
-}
-
-function showFrame(e, datain, top, left, type = 'dictionary') {
-  if (!datain || (Array.isArray(datain) && datain.length === 0)) {
-    return
-  }
-
-  let shadowRoot = document.createElement('div')
-  shadowRoot.setAttribute('id', 'popupFrame')
-
-  let shadow = shadowRoot.attachShadow({mode: 'open'});
-  fetch(chrome.runtime.getURL("content.css"), {
-    method: 'GET'
-  })
-  .then(resp => resp.text())
-  .then(css => {
-    const style = document.createElement('style')
-    style.textContent = css
-    shadow.appendChild(style)
-  })
-
-  let div = document.createElement('div')
-  div.setAttribute('id', 'popupShadow')
-  div.className = 'popupFrame'
-  div.style.cssText = "top:" + top + "px;left:" + left + "px;width:" + popupWidth +"px;background-color:" + popupColor + ";font-size: " + popupFontsize + "pt;color:" + popupFontColor + ";"
-
-  if (type === 'dictionary') {
-    renderDictionary(div, datain)
-  } else {
-    renderTranslation(div, datain)
-  }
-
-  shadow.appendChild(div)
-  document.body.appendChild(shadowRoot)
-
-  const height = div.clientHeight
-  if ((e.clientY > height) && (e.clientY + height > window.innerHeight)) {
-    const newtop = top - height - 2.5 * marginY
-    shadow.getElementById('popupShadow').style.top = newtop + "px"
-  }
-
-  document.getElementById('popupFrame').onmousedown = function(e) {
-    e.stopPropagation()
-  }
-  document.getElementById('popupFrame').onmousemove = function(e) {
-    e.stopPropagation()
-  }
-  document.getElementById('popupFrame').onmouseup = function(e) {
-    e.stopPropagation()
-  }
-}
-
-
-async function consultDic(e, word, top, left) {
-  const url = buildNaverApiUrl(word)
-
-  const response = await sendRuntimeMessage(
-    chrome.runtime,
-    createDictionaryRequest({method: 'GET', url})
-  )
-
-  if (!response.ok) {
-    reportMessageFailure('dictionary lookup', response)
-    return
-  }
-
-  showFrame(e, parseNaverDictionaryResponse(response.data), top, left)
-}
-
-async function translate(e, text, top, left, key) {
-  const url = 'https://api-free.deepl.com/v2/translate'
-
-  const response = await sendRuntimeMessage(
-    chrome.runtime,
-    createTranslationRequest({
-      method: 'POST',
-      url,
-      key,
-      data: {
-        text: [text],
-        target_lang: 'ko'
+function getPopupController() {
+  if (!popupController) {
+    popupController = createPopupController({
+      document,
+      window,
+      options: {
+        width: popupWidth,
+        backgroundColor: popupColor,
+        fontColor: popupFontColor,
+        fontSizePt: popupFontsize
       }
     })
-  )
-
-  if (!response.ok) {
-    reportMessageFailure('translation', response)
-    return
   }
 
-  const translatedText = response.data?.translations?.[0]?.text
-  if (typeof translatedText !== 'string') {
-    reportMessageFailure('translation', {
-      ok: false,
-      error: {
-        code: MESSAGE_ERROR_CODES.INVALID_RESPONSE,
-        message: 'The translation response did not include translated text.'
-      }
-    })
-    return
-  }
-
-  showFrame(e, translatedText, top, left, 'translation')
+  return popupController
 }
 
-function openPopup(e, key=null, type='search') {
-  let top = e.clientY + window.scrollY + marginY
-  let left = e.clientX - 120 + window.scrollX
-
-  if (e.clientX - 120 < marginLeft) {
-    left = marginLeft + window.scrollX
-  }
-  else if (left + popupWidth + marginRight >= window.innerWidth) {
-    left = window.innerWidth - popupWidth - marginLeft - marginRight
+function getPopupRequestCoordinator() {
+  if (!popupRequestCoordinator) {
+    popupRequestCoordinator = createPopupRequestCoordinator()
   }
 
-  const text = getSelectionText(window.getSelection())
+  return popupRequestCoordinator
+}
+
+function getPopupDataClient() {
+  if (!popupDataClient) {
+    popupDataClient = createInlinePopupDataClient({
+      runtime: chrome.runtime,
+      getChromeTranslatorRuntime
+    })
+  }
+
+  return popupDataClient
+}
+
+function getChromeTranslatorRuntime() {
+  if (!chromeTranslatorRuntime) {
+    chromeTranslatorRuntime = createChromeTranslatorRuntime()
+  }
+  return chromeTranslatorRuntime
+}
+
+function prepareChromeTranslatorRuntime() {
+  return getChromeTranslatorRuntime()
+}
+
+function reportPopupError(scope, error) {
+  if (isAbortError(error)) {
+    return
+  }
+
+  if (error?.response) {
+    reportMessageFailure(scope, error.response)
+    return
+  }
+
+  reportMessageFailure(scope, {
+    ok: false,
+    error: {
+      code: error?.code || MESSAGE_ERROR_CODES.RUNTIME_ERROR,
+      message: error?.message || 'The popup request failed.'
+    }
+  })
+}
+
+function getPopupAnchor(event) {
+  return createPopupAnchor({
+    selection: window.getSelection?.(),
+    event,
+    window
+  })
+}
+
+function renderRequestResult(type, result) {
+  if (!popupController?.isOpen?.()) {
+    return
+  }
+
+  const resolved = resolvePopupState(type, result)
+  if (!resolved) {
+    return
+  }
+
+  if (resolved.state === POPUP_STATES.ERROR) {
+    reportPopupError(type === 'translation' ? 'translation' : 'dictionary lookup', result.error)
+  }
+
+  popupController.update(resolved.state, resolved.data)
+}
+
+function openPopup(event, key = null, type = 'search') {
+  const text = getSelectionText(window.getSelection?.())
   if (!text) {
     return
   }
 
-  if (type === 'translate') {
-    translate(e, text, top, left, key)
+  const isTranslation = type === 'translate'
+  const popupType = isTranslation ? 'translation' : 'dictionary'
+  const query = isTranslation ? text : getDictionaryQuery(text)
+  if (!query) {
+    return
   }
-  else {
-    const word = getDictionaryQuery(text)
-    if (word) {
-      consultDic(e, word, top, left)
-    }
-  }
+
+  const controller = getPopupController()
+  const coordinator = getPopupRequestCoordinator()
+  const dataClient = getPopupDataClient()
+  controller.open({
+    popupType,
+    popupAnchor: getPopupAnchor(event),
+    onPopupClose: reason => coordinator.cancel(`Popup closed: ${reason}`)
+  })
+
+  const request = isTranslation
+    ? ({signal}) => dataClient.translate(query, key, {signal})
+    : ({signal}) => dataClient.lookupDictionary(query, {signal})
+
+  coordinator.run(request).then(result => {
+    renderRequestResult(popupType, result)
+  })
 }
 
 function removePopup() {
-  document.getElementById('popupFrame')?.remove()
+  popupRequestCoordinator?.cancel('Popup removed')
+  popupController?.close('programmatic', {notify: false})
 }
 
 function applyOptions(items) {
-  const nextItems = normalizeSettings(items)
+  const configurationRevision = ++interactionConfigurationRevision
+  const nextItems = items || {}
+  const nextProviderId = nextItems.translationProviderId || 'deepl-free'
+  const nextNeedsChromeRuntime = nextProviderId === CHROME_TRANSLATOR_PROVIDER_ID &&
+    Boolean(nextItems.translate)
+
+  if (activeTranslationProviderId === CHROME_TRANSLATOR_PROVIDER_ID &&
+      !nextNeedsChromeRuntime) {
+    chromeTranslatorRuntime?.destroy()
+    chromeTranslatorRuntime = null
+  }
+  activeTranslationProviderId = nextProviderId
 
   activeInteractionController?.destroy()
   activeInteractionController = null
   removePopup()
 
-  popupColor = nextItems.popup_bgcolor
-  popupFontColor = nextItems.popup_fontcolor
-  popupFontsize = nextItems.popup_fontsize
+  popupColor = nextItems.popup_bgcolor || SETTINGS_V2_DEFAULTS.popup.backgroundColor
+  popupFontColor = nextItems.popup_fontcolor || DEFAULT_OPTIONS.POPUP_FONT_COLOR
+  popupFontsize = nextItems.popup_fontsize || DEFAULT_OPTIONS.POPUP_FONT_SIZE
+  popupController?.setOptions({
+    backgroundColor: popupColor,
+    fontColor: popupFontColor,
+    fontSizePt: popupFontsize
+  })
 
   if (!nextItems.dclick && !nextItems.drag && !nextItems.translate) {
     return
@@ -253,23 +208,58 @@ function applyOptions(items) {
     return
   }
 
-  // This content script is injected into every frame (manifest all_frames).
-  // Binding to this frame's document keeps selection and events local to the
-  // browsing context; events do not bubble across iframe boundaries.
-  activeInteractionController = createInteractionController(nextItems, {
-    target: document,
-    openPopup,
-    removePopup,
-    checkTrigger
-  })
+  const translationRequest = {
+    provider: nextItems.translationProvider || getProviderPreset('deepl-free'),
+    credential: nextItems.translationCredential || '',
+    targetLanguage: nextItems.translationTargetLanguage || 'ko'
+  }
+
+  const bindInteractionController = () => {
+    if (configurationRevision !== interactionConfigurationRevision) {
+      return
+    }
+
+    // This content script is injected into every frame (manifest all_frames).
+    // Binding to this frame's document keeps selection and events local to the
+    // browsing context; events do not bubble across iframe boundaries.
+    activeInteractionController = createInteractionController({
+      ...nextItems,
+      translationRequest
+    }, {
+      target: document,
+      openPopup,
+      removePopup,
+      checkTrigger
+    })
+  }
+
+  if (nextNeedsChromeRuntime) {
+    // Warm the availability state without gating dictionary interaction on it.
+    // Translator availability can wait on browser/network state; delaying the
+    // document handlers would make double-click dictionary lookup appear dead.
+    // Model downloads still only start from the explicit settings click path.
+    try {
+      const availability = prepareChromeTranslatorRuntime().refreshAvailability?.()
+      availability?.catch?.(() => {})
+    } catch (_error) {
+      // An unavailable Translator API must not disable dictionary lookup.
+    }
+  }
+
+  bindInteractionController()
 }
 
 export function unregisterEventListener() {
+  interactionConfigurationRevision += 1
   storageLifecycle?.stop()
   storageLifecycle = null
   activeInteractionController?.destroy()
   activeInteractionController = null
-  removePopup()
+  popupRequestCoordinator?.cancel('Content script unregistered')
+  popupController?.close('unregister', {notify: false})
+  chromeTranslatorRuntime?.destroy()
+  chromeTranslatorRuntime = null
+  activeTranslationProviderId = ''
 }
 
 export function registerEventListener() {
@@ -278,7 +268,7 @@ export function registerEventListener() {
   }
 
   const storage = typeof chrome === 'undefined' ? null : chrome.storage
-  storageLifecycle = createStorageLifecycle({
+  storageLifecycle = createContentSettingsLifecycle({
     storage,
     onApply: applyOptions
   })

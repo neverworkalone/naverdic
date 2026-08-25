@@ -1,0 +1,947 @@
+<script setup>
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { getText } from '/src/text.js'
+import SettingsPreview from '/src/components/SettingsPreview.vue'
+import {
+  createDefaultSecretsV2,
+  createInitialSettingsV2,
+  SETTINGS_NAVIGATION
+} from '/src/settings-v2.mjs'
+import {
+  hasPendingSettingsChanges,
+  loadSettingsV2,
+  saveSettingsV2,
+  shouldWarnBeforeUnload
+} from '/src/settings-v2-storage.mjs'
+import {hasPendingTranslationChanges} from '/src/translation-settings-state.mjs'
+
+const navigation = SETTINGS_NAVIGATION
+const activeNavigationId = ref(navigation[0].id)
+const storage = globalThis.chrome?.storage || null
+
+const defaultSettings = createInitialSettingsV2()
+const defaultSecrets = createDefaultSecretsV2()
+const persistedSettings = reactive(createInitialSettingsV2())
+const persistedSecrets = reactive(createDefaultSecretsV2())
+const draftSettings = reactive(createInitialSettingsV2())
+const draftSecrets = reactive(createDefaultSecretsV2())
+const navButtonRefs = ref([])
+const isLoading = ref(true)
+const isSaving = ref(false)
+const migrationPending = ref(false)
+const draftRevision = ref(0)
+const draftResetRevision = ref(0)
+const hasLoadError = ref(false)
+const saveState = ref('idle')
+const translationEditorDirty = ref(false)
+
+const productVersion = computed(() => {
+  try {
+    const version = globalThis.chrome?.runtime?.getManifest?.()?.version
+    if (typeof version === 'string' && version.trim()) {
+      return version
+    }
+  } catch (_error) {
+    // Use the locale fallback when the runtime manifest is unavailable in tests or previews.
+  }
+  return text('SETTINGS_PRODUCT_VERSION')
+})
+
+const currentNavigation = computed(() => navigation.find(item => (
+  item.id === activeNavigationId.value
+)) || navigation[0])
+
+function cloneValue(value) {
+  return JSON.parse(JSON.stringify(value))
+}
+
+function replaceReactive(target, source) {
+  Object.keys(target).forEach(key => {
+    if (!Object.prototype.hasOwnProperty.call(source, key)) {
+      delete target[key]
+    }
+  })
+  Object.assign(target, cloneValue(source))
+}
+
+const hasPendingChanges = computed(() => hasPendingTranslationChanges(
+  hasPendingSettingsChanges(
+    {settings: persistedSettings, secrets: persistedSecrets},
+    {settings: draftSettings, secrets: draftSecrets}
+  ),
+  translationEditorDirty.value
+))
+
+const canSave = computed(() => (
+  !isLoading.value &&
+  !isSaving.value &&
+  (hasPendingChanges.value || migrationPending.value)
+))
+
+const statusMessageKey = computed(() => {
+  if (isLoading.value) {
+    return 'SETTINGS_SHELL_STATUS_LOADING'
+  }
+  if (isSaving.value) {
+    return 'SETTINGS_SHELL_STATUS_SAVING'
+  }
+  if (hasLoadError.value) {
+    return 'SETTINGS_SHELL_STATUS_LOAD_ERROR'
+  }
+  if (saveState.value === 'error' || migrationPending.value) {
+    return 'SETTINGS_SHELL_STATUS_SAVE_ERROR'
+  }
+  if (saveState.value === 'reset') {
+    return 'SETTINGS_SHELL_STATUS_RESET'
+  }
+  if (hasPendingChanges.value) {
+    return 'SETTINGS_SHELL_STATUS_UNSAVED'
+  }
+  return 'SETTINGS_SHELL_STATUS_SAVED'
+})
+
+const statusClass = computed(() => ({
+  'settings-header__status--unsaved': hasPendingChanges.value || migrationPending.value,
+  'settings-header__status--error': hasLoadError.value ||
+    saveState.value === 'error' || migrationPending.value,
+  'settings-header__status--saving': isLoading.value || isSaving.value
+}))
+
+function text(key, placeholders = undefined) {
+  return getText(key, placeholders)
+}
+
+function setTranslationEditorDirty(value) {
+  translationEditorDirty.value = Boolean(value)
+}
+
+function resetDraft() {
+  const confirmMessage = text('SETTINGS_SHELL_RESET_CONFIRM')
+  const confirmFn = globalThis.confirm
+  if (typeof confirmFn === 'function' && !confirmFn(confirmMessage)) {
+    return
+  }
+
+  replaceReactive(draftSettings, defaultSettings)
+  replaceReactive(draftSecrets, defaultSecrets)
+  draftResetRevision.value += 1
+  draftRevision.value += 1
+  setTranslationEditorDirty(false)
+  saveState.value = 'reset'
+}
+
+function bumpDraftRevision() {
+  draftRevision.value += 1
+}
+
+async function initializeSettings() {
+  isLoading.value = true
+  hasLoadError.value = false
+  saveState.value = 'idle'
+
+  try {
+    const loaded = await loadSettingsV2(storage)
+    replaceReactive(persistedSettings, loaded.settings)
+    replaceReactive(persistedSecrets, loaded.secrets)
+    replaceReactive(draftSettings, loaded.settings)
+    replaceReactive(draftSecrets, loaded.secrets)
+    draftRevision.value += 1
+    migrationPending.value = loaded.migrationNeeded
+
+    if (loaded.migrationNeeded) {
+      try {
+        await saveSettingsV2(storage, loaded)
+        migrationPending.value = false
+      } catch (_error) {
+        saveState.value = 'error'
+      }
+    }
+  } catch (_error) {
+    hasLoadError.value = true
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function saveDraft() {
+  if (!canSave.value) {
+    return
+  }
+
+  isSaving.value = true
+  saveState.value = 'saving'
+
+  try {
+    const saved = await saveSettingsV2(storage, {
+      settings: draftSettings,
+      secrets: draftSecrets
+    })
+    replaceReactive(persistedSettings, saved.settings)
+    replaceReactive(persistedSecrets, saved.secrets)
+    replaceReactive(draftSettings, saved.settings)
+    replaceReactive(draftSecrets, saved.secrets)
+    draftRevision.value += 1
+    migrationPending.value = false
+    hasLoadError.value = false
+    saveState.value = 'success'
+  } catch (_error) {
+    saveState.value = 'error'
+  } finally {
+    isSaving.value = false
+  }
+}
+
+function handleBeforeUnload(event) {
+  if (!shouldWarnBeforeUnload(hasPendingChanges.value)) {
+    return
+  }
+
+  event.preventDefault()
+  event.returnValue = ''
+}
+
+function selectNavigation(item) {
+  if (item.kind !== 'page') {
+    return
+  }
+
+  activeNavigationId.value = item.id
+}
+
+function setNavigationRef(element, index) {
+  if (element) {
+    navButtonRefs.value[index] = element
+  }
+}
+
+function focusNavigation(index) {
+  const item = navigation[index]
+  if (!item) {
+    return
+  }
+
+  navButtonRefs.value[index]?.focus()
+  selectNavigation(item)
+}
+
+function handleNavigationKeydown(event, index) {
+  const lastIndex = navigation.length - 1
+  let nextIndex = index
+
+  if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+    nextIndex = index === lastIndex ? 0 : index + 1
+  } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+    nextIndex = index === 0 ? lastIndex : index - 1
+  } else if (event.key === 'Home') {
+    nextIndex = 0
+  } else if (event.key === 'End') {
+    nextIndex = lastIndex
+  } else {
+    return
+  }
+
+  event.preventDefault()
+  focusNavigation(nextIndex)
+}
+
+defineExpose({
+  activeNavigationId,
+  canSave,
+  currentNavigation,
+  draftSettings,
+  draftSecrets,
+  draftRevision,
+  draftResetRevision,
+  hasPendingChanges,
+  initializeSettings,
+  isLoading,
+  isSaving,
+  migrationPending,
+  navigation,
+  persistedSettings,
+  persistedSecrets,
+  resetDraft,
+  saveDraft,
+  selectNavigation,
+  setTranslationEditorDirty,
+  translationEditorDirty
+})
+
+onMounted(() => {
+  globalThis.window?.addEventListener('beforeunload', handleBeforeUnload)
+  initializeSettings()
+})
+
+onBeforeUnmount(() => {
+  globalThis.window?.removeEventListener('beforeunload', handleBeforeUnload)
+})
+</script>
+
+<template>
+  <main
+    class="settings-shell"
+    :class="{
+      'settings-shell--double-click': currentNavigation.id === 'double-click',
+      'settings-shell--drag': currentNavigation.id === 'behavior',
+      'settings-shell--blocked-sites': currentNavigation.id === 'blocked-sites',
+      'settings-shell--advanced': currentNavigation.id === 'advanced'
+    }"
+    data-testid="settings-shell"
+  >
+    <header class="settings-header">
+      <img
+        class="settings-header__logo"
+        src="/icon128.png"
+        alt=""
+        aria-hidden="true"
+      >
+      <h1 class="settings-header__title">
+        {{ text('SETTINGS_PRODUCT_NAME') }}
+      </h1>
+      <span class="settings-header__version">
+        {{ productVersion }}
+      </span>
+
+      <div class="settings-header__actions" aria-live="polite">
+        <span
+          class="settings-header__status"
+          :class="statusClass"
+          data-testid="settings-save-status"
+          :data-status="statusMessageKey"
+        >
+          {{ text(statusMessageKey) }}
+        </span>
+        <button
+          type="button"
+          class="settings-header__save"
+          data-testid="settings-save-button"
+          :disabled="!canSave"
+          :aria-label="text('SETTINGS_SHELL_SAVE')"
+          @click="saveDraft"
+        >
+          {{ text('SETTINGS_SHELL_SAVE') }}
+        </button>
+      </div>
+    </header>
+
+    <div class="settings-body">
+      <aside class="settings-sidebar">
+        <div class="settings-sidebar__heading">
+          {{ text('SETTINGS_SIDEBAR_HEADING') }}
+        </div>
+
+        <nav
+          class="settings-navigation"
+          :aria-label="text('SETTINGS_SIDEBAR_HEADING')"
+        >
+          <template
+            v-for="(item, index) in navigation"
+            :key="item.id"
+          >
+            <button
+              v-if="item.kind === 'page'"
+              :ref="element => setNavigationRef(element, index)"
+              type="button"
+              class="settings-navigation__item"
+              :class="{
+                'settings-navigation__item--active': activeNavigationId === item.id,
+                'settings-navigation__item--help': item.id === 'help'
+              }"
+              :data-navigation-id="item.id"
+              :aria-current="activeNavigationId === item.id ? 'page' : undefined"
+              @click="selectNavigation(item)"
+              @keydown="handleNavigationKeydown($event, index)"
+            >
+              <span class="settings-navigation__label">
+                {{ text(item.labelKey) }}
+              </span>
+              <span
+                v-if="activeNavigationId === item.id"
+                class="settings-navigation__indicator"
+                aria-hidden="true"
+              />
+            </button>
+
+            <a
+              v-else
+              :ref="element => setNavigationRef(element, index)"
+              class="settings-navigation__item settings-navigation__item--external"
+              :class="{
+                'settings-navigation__item--help': item.id === 'help'
+              }"
+              :href="item.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              :data-navigation-id="item.id"
+              @keydown="handleNavigationKeydown($event, index)"
+            >
+              <span class="settings-navigation__label">
+                {{ text(item.labelKey) }}
+              </span>
+              <span
+                class="settings-navigation__external-icon"
+                aria-hidden="true"
+              >↗</span>
+            </a>
+          </template>
+        </nav>
+
+      </aside>
+
+      <section
+        class="settings-content"
+        :class="{
+          'settings-content--translation': currentNavigation.id === 'translation-service',
+          'settings-content--double-click': currentNavigation.id === 'double-click',
+          'settings-content--drag': currentNavigation.id === 'behavior',
+          'settings-content--blocked-sites': currentNavigation.id === 'blocked-sites',
+          'settings-content--advanced': currentNavigation.id === 'advanced'
+        }"
+        :aria-labelledby="`settings-page-title-${currentNavigation.id}`"
+      >
+        <div class="settings-form-column">
+          <div v-if="currentNavigation.id !== 'translation-service'" class="settings-page-heading">
+            <h2 :id="`settings-page-title-${currentNavigation.id}`">
+              {{ text(currentNavigation.titleKey) }}
+            </h2>
+            <p>{{ text(currentNavigation.descriptionKey) }}</p>
+          </div>
+
+          <slot
+            name="page"
+            :active-page="currentNavigation"
+            :draft="draftSettings"
+            :draft-secrets="draftSecrets"
+            :persisted-settings="persistedSettings"
+            :persisted-secrets="persistedSecrets"
+            :draft-revision="draftRevision"
+            :draft-reset-revision="draftResetRevision"
+            :is-loading="isLoading"
+            :is-saving="isSaving"
+            :reset-draft="resetDraft"
+            :on-draft-revision="bumpDraftRevision"
+            :translation-pending-change="setTranslationEditorDirty"
+          />
+        </div>
+
+        <aside
+          v-if="currentNavigation.id !== 'translation-service'"
+          class="settings-preview-column"
+          :aria-label="text(currentNavigation.previewTitleKey || 'SETTINGS_SHELL_PREVIEW_TITLE')"
+        >
+          <div class="settings-preview-heading">
+            <h2>{{ text(currentNavigation.previewTitleKey || 'SETTINGS_SHELL_PREVIEW_TITLE') }}</h2>
+            <p>{{ text(currentNavigation.previewDescriptionKey || 'SETTINGS_SHELL_PREVIEW_DESCRIPTION') }}</p>
+          </div>
+          <SettingsPreview
+            :active-page="currentNavigation"
+            :draft="draftSettings"
+            :is-loading="isLoading"
+            :is-saving="isSaving"
+            :reset-draft="resetDraft"
+          />
+        </aside>
+      </section>
+    </div>
+  </main>
+</template>
+
+<style scoped>
+:global(*) {
+  box-sizing: border-box;
+}
+
+:global(html),
+:global(body),
+:global(#app) {
+  min-width: 0;
+  min-height: 100%;
+  margin: 0;
+}
+
+:global(body) {
+  background: var(--naverdic-settings-canvas);
+  color: var(--naverdic-settings-text);
+  font-family: var(--naverdic-font-family);
+  font-size: var(--naverdic-font-size-md);
+}
+
+button,
+a {
+  font: inherit;
+}
+
+.settings-shell {
+  width: min(1200px, calc(100% - 32px));
+  min-height: min(860px, calc(100vh - 32px));
+  margin: 16px auto;
+  overflow: hidden;
+  background: var(--naverdic-settings-page);
+  border: 1px solid var(--naverdic-settings-border);
+  border-radius: var(--naverdic-settings-radius);
+  box-shadow: var(--naverdic-settings-shadow);
+}
+
+.settings-shell--double-click {
+  width: min(1200px, 100%);
+  min-height: min(860px, calc(100vh - 32px));
+  margin: 16px auto;
+  border: 1px solid var(--naverdic-settings-border);
+  border-radius: var(--naverdic-settings-radius);
+  box-shadow: var(--naverdic-settings-shadow);
+}
+
+.settings-shell--drag {
+  width: min(1200px, 100%);
+  min-height: min(860px, calc(100vh - 32px));
+  margin: 16px auto;
+  border: 1px solid var(--naverdic-settings-border);
+  border-radius: var(--naverdic-settings-radius);
+  box-shadow: var(--naverdic-settings-shadow);
+}
+
+.settings-shell--blocked-sites {
+  width: min(1200px, 100%);
+  min-height: min(860px, calc(100vh - 32px));
+  margin: 16px auto;
+  border: 1px solid var(--naverdic-settings-border);
+  border-radius: var(--naverdic-settings-radius);
+  box-shadow: var(--naverdic-settings-shadow);
+}
+
+.settings-shell--advanced {
+  width: min(1200px, 100%);
+  min-height: min(860px, calc(100vh - 32px));
+  margin: 16px auto;
+  border: 1px solid var(--naverdic-settings-border);
+  border-radius: var(--naverdic-settings-radius);
+  box-shadow: var(--naverdic-settings-shadow);
+}
+
+.settings-shell--double-click .settings-body {
+  min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
+}
+
+.settings-shell--drag .settings-body {
+  min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
+}
+
+.settings-shell--blocked-sites .settings-body {
+  min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
+}
+
+.settings-shell--advanced .settings-body {
+  min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  min-height: var(--naverdic-settings-header-height);
+  gap: 12px;
+  padding: 16px 24px 16px 32px;
+  background: var(--naverdic-settings-surface);
+  border-bottom: 1px solid var(--naverdic-settings-divider);
+}
+
+.settings-header__logo {
+  display: block;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  object-fit: contain;
+}
+
+.settings-header__title {
+  margin: 0;
+  color: var(--naverdic-settings-text);
+  font-size: var(--naverdic-font-size-lg);
+  font-weight: var(--naverdic-font-weight-medium);
+  line-height: 40px;
+  width: 190px;
+  flex: 0 0 190px;
+}
+
+.settings-header__version {
+  margin-left: -12px;
+  color: var(--naverdic-settings-text-subtle);
+  font-size: var(--naverdic-font-size-lg);
+  font-weight: var(--naverdic-font-weight-medium);
+  line-height: 40px;
+}
+
+.settings-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.settings-header__status {
+  min-width: 84px;
+  color: var(--naverdic-settings-success);
+  font-size: var(--naverdic-font-size-sm);
+  font-weight: var(--naverdic-font-weight-medium);
+  line-height: 40px;
+  text-align: right;
+}
+
+.settings-header__status--unsaved {
+  color: var(--naverdic-color-warning);
+}
+
+.settings-header__status--error {
+  color: var(--naverdic-color-danger);
+}
+
+.settings-header__status--saving {
+  color: var(--naverdic-settings-text-muted);
+}
+
+.settings-header__save {
+  width: 68px;
+  min-height: 40px;
+  padding: 0 8px;
+  color: var(--naverdic-button-text-default);
+  background: var(--naverdic-button-background-default);
+  border: 0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 40px;
+}
+
+.settings-header__save:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.settings-body {
+  display: grid;
+  grid-template-columns: var(--naverdic-settings-sidebar-width) minmax(0, 1fr);
+  min-height: calc(min(860px, 100vh - 32px) - var(--naverdic-settings-header-height));
+}
+
+.settings-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 24px 0 19px;
+  background: var(--naverdic-settings-surface);
+}
+
+.settings-sidebar__heading {
+  min-height: 24px;
+  margin: 0 24px 16px;
+  color: var(--naverdic-settings-text-subtle);
+  font-size: var(--naverdic-font-size-sm);
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.settings-navigation {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.settings-navigation__item--help {
+  position: relative;
+  margin-top: auto;
+}
+
+.settings-navigation__item--help::before {
+  position: absolute;
+  top: -16px;
+  left: 8px;
+  width: 188px;
+  height: 1px;
+  background: var(--naverdic-settings-divider);
+  content: '';
+}
+
+.settings-navigation__external-icon {
+  display: inline-flex;
+  margin-left: 8px;
+  color: currentColor;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.settings-navigation__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 16px;
+  overflow: hidden;
+  color: var(--naverdic-settings-nav-text);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: var(--naverdic-font-weight-medium);
+  line-height: 40px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.settings-navigation__item:hover {
+  background: var(--naverdic-settings-nav-hover);
+}
+
+.settings-navigation__item--active {
+  color: var(--naverdic-settings-primary-text);
+  background: var(--naverdic-settings-nav-active);
+  font-weight: 700;
+}
+
+.settings-navigation__item--active:hover {
+  background: var(--naverdic-settings-nav-active);
+}
+
+.settings-navigation__item:focus-visible,
+.settings-header__save:focus-visible,
+.settings-navigation__item--external:focus-visible {
+  outline: 2px solid var(--naverdic-color-focus);
+  outline-offset: 2px;
+  box-shadow: var(--naverdic-button-focus-ring);
+}
+
+.settings-navigation__indicator {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 3px;
+  height: 20px;
+  background: var(--naverdic-settings-primary);
+  border-radius: 2px;
+}
+
+.settings-content {
+  display: grid;
+  grid-template-columns: minmax(0, 556px) minmax(220px, 300px);
+  gap: 68px;
+  min-width: 0;
+  padding: 30px 40px;
+  background: var(--naverdic-settings-page);
+}
+
+.settings-content--translation {
+  grid-template-columns: minmax(0, 300px) minmax(0, 556px);
+  gap: 28px;
+}
+
+.settings-content--double-click {
+  grid-template-columns: 556px 300px;
+  gap: 28px;
+}
+
+.settings-content--drag {
+  grid-template-columns: 556px 300px;
+  gap: 28px;
+}
+
+.settings-content--blocked-sites {
+  grid-template-columns: 556px 300px;
+  gap: 28px;
+}
+
+.settings-content--advanced {
+  grid-template-columns: 556px 300px;
+  gap: 28px;
+}
+
+.settings-content--translation .settings-form-column {
+  grid-column: 1 / -1;
+}
+
+.settings-form-column,
+.settings-preview-column {
+  min-width: 0;
+}
+
+.settings-page-heading,
+.settings-preview-heading {
+  min-height: 42px;
+}
+
+.settings-page-heading h2,
+.settings-preview-heading h2 {
+  margin: 0;
+  color: var(--naverdic-settings-text);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+.settings-page-heading p,
+.settings-preview-heading p {
+  margin: 0;
+  color: var(--naverdic-settings-text-muted);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.settings-shell--double-click .settings-page-heading h2,
+.settings-shell--double-click .settings-preview-heading h2,
+.settings-shell--drag .settings-page-heading h2,
+.settings-shell--drag .settings-preview-heading h2,
+.settings-shell--advanced .settings-page-heading h2,
+.settings-shell--advanced .settings-preview-heading h2 {
+  font-size: 24px;
+}
+
+@media (max-width: 1050px) {
+  .settings-content {
+    grid-template-columns: minmax(0, 556px);
+  }
+
+  .settings-content--translation {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings-preview-column {
+    display: none;
+  }
+
+  .settings-content--double-click {
+    grid-template-columns: minmax(0, 556px);
+  }
+
+  .settings-content--double-click .settings-preview-column {
+    display: block;
+  }
+
+  .settings-content--drag {
+    grid-template-columns: minmax(0, 556px);
+  }
+
+  .settings-content--drag .settings-preview-column {
+    display: block;
+  }
+
+  .settings-content--blocked-sites {
+    grid-template-columns: minmax(0, 556px);
+  }
+
+  .settings-content--blocked-sites .settings-preview-column {
+    display: block;
+  }
+
+  .settings-content--advanced {
+    grid-template-columns: minmax(0, 556px);
+  }
+
+  .settings-content--advanced .settings-preview-column {
+    display: block;
+  }
+}
+
+@media (max-width: 760px) {
+  .settings-shell {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .settings-body {
+    min-height: calc(100vh - var(--naverdic-settings-header-height));
+  }
+
+  .settings-content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .settings-header {
+    gap: 8px;
+    padding: 12px 16px;
+  }
+
+  .settings-header__title {
+    width: auto;
+    flex: 1 1 auto;
+    max-width: none;
+    overflow: hidden;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .settings-header__version {
+    margin-left: 0;
+    font-size: 14px;
+  }
+
+  .settings-header__actions {
+    gap: 12px;
+  }
+
+  .settings-header__status {
+    display: none;
+  }
+
+  .settings-body {
+    display: block;
+  }
+
+  .settings-sidebar {
+    display: block;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--naverdic-settings-divider);
+  }
+
+  .settings-sidebar__heading {
+    display: none;
+  }
+
+  .settings-navigation {
+    flex: 0 0 auto;
+    flex-direction: row;
+    gap: 4px;
+    padding: 0 12px;
+    overflow-x: auto;
+  }
+
+  .settings-navigation__item {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: max-content;
+    padding: 0 14px;
+  }
+
+  .settings-navigation__item--help {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+    border-radius: 8px;
+  }
+
+  .settings-navigation__item--help::before {
+    display: none;
+  }
+
+  .settings-navigation__indicator {
+    top: auto;
+    right: 16px;
+    bottom: 0;
+    left: 16px;
+    width: auto;
+    height: 3px;
+  }
+
+  .settings-content {
+    display: block;
+    padding: 24px 16px 32px;
+  }
+}
+</style>

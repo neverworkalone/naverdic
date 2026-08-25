@@ -3,52 +3,34 @@
     "message": "네이버 영어사전 - NaverDic"
   },
   "APP_DESCRIPTION": {
-    "message": "직접 단어를 입력하거나 웹페이지의 영어 단어를 선택해 영단어의 뜻을 보여줍니다. 웹페이지의 문장을 드래그하면 DeepL로 번역합니다."
+    "message": "직접 단어를 입력하거나 웹페이지의 영어 단어를 선택해 영단어의 뜻을 보여줍니다. 웹페이지의 문장을 드래그하면 Chrome 내장 번역, DeepL 또는 Gemini로 번역합니다."
   },
   "SEARCH": {
     "message": "검색"
   },
+  "POPUP_SEARCH_LABEL": {
+    "message": "사전 검색"
+  },
+  "POPUP_SEARCH_PLACEHOLDER": {
+    "message": "단어를 입력하세요"
+  },
+  "POPUP_PRODUCT_LABEL": {
+    "message": "네이버 영어사전 · NaverDic"
+  },
+  "POPUP_AUDIO_LABEL": {
+    "message": "발음 재생"
+  },
+  "POPUP_AUDIO_PAUSE_LABEL": {
+    "message": "발음 일시정지"
+  },
   "SETTING": {
     "message": "설정"
   },
-  "VERSION": {
-    "message": "버전"
-  },
-  "DEEPL": {
-    "message": "DeepL 번역"
-  },
-  "POPUP_SETTING": {
-    "message": "팝업 사전"
-  },
-  "POPUP_THEME_GUIDE": {
-    "message": "테마 가이드"
-  },
-  "POPUP_BGCOLOR": {
-    "message": "팝업 배경색: "
-  },
-  "POPUP_FONTCOLOR": {
-    "message": "팝업 글자색: "
-  },
-  "POPUP_FONTSIZE": {
-    "message": "글자 크기(pt): "
-  },
-  "DCLICK_DESC": {
-    "message": "단어를 더블 클릭했을 때 팝업 사전을 보여줍니다."
-  },
-  "DRAG_DESC": {
-    "message": "드래그하여 단어나 숙어를 선택했을 때 팝업 사전을 보여줍니다."
-  },
-  "DEEPL_TRANSLATION": {
-    "message": "DeepL 번역 기능 사용"
-  },
-  "TRIGGER": {
-    "message": "트리거 키: "
-  },
   "DCLICK" : {
-    "message": "더블 클릭"
+    "message": "더블클릭"
   },
   "CTRL_DCLICK": {
-    "message": "$ctrl$ + 더블 클릭",
+    "message": "$ctrl$ + 더블클릭",
     "placeholders": {
       "ctrl": {
         "content": "$1"
@@ -56,7 +38,7 @@
     }
   },
   "ALT_DCLICK": {
-    "message": "$alt$ + 더블 클릭",
+    "message": "$alt$ + 더블클릭",
     "placeholders": {
       "alt": {
         "content": "$1"
@@ -64,7 +46,7 @@
     }
   },
   "CTRL_ALT_DCLICK": {
-    "message": "$ctrl$ + $alt$ + 더블 클릭",
+    "message": "$ctrl$ + $alt$ + 더블클릭",
     "placeholders": {
       "ctrl": {
         "content": "$1"
@@ -75,7 +57,7 @@
     }
   },
   "DCLICK_SPEED": {
-    "message": "더블 클릭 스피드: "
+    "message": "더블클릭 스피드: "
   },
   "DCLICK_SPEED_FASTEST": {
     "message": "더 빠르게"
@@ -119,34 +101,605 @@
       }
     }
   },
-  "URL_SETTING": {
-    "message": "중지 목록 사용"
+  "INLINE_POPUP_DICTIONARY_TITLE": {
+    "message": "사전"
   },
-  "URL_DESC": {
-    "message": "팝업 사전 사용을 중지할 웹사이트를 콤마(,)로 구분해서 넣으세요. 도메인만 넣으면 됩니다. 예) google.com,naver.com"
+  "INLINE_POPUP_TRANSLATION_TITLE": {
+    "message": "번역"
   },
-  "DEEPL_AUTH_KEY": {
-    "message": "인증키: "
+  "INLINE_POPUP_LOADING": {
+    "message": "불러오는 중…"
   },
-  "DEEPL_DESC": {
-    "message": "DeepL 번역 기능을 이용하려면 DeepL 사용법 보기를 참고하세요."
+  "INLINE_POPUP_NO_RESULT": {
+    "message": "결과가 없습니다."
   },
-  "DEEPL_INSTRUCTION": {
-    "message": "DeepL 사용법 보기"
+  "INLINE_POPUP_NETWORK_ERROR": {
+    "message": "결과를 불러오지 못했습니다. 다시 시도해 주세요."
   },
-  "DEEPL_API": {
-    "message": "DeepL API 가기"
+  "SETTINGS_PRODUCT_NAME": {
+    "message": "네이버 영어사전 · NaverDic"
   },
-  "SAVE_STATUS": {
-    "message": "저장했습니다. 열려있는 창은 새로 고침 후 반영됩니다."
+  "SETTINGS_PRODUCT_VERSION": {
+    "message": "7.0"
   },
-  "RESET_STATUS": {
-    "message": "초기화 되었습니다."
+  "SETTINGS_SIDEBAR_HEADING": {
+    "message": "설정"
   },
-  "SAVE": {
+  "SETTINGS_NAV_APPEARANCE": {
+    "message": "모양"
+  },
+  "SETTINGS_NAV_DOUBLE_CLICK": {
+    "message": "더블클릭"
+  },
+  "SETTINGS_NAV_BLOCKED_SITES": {
+    "message": "중지목록"
+  },
+  "SETTINGS_NAV_BEHAVIOR": {
+    "message": "드래그"
+  },
+  "SETTINGS_NAV_TRANSLATION": {
+    "message": "번역 서비스"
+  },
+  "SETTINGS_NAV_HELP": {
+    "message": "도움말"
+  },
+  "SETTINGS_NAV_ADVANCED": {
+    "message": "고급 설정"
+  },
+  "SETTINGS_PAGE_APPEARANCE_TITLE": {
+    "message": "모양"
+  },
+  "SETTINGS_PAGE_APPEARANCE_DESCRIPTION": {
+    "message": "팝업 사전의 색상과 글자 모양을 설정합니다."
+  },
+  "SETTINGS_PAGE_DOUBLE_CLICK_TITLE": {
+    "message": "더블클릭"
+  },
+  "SETTINGS_PAGE_DOUBLE_CLICK_DESCRIPTION": {
+    "message": "페이지에서 단어를 더블클릭했을 때 사전을 표시하는 방법을 설정합니다."
+  },
+  "SETTINGS_PAGE_BLOCKED_SITES_TITLE": {
+    "message": "중지목록"
+  },
+  "SETTINGS_PAGE_BLOCKED_SITES_DESCRIPTION": {
+    "message": "팝업 사전을 표시하지 않을 웹사이트를 관리합니다."
+  },
+  "SETTINGS_PAGE_BEHAVIOR_TITLE": {
+    "message": "드래그"
+  },
+  "SETTINGS_PAGE_BEHAVIOR_DESCRIPTION": {
+    "message": "단어나 짧은 구문을 드래그해 사전에서 검색하는 방식을 설정합니다."
+  },
+  "SETTINGS_PAGE_TRANSLATION_TITLE": {
+    "message": "번역 서비스"
+  },
+  "SETTINGS_PAGE_TRANSLATION_DESCRIPTION": {
+    "message": "번역 기능과 번역 제공자를 설정합니다."
+  },
+  "SETTINGS_PAGE_ADVANCED_TITLE": {
+    "message": "고급 설정"
+  },
+  "SETTINGS_PAGE_ADVANCED_DESCRIPTION": {
+    "message": "설정 데이터를 백업하거나 모든 설정을 초기화합니다."
+  },
+  "SETTINGS_ADVANCED_DATA_TITLE": {
+    "message": "설정 데이터"
+  },
+  "SETTINGS_ADVANCED_DATA_DESCRIPTION": {
+    "message": "다른 환경으로 옮길 때 설정을 파일로 저장할 수 있습니다."
+  },
+  "SETTINGS_ADVANCED_EXPORT_TITLE": {
+    "message": "설정 내보내기"
+  },
+  "SETTINGS_ADVANCED_EXPORT_DESCRIPTION": {
+    "message": "현재 설정을 JSON 파일로 저장합니다."
+  },
+  "SETTINGS_ADVANCED_EXPORT_BUTTON": {
+    "message": "내보내기"
+  },
+  "SETTINGS_ADVANCED_IMPORT_TITLE": {
+    "message": "설정 가져오기"
+  },
+  "SETTINGS_ADVANCED_IMPORT_DESCRIPTION": {
+    "message": "백업한 JSON 파일을 불러옵니다."
+  },
+  "SETTINGS_ADVANCED_IMPORT_BUTTON": {
+    "message": "가져오기"
+  },
+  "SETTINGS_ADVANCED_IMPORT_FILE_LABEL": {
+    "message": "설정 백업 JSON 파일"
+  },
+  "SETTINGS_ADVANCED_IMPORT_ERROR": {
+    "message": "올바른 NaverDic 설정 백업 파일을 선택하세요."
+  },
+  "SETTINGS_ADVANCED_DANGER_BADGE": {
+    "message": "위험 작업"
+  },
+  "SETTINGS_ADVANCED_RESET_TITLE": {
+    "message": "모든 설정 초기화"
+  },
+  "SETTINGS_ADVANCED_RESET_DESCRIPTION": {
+    "message": "저장된 모양, 동작, 서비스 설정이 모두 삭제됩니다. 이 작업은 되돌릴 수 없습니다."
+  },
+  "SETTINGS_ADVANCED_RESET_BUTTON": {
+    "message": "모든 설정 초기화"
+  },
+  "SETTINGS_SHELL_STATUS_SAVED": {
+    "message": "저장됨"
+  },
+  "SETTINGS_SHELL_SAVE": {
     "message": "저장"
   },
-  "RESET": {
-    "message": "초기화"
+  "SETTINGS_SHELL_PREVIEW_TITLE": {
+    "message": "미리보기"
+  },
+  "SETTINGS_SHELL_PREVIEW_DESCRIPTION": {
+    "message": "현재 화면의 변경 결과를 미리 볼 수 있습니다."
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_TITLE": {
+    "message": "더블클릭 안내"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_DESCRIPTION": {
+    "message": "더블클릭한 단어로 사전 결과를 확인합니다."
+  },
+  "SETTINGS_PREVIEW_DRAG_TITLE": {
+    "message": "드래그 안내"
+  },
+  "SETTINGS_PREVIEW_DRAG_DESCRIPTION": {
+    "message": "드래그한 텍스트로 사전 결과를 확인합니다."
+  },
+  "SETTINGS_SHELL_STATUS_LOADING": {
+    "message": "불러오는 중…"
+  },
+  "SETTINGS_SHELL_STATUS_SAVING": {
+    "message": "저장 중…"
+  },
+  "SETTINGS_SHELL_STATUS_UNSAVED": {
+    "message": "저장되지 않음"
+  },
+  "SETTINGS_SHELL_STATUS_SAVE_ERROR": {
+    "message": "저장 실패"
+  },
+  "SETTINGS_SHELL_STATUS_LOAD_ERROR": {
+    "message": "설정 불러오기 실패"
+  },
+  "SETTINGS_SHELL_STATUS_RESET": {
+    "message": "초기화 준비됨"
+  },
+  "SETTINGS_SHELL_RESET_CONFIRM": {
+    "message": "모든 설정 초기화\n저장된 모양, 동작, 서비스 설정이 모두 삭제됩니다. 이 작업은 되돌릴 수 없습니다.\n계속하시겠습니까?"
+  },
+  "SETTINGS_SECTION_POPUP_APPEARANCE": {
+    "message": "팝업 사전"
+  },
+  "SETTINGS_SECTION_POPUP_APPEARANCE_DESCRIPTION": {
+    "message": "페이지에서 단어를 더블클릭했을 때 표시되는 팝업의 스타일을 설정합니다."
+  },
+  "SETTINGS_FIELD_BACKGROUND_COLOR": {
+    "message": "배경색"
+  },
+  "SETTINGS_FIELD_BACKGROUND_COLOR_HINT": {
+    "message": "팝업 사전의 배경색"
+  },
+  "SETTINGS_FIELD_BACKGROUND_COLOR_PICKER": {
+    "message": "팝업 배경색 선택"
+  },
+  "SETTINGS_FIELD_FONT_COLOR": {
+    "message": "글자색"
+  },
+  "SETTINGS_FIELD_FONT_COLOR_HINT": {
+    "message": "검색 결과에 사용할 글자색"
+  },
+  "SETTINGS_FIELD_FONT_COLOR_PICKER": {
+    "message": "팝업 글자색 선택"
+  },
+  "SETTINGS_FIELD_FONT_SIZE": {
+    "message": "글자 크기"
+  },
+  "SETTINGS_FIELD_FONT_SIZE_HINT": {
+    "message": "검색 결과의 글자 크기"
+  },
+  "SETTINGS_FIELD_FONT_SIZE_DECREASE": {
+    "message": "글자 크기 줄이기"
+  },
+  "SETTINGS_FIELD_FONT_SIZE_INCREASE": {
+    "message": "글자 크기 늘리기"
+  },
+  "SETTINGS_FIELD_INVALID_HEX": {
+    "message": "6자리 HEX 색상 코드를 입력하세요."
+  },
+  "SETTINGS_APPEARANCE_SCOPE_TITLE": {
+    "message": "적용 범위"
+  },
+  "SETTINGS_APPEARANCE_SCOPE_DESCRIPTION": {
+    "message": "설정은 페이지 내 더블클릭 사전 팝업에 적용됩니다. 오른쪽에서 해당 팝업을 미리 볼 수 있습니다."
+  },
+  "SETTINGS_POPUP_THEME_GUIDE": {
+    "message": "테마 가이드 보기"
+  },
+  "SETTINGS_SECTION_DOUBLE_CLICK": {
+    "message": "더블클릭 검색"
+  },
+  "SETTINGS_SECTION_DOUBLE_CLICK_DESCRIPTION": {
+    "message": "단어를 더블클릭했을 때 사전을 표시하는 방법을 설정합니다."
+  },
+  "SETTINGS_FIELD_DOUBLE_CLICK_ENABLED": {
+    "message": "더블클릭으로 사전 보기"
+  },
+  "SETTINGS_FIELD_TRIGGER_KEY": {
+    "message": "트리거 키"
+  },
+  "SETTINGS_FIELD_DOUBLE_CLICK_TRIGGER_HINT": {
+    "message": "필요하면 보조 키를 함께 누르세요."
+  },
+  "SETTINGS_FIELD_DOUBLE_CLICK_SPEED": {
+    "message": "더블클릭 속도"
+  },
+  "SETTINGS_FIELD_DOUBLE_CLICK_SPEED_HINT": {
+    "message": "간격이 길수록 느린 더블클릭도 인식합니다."
+  },
+  "SETTINGS_SECTION_DRAG": {
+    "message": "드래그 검색"
+  },
+  "SETTINGS_SECTION_DRAG_DESCRIPTION": {
+    "message": "단어나 짧은 구문을 드래그해 사전에서 검색합니다."
+  },
+  "SETTINGS_FIELD_DRAG_ENABLED": {
+    "message": "드래그 검색 사용"
+  },
+  "SETTINGS_FIELD_DRAG_TRIGGER_HINT": {
+    "message": "드래그할 때 사용할 보조 키를 선택하세요."
+  },
+  "SETTINGS_FIELD_BLOCKED_SITES_ENABLED": {
+    "message": "중지목록 사용"
+  },
+  "SETTINGS_FIELD_BLOCKED_SITES": {
+    "message": "사이트 목록"
+  },
+  "SETTINGS_BLOCKED_SITES_HINT": {
+    "message": "사이트를 한 줄에 하나씩 입력하거나 쉼표(,)나 세미콜론(;)으로 구분하세요."
+  },
+  "SETTINGS_BLOCKED_SITES_PLACEHOLDER": {
+    "message": "예: google.com\nnaver.com"
+  },
+  "SETTINGS_BLOCKED_SITES_INVALID": {
+    "message": "$count$개 항목을 확인하세요. 도메인 또는 URL 형식이어야 합니다.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "SETTINGS_BLOCKED_SITES_REGISTERED": {
+    "message": "등록된 사이트"
+  },
+  "SETTINGS_BLOCKED_SITES_EMPTY": {
+    "message": "등록된 사이트가 없습니다."
+  },
+  "SETTINGS_PREVIEW_WORD": {
+    "message": "dictionary"
+  },
+  "SETTINGS_PREVIEW_MEANING": {
+    "message": "사전 결과 미리보기"
+  },
+  "SETTINGS_PREVIEW_HINT": {
+    "message": "현재 팝업 설정"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_TITLE": {
+    "message": "중지목록 안내"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_DESCRIPTION": {
+    "message": "팝업이 표시되지 않는 범위를 확인합니다."
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1": {
+    "message": "단어 위에 포인터 이동"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_1_DESCRIPTION": {
+    "message": "검색할 단어를 찾습니다."
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_2": {
+    "message": "설정한 방식으로 더블클릭"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_2_DESCRIPTION": {
+    "message": "설정한 트리거로 사전 열기를 실행합니다."
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3": {
+    "message": "사전 팝업 표시"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_3_DESCRIPTION": {
+    "message": "선택한 단어 근처에 결과가 나타납니다."
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_4": {
+    "message": "팝업 닫기"
+  },
+  "SETTINGS_PREVIEW_DOUBLE_CLICK_STEP_4_DESCRIPTION": {
+    "message": "팝업 바깥을 클릭하면 닫힙니다."
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_1": {
+    "message": "텍스트를 선택"
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_1_DESCRIPTION": {
+    "message": "단어나 짧은 구문을 드래그합니다."
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_2": {
+    "message": "검색 실행"
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_2_DESCRIPTION": {
+    "message": "설정한 방식으로 검색합니다."
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_3": {
+    "message": "사전 검색"
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_3_DESCRIPTION": {
+    "message": "선택한 내용을 사전에서 찾습니다."
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_4": {
+    "message": "결과 팝업 표시"
+  },
+  "SETTINGS_PREVIEW_DRAG_STEP_4_DESCRIPTION": {
+    "message": "텍스트 근처에 결과가 나타납니다."
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_1": {
+    "message": "사이트 주소 확인"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_1_DESCRIPTION": {
+    "message": "현재 페이지의 도메인을 확인합니다."
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_2": {
+    "message": "목록과 비교"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_2_DESCRIPTION": {
+    "message": "중지목록에 포함되어 있는지 찾습니다."
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_3": {
+    "message": "팝업 표시 안 함"
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_STEP_3_DESCRIPTION": {
+    "message": "더블클릭과 드래그 팝업을 숨깁니다."
+  },
+  "SETTINGS_PREVIEW_BLOCKED_SITES_NOTE": {
+    "message": "필요한 도메인만 추가하면 다른 사이트에는 계속 적용됩니다."
+  },
+  "SETTINGS_PREVIEW_ADVANCED_TITLE": {
+    "message": "설정 초기화"
+  },
+  "SETTINGS_PREVIEW_ADVANCED_DESCRIPTION": {
+    "message": "삭제 전 내용을 꼭 확인하세요."
+  },
+  "SETTINGS_TRANSLATION_ENABLED": {
+    "message": "번역 기능"
+  },
+  "SETTINGS_TRANSLATION_AVAILABLE_SERVICES": {
+    "message": "서비스 선택"
+  },
+  "SETTINGS_TRANSLATION_CHROME_NAME": {
+    "message": "Chrome 내장 번역"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DESCRIPTION": {
+    "message": "Translator API · 무료"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_NAME": {
+    "message": "DeepL"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_DESCRIPTION": {
+    "message": "Free / Pro API"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_NAME": {
+    "message": "Gemini"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_DESCRIPTION": {
+    "message": "Google AI API"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_MODEL": {
+    "message": "모델"
+  },
+  "SETTINGS_TRANSLATION_ACTIVE": {
+    "message": "사용 중"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_VARIANT": {
+    "message": "DeepL 요금제"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_FREE": {
+    "message": "DeepL Free"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_PRO": {
+    "message": "DeepL Pro"
+  },
+  "SETTINGS_TRANSLATION_API_KEY": {
+    "message": "API 키"
+  },
+  "SETTINGS_TRANSLATION_API_KEY_HINT": {
+    "message": "인증 정보는 이 기기의 로컬 저장소에만 저장됩니다."
+  },
+  "SETTINGS_TRANSLATION_API_KEY_PLACEHOLDER": {
+    "message": "API 키를 입력하세요"
+  },
+  "SETTINGS_TRANSLATION_API_KEY_MISSING": {
+    "message": "API 키를 입력해야 연결 테스트를 할 수 있습니다."
+  },
+  "SETTINGS_TRANSLATION_SHOW_KEY": {
+    "message": "보기"
+  },
+  "SETTINGS_TRANSLATION_HIDE_KEY": {
+    "message": "숨기기"
+  },
+  "SETTINGS_TRANSLATION_TEST": {
+    "message": "연결 테스트"
+  },
+  "SETTINGS_TRANSLATION_TESTING": {
+    "message": "테스트 중…"
+  },
+  "SETTINGS_TRANSLATION_TEST_SUCCESS": {
+    "message": "연결 테스트에 성공했습니다."
+  },
+  "SETTINGS_TRANSLATION_TEST_FAILURE": {
+    "message": "연결 테스트에 실패했습니다. 설정과 API 키를 확인하세요."
+  },
+  "SETTINGS_TRANSLATION_SELECTOR_TITLE": {
+    "message": "번역 서비스"
+  },
+  "SETTINGS_TRANSLATION_SELECTOR_HINT": {
+    "message": "번역 기능과 사용할 서비스를 설정합니다."
+  },
+  "SETTINGS_TRANSLATION_DETAIL_TITLE": {
+    "message": "세부 설정"
+  },
+  "SETTINGS_TRANSLATION_STATUS_DOWNLOADING": {
+    "message": "준비 중"
+  },
+  "SETTINGS_TRANSLATION_STATUS_UNAVAILABLE": {
+    "message": "사용 불가"
+  },
+  "SETTINGS_TRANSLATION_STATUS_ERROR": {
+    "message": "오류"
+  },
+  "SETTINGS_TRANSLATION_STATUS_CONFIGURED": {
+    "message": "준비됨"
+  },
+  "SETTINGS_TRANSLATION_STATUS_CONFIGURED_INACTIVE": {
+    "message": "설정됨"
+  },
+  "SETTINGS_TRANSLATION_STATUS_UNCONFIGURED": {
+    "message": "미설정"
+  },
+  "SETTINGS_TRANSLATION_CONNECTED_BADGE": {
+    "message": "연결됨"
+  },
+  "SETTINGS_TRANSLATION_ERROR_BADGE": {
+    "message": "연결 오류"
+  },
+  "SETTINGS_TRANSLATION_REQUIRED_BADGE": {
+    "message": "설정 필요"
+  },
+  "SETTINGS_TRANSLATION_DELETE_KEY": {
+    "message": "삭제"
+  },
+  "SETTINGS_TRANSLATION_ACTIVATE": {
+    "message": "이 서비스 사용"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL": {
+    "message": "번역 모델"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNSUPPORTED": {
+    "message": "지원 안 함"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_NEEDED": {
+    "message": "다운로드 필요"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_DOWNLOADING": {
+    "message": "다운로드 중"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_READY": {
+    "message": "사용 가능"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_UNAVAILABLE": {
+    "message": "사용 불가"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_FAILED": {
+    "message": "다운로드 실패"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_BUTTON": {
+    "message": "모델 다운로드"
+  },
+  "SETTINGS_TRANSLATION_CHROME_RETRY": {
+    "message": "다시 시도"
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_STATUS": {
+    "message": "$progress$% · 다운로드 중입니다.",
+    "placeholders": {
+      "progress": {
+        "content": "$1"
+      }
+    }
+  },
+  "SETTINGS_TRANSLATION_CHROME_DOWNLOAD_PROGRESS_INDETERMINATE": {
+    "message": "다운로드 중입니다."
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_TITLE": {
+    "message": "Translator API를 사용할 수 없습니다."
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_VERSION": {
+    "message": "Chrome 버전이 Translator API를 지원하지 않음"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_ENVIRONMENT": {
+    "message": "지원되지 않는 운영체제 또는 기기 환경"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_REASON_REQUIREMENTS": {
+    "message": "Chrome의 온디바이스 번역 실행 조건을 충족하지 않음"
+  },
+  "SETTINGS_TRANSLATION_CHROME_UNAVAILABLE_UPDATE": {
+    "message": "Chrome을 최신 버전으로 업데이트한 뒤 다시 확인해 보세요."
+  },
+  "SETTINGS_TRANSLATION_CHROME_NOTE": {
+    "message": "오류가 발생하면 Chrome 번역 모델을 Uninstall한 후 다시 설치해 보세요."
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_LABEL": {
+    "message": "번역 트리거"
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_NONE": {
+    "message": "드래그"
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_PRIMARY": {
+    "message": "$modifier$ + 드래그",
+    "placeholders": {
+      "modifier": {
+        "content": "$1"
+      }
+    }
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_ALT": {
+    "message": "$modifier$ + 드래그",
+    "placeholders": {
+      "modifier": {
+        "content": "$1"
+      }
+    }
+  },
+  "SETTINGS_TRANSLATION_TRIGGER_PRIMARY_ALT": {
+    "message": "$primary$ + $secondary$ + 드래그",
+    "placeholders": {
+      "primary": {
+        "content": "$1"
+      },
+      "secondary": {
+        "content": "$2"
+      }
+    }
+  },
+  "SETTINGS_TRANSLATION_CHROME_PAGE_DESCRIPTION": {
+    "message": "Chrome 번역 모델의 상태를 확인하고 관리합니다."
+  },
+  "SETTINGS_TRANSLATION_EXTERNAL_PAGE_DESCRIPTION": {
+    "message": "외부 번역 서비스 연결과 인증 정보를 관리합니다."
+  },
+  "SETTINGS_TRANSLATION_CHROME_CARD_DESCRIPTION": {
+    "message": "Chrome 내장 Translator API는 모델을 다운로드하면 인터넷 연결이나 사용량 제한 없이 기기에서 무료로 작동하는 온디바이스 번역 기능입니다."
+  },
+  "SETTINGS_TRANSLATION_EXTERNAL_CARD_DESCRIPTION": {
+    "message": "API 키와 연결 상태를 설정합니다."
+  },
+  "SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR_VALUE": {
+    "message": "영어 → 한국어"
+  },
+  "SETTINGS_TRANSLATION_CHROME_LANGUAGE_PAIR_CODE": {
+    "message": "en → ko"
+  },
+  "SETTINGS_TRANSLATION_CHROME_MODEL_MANAGEMENT": {
+    "message": "번역 모델 관리"
+  },
+  "SETTINGS_TRANSLATION_DEEPL_KEY_LINK": {
+    "message": "DeepL API 키 발급하기"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_KEY_LINK": {
+    "message": "Gemini API 키 발급하기"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_MODEL_FETCH": {
+    "message": "모델 목록 가져오기"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_MODEL_LOADING": {
+    "message": "가져오는 중…"
+  },
+  "SETTINGS_TRANSLATION_GEMINI_MODEL_LIST_FAILURE": {
+    "message": "모델 목록을 가져오지 못했습니다. API 키와 연결을 확인하세요."
   }
 }
