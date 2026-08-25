@@ -468,8 +468,8 @@ test('renders drag defaults, locale-backed controls, and only drag settings', as
   const enabled = wrapper.get('[data-testid="settings-drag-enabled"]').element
   const trigger = wrapper.get('[data-testid="settings-drag-trigger"]').element
 
-  assert.equal(enabled.checked, true)
-  assert.equal(trigger.value, 'none')
+  assert.equal(enabled.checked, false)
+  assert.equal(trigger.value, 'alt')
   assert.deepEqual(
     [...trigger.options].map(option => option.value),
     ['none', 'ctrl', 'alt', 'ctrlalt']
@@ -518,8 +518,8 @@ test('updates drag draft values, reports dirty state, and resets from the revisi
   Object.assign(draft.dictionary.drag, createInitialSettingsV2().dictionary.drag)
   await wrapper.setProps({draftRevision: 1})
   await wrapper.vm.$nextTick()
-  assert.equal(wrapper.get('[data-testid="settings-drag-enabled"]').element.checked, true)
-  assert.equal(wrapper.get('[data-testid="settings-drag-trigger"]').element.value, 'none')
+  assert.equal(wrapper.get('[data-testid="settings-drag-enabled"]').element.checked, false)
+  assert.equal(wrapper.get('[data-testid="settings-drag-trigger"]').element.value, 'alt')
   wrapper.unmount()
 })
 

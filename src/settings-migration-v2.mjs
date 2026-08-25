@@ -82,7 +82,11 @@ export function migrateV66ToV2(values) {
     legacy.dclick_speed,
     settings.dictionary.doubleClick.speedMs
   )
-  settings.dictionary.drag.enabled = legacy.drag
+  // Do not let legacy compatibility defaults re-enable drag search on a
+  // genuinely new install with no v6.6 settings to migrate.
+  if (sourceKeys.length > 0) {
+    settings.dictionary.drag.enabled = legacy.drag
+  }
   if (hasOwn(source, 'drag_trigger_key')) {
     settings.dictionary.drag.triggerKey = legacy.drag_trigger_key
   }
