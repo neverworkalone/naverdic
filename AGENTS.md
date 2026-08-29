@@ -79,3 +79,14 @@ Clearly distinguish between:
 * `validation blocked`
 
 Passing the full automated test suite alone does NOT prove that a browser-visible issue is resolved.
+
+## Review Feedback
+
+When asked to check PR review comments, evaluate the feedback rather than merely summarizing it: fix findings you agree with, and explain your reasoning when you disagree.
+
+* Read all current review comments and threads.
+* Evaluate each comment against the current code and PR head.
+* If you agree with the finding, fix it and run the relevant validation.
+* If you disagree, explain why with concrete technical reasoning instead of changing the code.
+* Push confirmed fixes to the existing PR.
+* DO NOT self-review or merge the PR unless explicitly asked.
