@@ -25,6 +25,17 @@ function entryMeta(entry) {
   ].filter(Boolean).join(' · ')
 }
 
+function hasEntryHeader(entry, entryIndex) {
+  return Boolean(
+    entry?.word
+    || (entryIndex === audioEntryIndex.value && audioAvailable.value)
+  )
+}
+
+function hasEntryDetails(entry, entryIndex) {
+  return hasEntryHeader(entry, entryIndex) || Boolean(entryMeta(entry))
+}
+
 function stopAudio(resetPosition = false) {
   const audio = audioElement.value
   try {
@@ -112,8 +123,9 @@ onBeforeUnmount(() => stopAudio())
       class="dictionary-result__entry"
       role="listitem"
     >
-      <div class="dictionary-result__header">
+      <div v-if="hasEntryHeader(entry, entryIndex)" class="dictionary-result__header">
         <a
+          v-if="entry.word"
           class="dictionary-result__word"
           :href="entry.dictionaryUrl || '#'"
           target="_blank"
@@ -136,7 +148,7 @@ onBeforeUnmount(() => stopAudio())
         {{ entryMeta(entry) }}
       </p>
 
-      <div class="dictionary-result__divider" aria-hidden="true" />
+      <div v-if="hasEntryDetails(entry, entryIndex)" class="dictionary-result__divider" aria-hidden="true" />
 
       <p
         v-for="(meaning, meaningIndex) in entry.meanings"

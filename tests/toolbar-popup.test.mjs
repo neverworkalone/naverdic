@@ -113,6 +113,62 @@ function dictionaryResponseForItems(items) {
   }
 }
 
+function koreanDictionaryResponse() {
+  return {
+    searchResultMap: {
+      searchResultListMap: {
+        WORD: {
+          items: [
+            {
+              handleEntry: '',
+              expEntry: '<strong>복수</strong>',
+              meansCollector: [{
+                partOfSpeech: '',
+                means: [{
+                  order: '',
+                  value: '[명사] revenge, vengeance, [동사] (formal) avenge (oneself on sb), (formal) revenge oneself on sb, take revenge[vengeance] on sb, pay sb back for sth, get back at sb'
+                }]
+              }]
+            },
+            {
+              handleEntry: '',
+              expEntry: '<strong>복수</strong>',
+              meansCollector: [{
+                partOfSpeech: '',
+                means: [{order: '', value: '(둘 이상의 수) the plural ((abb.)pl.)'}]
+              }]
+            },
+            {
+              handleEntry: '',
+              expEntry: '<strong>복수</strong>의 칼[칼날]을 갈다',
+              meansCollector: [{
+                partOfSpeech: '',
+                means: [{order: '', value: 'sharpen the sword of[the sword blade of] revenge'}]
+              }]
+            },
+            {
+              handleEntry: '',
+              expEntry: '<strong>복수</strong>의',
+              meansCollector: [{
+                partOfSpeech: '',
+                means: [{order: '', value: 'plural'}]
+              }]
+            },
+            {
+              handleEntry: '',
+              expEntry: '단수와 <strong>복수</strong>',
+              meansCollector: [{
+                partOfSpeech: '',
+                means: [{order: '', value: 'the singular (number) and the plural (number)'}]
+              }]
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
 function respond(index, response) {
   requests[index]?.callback(response)
 }
@@ -287,6 +343,26 @@ test('renders multiple concise entries in the same whole-body scroll layout', as
   assert.equal(wrapper.get('.naverdic-popup-body').classes('naverdic-popup-body--result'), true)
   assert.equal(wrapper.findAll('.dictionary-result__entry').length, 6)
   assert.equal(wrapper.get('.naverdic-popup-body .naverdic-popup-footer').exists(), true)
+  wrapper.unmount()
+})
+
+test('renders Korean-query entries without reserving empty heading rows', async () => {
+  const wrapper = mountPopup()
+  await wrapper.get('.naverdic-popup-search__input').setValue('복수')
+  await wrapper.get('.naverdic-popup-search').trigger('submit')
+
+  assert.equal(requests.length, 1)
+  assert.match(requests[0].request.url, /query=%EB%B3%B5%EC%88%98$/)
+
+  respond(0, {ok: true, data: koreanDictionaryResponse()})
+  await flushPromises()
+
+  assert.equal(wrapper.findAll('.dictionary-result__entry').length, 5)
+  assert.equal(wrapper.findAll('.dictionary-result__header').length, 0)
+  assert.equal(wrapper.findAll('.dictionary-result__divider').length, 0)
+  assert.equal(wrapper.findAll('.dictionary-result__meaning')[0].text().startsWith('. '), true)
+  assert.equal(wrapper.findAll('.dictionary-result__meaning')[1].text(), '. (둘 이상의 수) the plural ((abb.)pl.)')
+  assert.equal(wrapper.findAll('.dictionary-result__meaning')[2].text(), '. sharpen the sword of[the sword blade of] revenge')
   wrapper.unmount()
 })
 
