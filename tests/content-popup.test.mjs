@@ -399,14 +399,18 @@ test('installs dictionary interaction while Chrome Translator availability is pe
     chrome: globalThis.chrome,
     document: globalThis.document,
     fetch: globalThis.fetch,
-    navigator: globalThis.navigator,
+    navigatorDescriptor: Object.getOwnPropertyDescriptor(globalThis, 'navigator'),
     self: globalThis.self,
     window: globalThis.window
   }
 
   globalThis.window = window
   globalThis.document = document
-  globalThis.navigator = window.navigator
+  Object.defineProperty(globalThis, 'navigator', {
+    configurable: true,
+    writable: true,
+    value: window.navigator
+  })
   globalThis.self = window
   globalThis.fetch = async () => ({ok: false})
   window.Translator = {
@@ -464,7 +468,11 @@ test('installs dictionary interaction while Chrome Translator availability is pe
     globalThis.chrome = previousGlobals.chrome
     globalThis.document = previousGlobals.document
     globalThis.fetch = previousGlobals.fetch
-    globalThis.navigator = previousGlobals.navigator
+    if (previousGlobals.navigatorDescriptor) {
+      Object.defineProperty(globalThis, 'navigator', previousGlobals.navigatorDescriptor)
+    } else {
+      delete globalThis.navigator
+    }
     globalThis.self = previousGlobals.self
     globalThis.window = previousGlobals.window
     dom.window.close()
