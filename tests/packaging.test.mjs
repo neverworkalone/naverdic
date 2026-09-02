@@ -13,15 +13,26 @@ import {
 } from '../scripts/validate-package.mjs'
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const packageJson = JSON.parse(
+  fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8')
+)
+const packScript = fs.readFileSync(path.join(projectRoot, 'pack.sh'), 'utf8')
 const manifest = JSON.parse(
   fs.readFileSync(path.join(projectRoot, 'public/manifest.json'), 'utf8')
 )
+
+test('release packaging opts into minification while direct pack.sh stays raw by default', () => {
+  assert.equal(packageJson.scripts.package, 'bash pack.sh --minify')
+  assert.match(packScript, /MINIFY=false/)
+  assert.match(packScript, /--minify\)/)
+  assert.match(packScript, /if \[\[ "\$MINIFY" == true \]\]; then/)
+})
 
 test('package validator covers manifest entry points and web resources', () => {
   const files = collectManifestFiles(manifest)
 
   assert.equal(manifest.version, RELEASE_MANIFEST_VERSION)
-  assert.equal(JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8')).version, RELEASE_PACKAGE_VERSION)
+  assert.equal(packageJson.version, RELEASE_PACKAGE_VERSION)
   assert.equal(manifest.options_ui?.open_in_tab, true)
 
   assert.equal(

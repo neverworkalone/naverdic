@@ -148,7 +148,10 @@ test('distinguishes vertical/horizontal drags from a double click', () => {
   }, {
     target,
     openPopup: (...args) => opened.push(args),
-    removePopup: () => { removed += 1 }
+    removePopup: () => { removed += 1 },
+    // Keep this interaction sequence deterministic on hosts whose Node
+    // navigator reports macOS (where the ctrl setting maps to Meta).
+    checkTrigger: (event, key) => checkTrigger(event, key, 'Win32')
   })
 
   target.dispatch('mousedown', mouseEvent({clientX: 10, clientY: 10}))

@@ -41,7 +41,9 @@ yarn build
 yarn package
 ```
 
-The package command builds and validates `naverdic_<version>.zip`.
+The package command builds, minifies, and validates `naverdic_<version>.zip`.
+Run `./pack.sh` directly when a non-minified package is needed; pass
+`./pack.sh --minify` to enable minification explicitly.
 
 ### Run the webpage development server
 

@@ -231,6 +231,8 @@ onBeforeUnmount(() => stopAudio())
   width: 40px;
   height: 28px;
   padding: 0 8px;
+  /* The result inset leaves the control 6px right of the search action center. */
+  margin-right: 6px;
   border: 0;
   border-radius: 8px;
   background: #E8F2FF;

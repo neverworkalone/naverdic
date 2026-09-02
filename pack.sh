@@ -5,8 +5,22 @@ PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 DIST_DIR="$PROJECT_ROOT/dist"
 VITE_BIN="$PROJECT_ROOT/node_modules/.bin/vite"
 ESBUILD_BIN="$PROJECT_ROOT/node_modules/.bin/esbuild"
+MINIFY=false
 
-if [[ ! -x "$VITE_BIN" || ! -x "$ESBUILD_BIN" ]]; then
+for argument in "$@"; do
+  case "$argument" in
+    --minify)
+      MINIFY=true
+      ;;
+    *)
+      echo "Unknown option: $argument" >&2
+      echo "Usage: $0 [--minify]" >&2
+      exit 2
+      ;;
+  esac
+done
+
+if [[ ! -x "$VITE_BIN" || ( "$MINIFY" == true && ! -x "$ESBUILD_BIN" ) ]]; then
   echo "Missing local build dependencies. Run yarn install first." >&2
   exit 1
 fi
@@ -14,12 +28,14 @@ fi
 cd "$PROJECT_ROOT"
 "$VITE_BIN" build
 
-# Vite copies the raw service/content modules for development. The release
-# package uses minified bundles while retaining the static modules declared by
-# the manifest for unpacked/content-script compatibility.
-"$ESBUILD_BIN" --bundle src/background.js --minify --format=esm --outfile="$DIST_DIR/background.js"
-"$ESBUILD_BIN" --bundle src/content.js --minify --format=esm --outfile="$DIST_DIR/content.js"
-"$ESBUILD_BIN" --bundle src/content.css --minify --outfile="$DIST_DIR/content.css"
+# Vite copies the raw service/content modules for development. The optional
+# release minification keeps the static modules declared by the manifest for
+# unpacked/content-script compatibility.
+if [[ "$MINIFY" == true ]]; then
+  "$ESBUILD_BIN" --bundle src/background.js --minify --format=esm --outfile="$DIST_DIR/background.js"
+  "$ESBUILD_BIN" --bundle src/content.js --minify --format=esm --outfile="$DIST_DIR/content.js"
+  "$ESBUILD_BIN" --bundle src/content.css --minify --outfile="$DIST_DIR/content.css"
+fi
 
 # index.html and its index-* chunks are the repository's development demo, not
 # extension entry points. The demo HTML and favicon are not needed by Chrome.
