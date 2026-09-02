@@ -2,7 +2,7 @@
   "name": "naverdic",
   "private": true,
   "type": "module",
-  "version": "7.0.0",
+  "version": "7.1.0",
   "scripts": {
     "dev": "vite",
     "lint": "node scripts/check-source.mjs",
