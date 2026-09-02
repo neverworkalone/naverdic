@@ -9,7 +9,7 @@
     "test": "node --test tests/*.test.mjs",
     "typecheck": "node scripts/check-source.mjs",
     "build": "vite build",
-    "package": "bash pack.sh",
+    "package": "bash pack.sh --minify",
     "preview": "vite preview"
   },
   "dependencies": {
