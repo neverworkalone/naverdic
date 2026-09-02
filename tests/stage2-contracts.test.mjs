@@ -484,6 +484,7 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(dictionaryResult, /\.dictionary-result \{[\s\S]*min-height: 216px;[\s\S]*padding: 12px 4px;[\s\S]*overflow: visible/)
   assert.equal(dictionaryResult.includes('dictionary-result--scrollable'), false)
   assert.match(dictionaryResult, /\.dictionary-result__audio-button img \{[\s\S]*width: 18px;[\s\S]*height: 18px/)
+  assert.match(dictionaryResult, /\.dictionary-result__audio-button \{[\s\S]*margin-right: 6px;/)
   assert.match(dictionaryResult, /POPUP_AUDIO_PAUSE_LABEL/)
 
   const preview = fs.readFileSync(path.join(projectRoot, 'src/components/SettingsPreview.vue'), 'utf8')
