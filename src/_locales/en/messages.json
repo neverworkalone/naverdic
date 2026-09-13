@@ -17,6 +17,15 @@
   "POPUP_PRODUCT_LABEL": {
     "message": "Naver English Dictionary · NaverDic"
   },
+  "POPUP_RECENT_SEARCH_TITLE": {
+    "message": "Recent searches"
+  },
+  "POPUP_RECENT_SEARCH_CLEAR": {
+    "message": "Clear"
+  },
+  "POPUP_RECENT_SEARCH_CLEAR_LABEL": {
+    "message": "Clear recent searches"
+  },
   "POPUP_AUDIO_LABEL": {
     "message": "Play pronunciation"
   },
@@ -181,6 +190,12 @@
   },
   "SETTINGS_PAGE_ADVANCED_DESCRIPTION": {
     "message": "Back up settings data or reset all settings."
+  },
+  "SETTINGS_ADVANCED_RECENT_SEARCH_TITLE": {
+    "message": "Recent searches"
+  },
+  "SETTINGS_ADVANCED_RECENT_SEARCH_DESCRIPTION": {
+    "message": "Save recently searched English words and show them in the popup."
   },
   "SETTINGS_ADVANCED_DATA_TITLE": {
     "message": "Settings data"
@@ -349,6 +364,9 @@
   },
   "SETTINGS_FIELD_DRAG_TRIGGER_HINT": {
     "message": "Choose the modifier key used while dragging."
+  },
+  "SETTINGS_FIELD_RECENT_SEARCH_ENABLED": {
+    "message": "Use recent searches"
   },
   "SETTINGS_FIELD_BLOCKED_SITES_ENABLED": {
     "message": "Enable blocked sites"

@@ -41,7 +41,10 @@ test('provides complete toolbar popup labels in both locales', () => {
       'POPUP_SEARCH_PLACEHOLDER',
       'POPUP_PRODUCT_LABEL',
       'POPUP_AUDIO_LABEL',
-      'POPUP_AUDIO_PAUSE_LABEL'
+      'POPUP_AUDIO_PAUSE_LABEL',
+      'POPUP_RECENT_SEARCH_TITLE',
+      'POPUP_RECENT_SEARCH_CLEAR',
+      'POPUP_RECENT_SEARCH_CLEAR_LABEL'
     ]) {
       assert.equal(typeof locale[key]?.message, 'string')
       assert.notEqual(locale[key].message.trim(), '')

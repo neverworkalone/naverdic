@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 import {fileURLToPath} from 'node:url'
@@ -8,8 +9,7 @@ import {
   PACKAGE_ASSETS,
   collectManifestFiles,
   collectSourceDependencies,
-  RELEASE_MANIFEST_VERSION,
-  RELEASE_PACKAGE_VERSION
+  validatePackageDirectory
 } from '../scripts/validate-package.mjs'
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -31,8 +31,8 @@ test('release packaging opts into minification while direct pack.sh stays raw by
 test('package validator covers manifest entry points and web resources', () => {
   const files = collectManifestFiles(manifest)
 
-  assert.equal(manifest.version, RELEASE_MANIFEST_VERSION)
-  assert.equal(packageJson.version, RELEASE_PACKAGE_VERSION)
+  assert.match(manifest.version, /^\d+\.\d+$/)
+  assert.match(packageJson.version, /^\d+\.\d+\.\d+$/)
   assert.equal(manifest.options_ui?.open_in_tab, true)
 
   assert.equal(
@@ -67,6 +67,23 @@ test('package validator covers manifest entry points and web resources', () => {
   }
 
   assert.deepEqual(PACKAGE_ASSETS, ['audio-play.svg'])
+})
+
+test('uses the packaged manifest as the only release-version source', () => {
+  const packageDir = fs.mkdtempSync(path.join(os.tmpdir(), 'naverdic-package-manifest-'))
+
+  try {
+    fs.writeFileSync(
+      path.join(packageDir, 'manifest.json'),
+      JSON.stringify({version: manifest.version})
+    )
+    const result = validatePackageDirectory({projectRoot, packageDir})
+
+    assert.equal(result.errors.some(error => error.includes('Version mismatch')), false)
+    assert.equal(result.errors.some(error => error.includes('Release version mismatch')), false)
+  } finally {
+    fs.rmSync(packageDir, {recursive: true, force: true})
+  }
 })
 
 test('package validator follows raw background and content imports', () => {

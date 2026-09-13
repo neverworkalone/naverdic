@@ -5,6 +5,8 @@ import {fileURLToPath, pathToFileURL} from 'node:url'
 import {after, before, test} from 'node:test'
 import {JSDOM} from 'jsdom'
 import {compileScript, parse} from '@vue/compiler-sfc'
+import {RECENT_SEARCH_STORAGE} from '../src/recent-search.mjs'
+import {SETTINGS_STORAGE} from '../src/settings-v2.mjs'
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 let tempRoot
@@ -173,7 +175,102 @@ function respond(index, response) {
   requests[index]?.callback(response)
 }
 
-function mountPopup() {
+class PopupStorageArea {
+  constructor(items = {}) {
+    this.items = {...items}
+    this.getCalls = []
+    this.setCalls = []
+    this.removeCalls = []
+  }
+
+  get(keys, callback) {
+    this.getCalls.push(keys)
+    const requestedKeys = Array.isArray(keys) ? keys : [keys]
+    callback(Object.fromEntries(requestedKeys
+      .filter(key => Object.prototype.hasOwnProperty.call(this.items, key))
+      .map(key => [key, this.items[key]])))
+  }
+
+  set(values, callback) {
+    this.setCalls.push({...values})
+    Object.assign(this.items, values)
+    callback?.()
+  }
+
+  remove(keys, callback) {
+    const requestedKeys = Array.isArray(keys) ? keys : [keys]
+    this.removeCalls.push([...requestedKeys])
+    requestedKeys.forEach(key => delete this.items[key])
+    callback?.()
+  }
+}
+
+class DeferredPopupStorageArea extends PopupStorageArea {
+  constructor(items = {}) {
+    super(items)
+    this.pendingGets = []
+  }
+
+  get(keys, callback) {
+    this.getCalls.push(keys)
+    const requestedKeys = Array.isArray(keys) ? keys : [keys]
+    const values = Object.fromEntries(requestedKeys
+      .filter(key => Object.prototype.hasOwnProperty.call(this.items, key))
+      .map(key => [key, this.items[key]]))
+    this.pendingGets.push({callback, values})
+  }
+
+  resolveNextGet() {
+    const pending = this.pendingGets.shift()
+    pending?.callback(pending.values)
+  }
+}
+
+function createPopupStorage({enabled = false, searches = [], sync: providedSync = null} = {}) {
+  const listeners = new Set()
+  const sync = providedSync || new PopupStorageArea({
+    [SETTINGS_STORAGE.settings.key]: {
+      schemaVersion: 2,
+      recentSearch: {enabled}
+    }
+  })
+  const local = new PopupStorageArea(searches.length
+    ? {[RECENT_SEARCH_STORAGE.key]: searches}
+    : {})
+
+  return {
+    sync,
+    local,
+    onChanged: {
+      addListener(listener) {
+        listeners.add(listener)
+      },
+      removeListener(listener) {
+        listeners.delete(listener)
+      }
+    },
+    updateSettings(changes) {
+      const oldValue = sync.items[SETTINGS_STORAGE.settings.key]
+      const newValue = {...oldValue, ...changes}
+      sync.items[SETTINGS_STORAGE.settings.key] = newValue
+      for (const listener of listeners) {
+        listener({
+          [SETTINGS_STORAGE.settings.key]: {oldValue, newValue}
+        }, 'sync')
+      }
+    },
+    updateRecentSearchSetting(nextEnabled) {
+      this.updateSettings({
+        recentSearch: {
+          ...sync.items[SETTINGS_STORAGE.settings.key].recentSearch,
+          enabled: nextEnabled
+        }
+      })
+    }
+  }
+}
+
+function mountPopup({storage = null} = {}) {
   requests = []
   globalThis.chrome = {
     i18n: {getMessage: () => ''},
@@ -181,7 +278,8 @@ function mountPopup() {
       sendMessage: (request, callback) => {
         requests.push({request, callback})
       }
-    }
+    },
+    ...(storage ? {storage} : {})
   }
   return mount(Popup)
 }
@@ -240,6 +338,161 @@ test('matches the v7 toolbar shell and renders a dictionary result', async () =>
   assert.equal(wrapper.get('.dictionary-result__meaning').text(), '1. 시험, 테스트')
   assert.equal(wrapper.find('.dictionary-result__audio-button').exists(), false)
   assert.equal(wrapper.get('.naverdic-popup-body .naverdic-popup-footer').exists(), true)
+  wrapper.unmount()
+})
+
+test('keeps recent searches completely absent when the opt-in setting is off', async () => {
+  const storage = createPopupStorage()
+  const wrapper = mountPopup({storage})
+  await flushPromises()
+
+  assert.equal(wrapper.find('[data-testid="popup-recent-search"]').exists(), false)
+
+  await wrapper.get('.naverdic-popup-search__input').setValue('test')
+  await wrapper.get('.naverdic-popup-search').trigger('submit')
+  respond(0, {ok: true, data: dictionaryResponse('test')})
+  await flushPromises()
+
+  assert.equal(storage.local.setCalls.length, 0)
+  assert.equal(RECENT_SEARCH_STORAGE.key in storage.local.items, false)
+  wrapper.unmount()
+})
+
+test('renders up to 20 stored recent words in the Figma-aligned two-column panel', async () => {
+  const searches = [
+    'elaborate', 'subtle', 'beneath', 'reckon', 'linger', 'ambiguous',
+    'reluctant', 'glimpse', 'weary', 'obscure', 'tremble', 'hollow',
+    'murmur', 'faint', 'peculiar', 'stumble', 'solemn', 'drift',
+    'scarce', 'intricate'
+  ]
+  const wrapper = mountPopup({storage: createPopupStorage({enabled: true, searches})})
+  await flushPromises()
+
+  const panel = wrapper.get('[data-testid="popup-recent-search"]')
+  assert.equal(panel.get('.naverdic-popup-recent__title').text(), '최근 검색')
+  assert.equal(panel.get('[data-testid="popup-recent-search-clear"]').text(), '지우기')
+  assert.equal(panel.get('.naverdic-popup-recent__grid').classes('naverdic-popup-recent__grid'), true)
+  assert.equal(panel.findAll('[data-testid="popup-recent-search-item"]').length, 20)
+  assert.deepEqual(
+    panel.findAll('[data-testid="popup-recent-search-item"]').slice(0, 4).map(item => item.text()),
+    ['elaborate', 'subtle', 'beneath', 'reckon']
+  )
+  assert.equal(wrapper.get('.naverdic-popup-footer').exists(), true)
+  wrapper.unmount()
+})
+
+test('records only valid toolbar words, moves duplicates to the front, and clears on request', async () => {
+  const storage = createPopupStorage({enabled: true})
+  const wrapper = mountPopup({storage})
+  await flushPromises()
+
+  const input = wrapper.get('.naverdic-popup-search__input')
+  const form = wrapper.get('.naverdic-popup-search')
+  await input.setValue('Hello')
+  await form.trigger('submit')
+  respond(0, {ok: true, data: dictionaryResponse('hello')})
+  await flushPromises()
+  await input.setValue('복수')
+  await form.trigger('submit')
+  respond(1, {ok: true, data: dictionaryResponse('복수')})
+  await flushPromises()
+  await input.setValue('hello world')
+  await form.trigger('submit')
+  respond(2, {ok: true, data: dictionaryResponse('hello world')})
+  await flushPromises()
+  await input.setValue("can't")
+  await form.trigger('submit')
+  respond(3, {ok: true, data: dictionaryResponse("can't")})
+  await flushPromises()
+  await input.setValue('HELLO')
+  await form.trigger('submit')
+  respond(4, {ok: true, data: dictionaryResponse('hello')})
+  await flushPromises()
+
+  assert.deepEqual(storage.local.items[RECENT_SEARCH_STORAGE.key], ['hello', "can't"])
+
+  await input.setValue('')
+  await form.trigger('submit')
+  await flushPromises()
+  await wrapper.get('[data-testid="popup-recent-search-clear"]').trigger('click')
+  await flushPromises()
+  assert.equal(RECENT_SEARCH_STORAGE.key in storage.local.items, false)
+  assert.equal(wrapper.find('[data-testid="popup-recent-search"]').exists(), false)
+  wrapper.unmount()
+})
+
+test('hides and stops recording immediately when the saved setting changes to off', async () => {
+  const storage = createPopupStorage({enabled: true, searches: ['stored']})
+  const wrapper = mountPopup({storage})
+  await flushPromises()
+  assert.equal(wrapper.find('[data-testid="popup-recent-search"]').exists(), true)
+
+  storage.updateRecentSearchSetting(false)
+  await flushPromises()
+  assert.equal(wrapper.find('[data-testid="popup-recent-search"]').exists(), false)
+  assert.equal(RECENT_SEARCH_STORAGE.key in storage.local.items, false)
+
+  await wrapper.get('.naverdic-popup-search__input').setValue('newword')
+  await wrapper.get('.naverdic-popup-search').trigger('submit')
+  respond(0, {ok: true, data: dictionaryResponse('newword')})
+  await flushPromises()
+  assert.equal(storage.local.setCalls.length, 0)
+  wrapper.unmount()
+})
+
+test('ignores a stale initial settings read after the feature is turned off', async () => {
+  const sync = new DeferredPopupStorageArea({
+    [SETTINGS_STORAGE.settings.key]: {
+      schemaVersion: 2,
+      recentSearch: {enabled: true}
+    }
+  })
+  const storage = createPopupStorage({sync, searches: ['stored']})
+  const wrapper = mountPopup({storage})
+  await flushPromises()
+
+  storage.updateRecentSearchSetting(false)
+  await flushPromises()
+  sync.resolveNextGet()
+  await flushPromises()
+
+  assert.equal(wrapper.find('[data-testid="popup-recent-search"]').exists(), false)
+  await wrapper.get('.naverdic-popup-search__input').setValue('newword')
+  await wrapper.get('.naverdic-popup-search').trigger('submit')
+  respond(0, {ok: true, data: dictionaryResponse('newword')})
+  await flushPromises()
+  assert.equal(storage.local.setCalls.length, 0)
+  wrapper.unmount()
+})
+
+test('does not reload recent history when an unrelated settings value changes', async () => {
+  const storage = createPopupStorage({enabled: true, searches: ['stored']})
+  const wrapper = mountPopup({storage})
+  await flushPromises()
+  const syncReads = storage.sync.getCalls.length
+  const localReads = storage.local.getCalls.length
+
+  storage.updateSettings({popup: {fontSizePt: 12}})
+  await flushPromises()
+
+  assert.equal(storage.sync.getCalls.length, syncReads)
+  assert.equal(storage.local.getCalls.length, localReads)
+  assert.equal(wrapper.find('[data-testid="popup-recent-search"]').exists(), true)
+  wrapper.unmount()
+})
+
+test('searches immediately when a recent word is clicked', async () => {
+  const wrapper = mountPopup({
+    storage: createPopupStorage({enabled: true, searches: ['first', 'second']})
+  })
+  await flushPromises()
+
+  await wrapper.findAll('[data-testid="popup-recent-search-item"]')[1].trigger('click')
+  assert.equal(requests.length, 1)
+  assert.match(requests[0].request.url, /query=second$/)
+  assert.equal(wrapper.get('.naverdic-popup-search__input').element.value, 'second')
+  respond(0, {ok: true, data: dictionaryResponse('second')})
+  await flushPromises()
   wrapper.unmount()
 })
 
