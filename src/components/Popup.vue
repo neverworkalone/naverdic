@@ -31,6 +31,7 @@ const recentSearchReady = ref(false)
 const pendingRecentSearches = []
 let recentSearchWriteQueue = Promise.resolve()
 let storageChangeListener = null
+let recentSearchStateRevision = 0
 const popupBodyElement = ref(null)
 let requestRevision = 0
 const hasVisibleResult = computed(() => entries.value.length > 0
@@ -122,25 +123,49 @@ function trackRecentSearch(query) {
 }
 
 async function initializeRecentSearch() {
+  const revision = recentSearchStateRevision
   try {
     const loaded = await loadRecentSearchState(globalThis.chrome?.storage)
+    if (revision !== recentSearchStateRevision) {
+      return
+    }
     recentSearchEnabled.value = loaded.enabled
     recentSearches.value = loaded.searches
   } catch (_error) {
+    if (revision !== recentSearchStateRevision) {
+      return
+    }
     recentSearchEnabled.value = false
     recentSearches.value = []
   } finally {
+    if (revision !== recentSearchStateRevision) {
+      return
+    }
     recentSearchReady.value = true
     flushPendingRecentSearches()
   }
 }
 
 async function refreshRecentSearchFromStorage() {
-  const loaded = await loadRecentSearchState(globalThis.chrome?.storage)
-  recentSearchEnabled.value = loaded.enabled
-  recentSearches.value = loaded.searches
-  recentSearchReady.value = true
-  flushPendingRecentSearches()
+  const revision = ++recentSearchStateRevision
+  try {
+    const loaded = await loadRecentSearchState(globalThis.chrome?.storage)
+    if (revision !== recentSearchStateRevision) {
+      return
+    }
+    recentSearchEnabled.value = loaded.enabled
+    recentSearches.value = loaded.searches
+    recentSearchReady.value = true
+    flushPendingRecentSearches()
+  } catch (_error) {
+    if (revision !== recentSearchStateRevision) {
+      return
+    }
+    recentSearchEnabled.value = false
+    recentSearches.value = []
+    recentSearchReady.value = true
+    pendingRecentSearches.length = 0
+  }
 }
 
 function handleStorageChanged(changes, areaName) {
@@ -153,19 +178,23 @@ function handleStorageChanged(changes, areaName) {
     return
   }
 
+  const previousEnabled = normalizeSettingsV2(settingChange.oldValue).recentSearch.enabled
   const enabled = normalizeSettingsV2(settingChange.newValue).recentSearch.enabled
+  if (previousEnabled === enabled) {
+    return
+  }
+
   if (!enabled) {
+    recentSearchStateRevision += 1
     recentSearchEnabled.value = false
     recentSearches.value = []
+    recentSearchReady.value = true
     pendingRecentSearches.length = 0
     queueRecentSearchClear()
     return
   }
 
-  void refreshRecentSearchFromStorage().catch(() => {
-    recentSearchEnabled.value = false
-    recentSearches.value = []
-  })
+  void refreshRecentSearchFromStorage()
 }
 
 function clearPopupRecentSearches() {

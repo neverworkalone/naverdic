@@ -178,11 +178,13 @@ function respond(index, response) {
 class PopupStorageArea {
   constructor(items = {}) {
     this.items = {...items}
+    this.getCalls = []
     this.setCalls = []
     this.removeCalls = []
   }
 
   get(keys, callback) {
+    this.getCalls.push(keys)
     const requestedKeys = Array.isArray(keys) ? keys : [keys]
     callback(Object.fromEntries(requestedKeys
       .filter(key => Object.prototype.hasOwnProperty.call(this.items, key))
@@ -203,9 +205,30 @@ class PopupStorageArea {
   }
 }
 
-function createPopupStorage({enabled = false, searches = []} = {}) {
+class DeferredPopupStorageArea extends PopupStorageArea {
+  constructor(items = {}) {
+    super(items)
+    this.pendingGets = []
+  }
+
+  get(keys, callback) {
+    this.getCalls.push(keys)
+    const requestedKeys = Array.isArray(keys) ? keys : [keys]
+    const values = Object.fromEntries(requestedKeys
+      .filter(key => Object.prototype.hasOwnProperty.call(this.items, key))
+      .map(key => [key, this.items[key]]))
+    this.pendingGets.push({callback, values})
+  }
+
+  resolveNextGet() {
+    const pending = this.pendingGets.shift()
+    pending?.callback(pending.values)
+  }
+}
+
+function createPopupStorage({enabled = false, searches = [], sync: providedSync = null} = {}) {
   const listeners = new Set()
-  const sync = new PopupStorageArea({
+  const sync = providedSync || new PopupStorageArea({
     [SETTINGS_STORAGE.settings.key]: {
       schemaVersion: 2,
       recentSearch: {enabled}
@@ -226,18 +249,23 @@ function createPopupStorage({enabled = false, searches = []} = {}) {
         listeners.delete(listener)
       }
     },
-    updateRecentSearchSetting(nextEnabled) {
+    updateSettings(changes) {
       const oldValue = sync.items[SETTINGS_STORAGE.settings.key]
-      const newValue = {
-        ...oldValue,
-        recentSearch: {enabled: nextEnabled}
-      }
+      const newValue = {...oldValue, ...changes}
       sync.items[SETTINGS_STORAGE.settings.key] = newValue
       for (const listener of listeners) {
         listener({
           [SETTINGS_STORAGE.settings.key]: {oldValue, newValue}
         }, 'sync')
       }
+    },
+    updateRecentSearchSetting(nextEnabled) {
+      this.updateSettings({
+        recentSearch: {
+          ...sync.items[SETTINGS_STORAGE.settings.key].recentSearch,
+          enabled: nextEnabled
+        }
+      })
     }
   }
 }
@@ -409,6 +437,47 @@ test('hides and stops recording immediately when the saved setting changes to of
   respond(0, {ok: true, data: dictionaryResponse('newword')})
   await flushPromises()
   assert.equal(storage.local.setCalls.length, 0)
+  wrapper.unmount()
+})
+
+test('ignores a stale initial settings read after the feature is turned off', async () => {
+  const sync = new DeferredPopupStorageArea({
+    [SETTINGS_STORAGE.settings.key]: {
+      schemaVersion: 2,
+      recentSearch: {enabled: true}
+    }
+  })
+  const storage = createPopupStorage({sync, searches: ['stored']})
+  const wrapper = mountPopup({storage})
+  await flushPromises()
+
+  storage.updateRecentSearchSetting(false)
+  await flushPromises()
+  sync.resolveNextGet()
+  await flushPromises()
+
+  assert.equal(wrapper.find('[data-testid="popup-recent-search"]').exists(), false)
+  await wrapper.get('.naverdic-popup-search__input').setValue('newword')
+  await wrapper.get('.naverdic-popup-search').trigger('submit')
+  respond(0, {ok: true, data: dictionaryResponse('newword')})
+  await flushPromises()
+  assert.equal(storage.local.setCalls.length, 0)
+  wrapper.unmount()
+})
+
+test('does not reload recent history when an unrelated settings value changes', async () => {
+  const storage = createPopupStorage({enabled: true, searches: ['stored']})
+  const wrapper = mountPopup({storage})
+  await flushPromises()
+  const syncReads = storage.sync.getCalls.length
+  const localReads = storage.local.getCalls.length
+
+  storage.updateSettings({popup: {fontSizePt: 12}})
+  await flushPromises()
+
+  assert.equal(storage.sync.getCalls.length, syncReads)
+  assert.equal(storage.local.getCalls.length, localReads)
+  assert.equal(wrapper.find('[data-testid="popup-recent-search"]').exists(), true)
   wrapper.unmount()
 })
 
