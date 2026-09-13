@@ -75,6 +75,10 @@ export default defineConfig({
           dest: '.'
         },
         {
+          src: 'src/recent-search.mjs',
+          dest: '.'
+        },
+        {
           src: 'src/chrome-translator.mjs',
           dest: '.'
         },

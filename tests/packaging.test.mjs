@@ -53,6 +53,7 @@ test('package validator covers manifest entry points and web resources', () => {
     'content-popup.mjs',
     'content-request.mjs',
     'messaging.mjs',
+    'recent-search.mjs',
     'dictionary/parser.mjs',
     'dictionary/normalizer.mjs',
     'icon16.png',

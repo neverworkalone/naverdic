@@ -28,6 +28,12 @@ import {
   CHROME_TRANSLATOR_PROVIDER_ID,
   getProviderPreset
 } from './translation-provider.mjs'
+import {
+  addRecentSearch,
+  normalizeRecentSearchTerm,
+  readRecentSearches,
+  writeRecentSearches
+} from './recent-search.mjs'
 
 export {DEFAULT_OPTIONS, STORAGE_DEFAULTS}
 
@@ -44,6 +50,8 @@ let interactionConfigurationRevision = 0
 let popupController = null
 let popupRequestCoordinator = null
 let popupDataClient = null
+let activeRecentSearchEnabled = false
+let recentSearchWriteQueue = Promise.resolve()
 
 function getPopupController() {
   if (!popupController) {
@@ -86,6 +94,31 @@ function getChromeTranslatorRuntime() {
     chromeTranslatorRuntime = createChromeTranslatorRuntime()
   }
   return chromeTranslatorRuntime
+}
+
+function trackInlineRecentSearch(query) {
+  const term = normalizeRecentSearchTerm(query)
+  if (!activeRecentSearchEnabled || !term) {
+    return
+  }
+
+  recentSearchWriteQueue = recentSearchWriteQueue
+    .catch(() => {})
+    .then(async () => {
+      if (!activeRecentSearchEnabled) {
+        return
+      }
+
+      const localStorage = globalThis.chrome?.storage?.local
+      const searches = await readRecentSearches(localStorage)
+      const nextSearches = addRecentSearch(searches, term)
+      const changed = nextSearches.length !== searches.length ||
+        nextSearches.some((entry, index) => entry !== searches[index])
+      if (changed) {
+        await writeRecentSearches(localStorage, nextSearches)
+      }
+    })
+    .catch(() => {})
 }
 
 function prepareChromeTranslatorRuntime() {
@@ -136,7 +169,7 @@ function renderRequestResult(type, result) {
   popupController.update(resolved.state, resolved.data)
 }
 
-function openPopup(event, key = null, type = 'search') {
+function openPopup(event, key = null, type = 'search', source = '') {
   const text = getSelectionText(window.getSelection?.())
   if (!text) {
     return
@@ -147,6 +180,10 @@ function openPopup(event, key = null, type = 'search') {
   const query = isTranslation ? text : getDictionaryQuery(text)
   if (!query) {
     return
+  }
+
+  if (!isTranslation && source === 'double-click') {
+    trackInlineRecentSearch(query)
   }
 
   const controller = getPopupController()
@@ -175,6 +212,7 @@ function removePopup() {
 function applyOptions(items) {
   const configurationRevision = ++interactionConfigurationRevision
   const nextItems = items || {}
+  activeRecentSearchEnabled = Boolean(nextItems.recentSearchEnabled)
   const nextProviderId = nextItems.translationProviderId || 'deepl-free'
   const nextNeedsChromeRuntime = nextProviderId === CHROME_TRANSLATOR_PROVIDER_ID &&
     Boolean(nextItems.translate)
@@ -260,6 +298,7 @@ export function unregisterEventListener() {
   chromeTranslatorRuntime?.destroy()
   chromeTranslatorRuntime = null
   activeTranslationProviderId = ''
+  activeRecentSearchEnabled = false
 }
 
 export function registerEventListener() {

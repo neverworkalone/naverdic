@@ -158,12 +158,14 @@ test('distinguishes vertical/horizontal drags from a double click', () => {
   target.dispatch('mousemove', mouseEvent({clientX: 10, clientY: 30}))
   target.dispatch('mouseup', mouseEvent({clientX: 10, clientY: 30, ctrlKey: true}))
   assert.equal(opened.length, 1)
+  assert.equal(opened[0][3], 'drag')
 
   target.dispatch('mousedown', mouseEvent({clientX: 20, clientY: 20}))
   target.dispatch('mouseup', mouseEvent({clientX: 20, clientY: 20}))
   target.dispatch('mousedown', mouseEvent({clientX: 20, clientY: 20}))
   target.dispatch('mouseup', mouseEvent({clientX: 20, clientY: 20}))
   assert.equal(opened.length, 2)
+  assert.equal(opened[1][3], 'double-click')
   assert.equal(removed >= 3, true)
 
   controller.destroy()

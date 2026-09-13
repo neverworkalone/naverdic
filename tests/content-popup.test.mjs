@@ -17,6 +17,7 @@ import {
   createDefaultSecretsV2,
   createInitialSettingsV2
 } from '../src/settings-v2.mjs'
+import {RECENT_SEARCH_STORAGE} from '../src/recent-search.mjs'
 
 const VIEWPORT = {
   left: 0,
@@ -373,7 +374,11 @@ test('installs dictionary interaction while Chrome Translator availability is pe
   const {document, window} = dom.window
   const settings = createInitialSettingsV2()
   settings.dictionary.drag.enabled = false
+  settings.recentSearch.enabled = true
   const secrets = createDefaultSecretsV2()
+  const localItems = {
+    [SETTINGS_STORAGE.secrets.key]: secrets
+  }
   const listeners = new Set()
   const storage = {
     sync: {
@@ -382,9 +387,16 @@ test('installs dictionary interaction while Chrome Translator availability is pe
       })
     },
     local: {
-      get: (_keys, callback) => callback({
-        [SETTINGS_STORAGE.secrets.key]: secrets
-      })
+      get: (keys, callback) => {
+        const requestedKeys = Array.isArray(keys) ? keys : [keys]
+        callback(Object.fromEntries(requestedKeys
+          .filter(key => Object.prototype.hasOwnProperty.call(localItems, key))
+          .map(key => [key, localItems[key]])))
+      },
+      set: (values, callback) => {
+        Object.assign(localItems, values)
+        callback?.()
+      }
     },
     onChanged: {
       addListener: listener => listeners.add(listener),
@@ -460,6 +472,8 @@ test('installs dictionary interaction while Chrome Translator availability is pe
 
     assert.ok(document.getElementById('popupFrame'))
     assert.equal(listeners.size, 1)
+    await new Promise(resolve => setImmediate(resolve))
+    assert.deepEqual(localItems[RECENT_SEARCH_STORAGE.key], ['hello'])
 
     resolveAvailability('available')
     await new Promise(resolve => setImmediate(resolve))

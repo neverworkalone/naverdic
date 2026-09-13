@@ -374,6 +374,7 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.equal(toolbarPopup.includes('box-shadow: 0 4px 14px rgba(26, 36, 51, 0.12)'), false)
   assert.match(toolbarPopup, /\.naverdic-popup-shell--result \{[\s\S]*min-height: 308px/)
   assert.match(toolbarPopup, /\.naverdic-popup-shell--idle,[\s\S]*\.naverdic-popup-shell--loading \{[\s\S]*height: 92px/)
+  assert.match(toolbarPopup, /\.naverdic-popup-shell--recent \{[\s\S]*height: auto;[\s\S]*min-height: 0;/)
   assert.match(toolbarPopup, /\.naverdic-popup-shell--loading\.naverdic-popup-shell--result \{[\s\S]*height: auto/)
   assert.match(toolbarPopup, /naverdic-popup-recent__grid/)
   assert.match(toolbarPopup, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)/)

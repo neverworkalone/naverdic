@@ -444,7 +444,7 @@ body {
 
 .naverdic-popup-shell--recent {
   height: auto;
-  min-height: 374px;
+  min-height: 0;
   padding-bottom: 14px;
 }
 

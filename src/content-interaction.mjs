@@ -259,7 +259,7 @@ export function createInteractionController(options, dependencies = {}) {
 
       if (config.drag && triggerMatches(event, config.drag_trigger_key)) {
         removePopup()
-        openPopup(event)
+        openPopup(event, null, 'search', 'drag')
       } else if (config.translate && triggerMatches(event, config.translate_trigger_key)) {
         removePopup()
         openPopup(
@@ -291,7 +291,7 @@ export function createInteractionController(options, dependencies = {}) {
     }
 
     resetClickSequence()
-    openPopup(event)
+    openPopup(event, null, 'search', 'double-click')
   }
 
   target.addEventListener('mousedown', onMouseDown)
