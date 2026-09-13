@@ -17,6 +17,7 @@ const word = ref('')
 const entries = ref([])
 const state = ref(POPUP_STATES.IDLE)
 const inputElement = ref(null)
+const popupBodyElement = ref(null)
 let requestRevision = 0
 const hasVisibleResult = computed(() => entries.value.length > 0
   && (state.value === POPUP_STATES.RESULT || state.value === POPUP_STATES.LOADING))
@@ -30,9 +31,16 @@ function setResolvedState(resolved) {
   entries.value = Array.isArray(resolved?.data) ? resolved.data : []
 }
 
+function resetPopupScroll() {
+  if (popupBodyElement.value) {
+    popupBodyElement.value.scrollTop = 0
+  }
+}
+
 async function searchWord(searchTerm = word.value) {
   const query = String(searchTerm ?? '').trim()
   word.value = query
+  resetPopupScroll()
 
   if (!query) {
     requestRevision += 1
@@ -126,6 +134,7 @@ onMounted(() => {
     </form>
 
     <div
+      ref="popupBodyElement"
       class="naverdic-popup-body"
       :class="{'naverdic-popup-body--result': hasVisibleResult}"
     >

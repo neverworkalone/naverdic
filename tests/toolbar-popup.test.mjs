@@ -288,6 +288,39 @@ test('keeps the previous toolbar result visible while a newer lookup is pending'
   wrapper.unmount()
 })
 
+test('resets toolbar result scroll when a new lookup starts', async () => {
+  const wrapper = mountPopup()
+  const input = wrapper.get('.naverdic-popup-search__input')
+  const form = wrapper.get('.naverdic-popup-search')
+  const body = wrapper.get('.naverdic-popup-body')
+
+  await input.setValue('issue')
+  await form.trigger('submit')
+  respond(0, {
+    ok: true,
+    data: dictionaryResponseForItems([
+      {word: 'one', meaning: '첫 번째 뜻'},
+      {word: 'two', meaning: '두 번째 뜻'},
+      {word: 'three', meaning: '세 번째 뜻'},
+      {word: 'four', meaning: '네 번째 뜻'},
+      {word: 'five', meaning: '다섯 번째 뜻'},
+      {word: 'six', meaning: '여섯 번째 뜻'}
+    ])
+  })
+  await flushPromises()
+
+  body.element.scrollTop = 240
+  assert.equal(body.element.scrollTop, 240)
+
+  await input.setValue('test')
+  await form.trigger('submit')
+  assert.equal(body.element.scrollTop, 0)
+
+  respond(1, {ok: true, data: dictionaryResponse('test')})
+  await flushPromises()
+  wrapper.unmount()
+})
+
 test('uses the whole popup body for long dictionary entries', async () => {
   const wrapper = mountPopup()
   await wrapper.get('.naverdic-popup-search__input').setValue('test')
