@@ -42,9 +42,9 @@ const productVersion = computed(() => {
       return version
     }
   } catch (_error) {
-    // Use the locale fallback when the runtime manifest is unavailable in tests or previews.
+    // Use a stable fallback when the runtime manifest is unavailable in tests or previews.
   }
-  return text('SETTINGS_PRODUCT_VERSION')
+  return '1.0'
 })
 
 const currentNavigation = computed(() => navigation.find(item => (

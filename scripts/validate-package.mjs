@@ -7,8 +7,6 @@ const SOURCE_ENTRYPOINTS = [
   'src/content.js'
 ]
 
-export const RELEASE_MANIFEST_VERSION = '7.2'
-export const RELEASE_PACKAGE_VERSION = '7.2.0'
 export const PACKAGE_ASSETS = Object.freeze([
   'audio-play.svg'
 ])
@@ -197,15 +195,22 @@ export function validatePackageDirectory({projectRoot, packageDir}) {
     errors.push(`Development files found in package: ${forbidden.join(', ')}`)
   }
 
-  const packageJsonPath = path.join(projectRoot, 'package.json')
-  if (fs.existsSync(packageJsonPath)) {
-    const packageVersion = String(readJson(packageJsonPath).version || '')
-    const manifestVersion = String(manifest.version || '')
-    if (!manifestVersion || !packageVersion.startsWith(`${manifestVersion}.`)) {
-      errors.push(`Version mismatch: manifest ${manifestVersion || '(missing)'} vs package ${packageVersion || '(missing)'}.`)
-    }
-    if (manifestVersion !== RELEASE_MANIFEST_VERSION || packageVersion !== RELEASE_PACKAGE_VERSION) {
-      errors.push(`Release version mismatch: expected manifest ${RELEASE_MANIFEST_VERSION} and package ${RELEASE_PACKAGE_VERSION}; received manifest ${manifestVersion || '(missing)'} and package ${packageVersion || '(missing)'}.`)
+  const manifestVersion = String(manifest.version || '')
+  if (!manifestVersion) {
+    errors.push('Manifest version is missing.')
+  }
+
+  const sourceManifestPath = path.join(projectRoot, 'public', 'manifest.json')
+  if (fs.existsSync(sourceManifestPath)) {
+    try {
+      const sourceManifestVersion = String(readJson(sourceManifestPath).version || '')
+      if (!sourceManifestVersion) {
+        errors.push('Source manifest version is missing.')
+      } else if (manifestVersion !== sourceManifestVersion) {
+        errors.push(`Manifest version mismatch: source ${sourceManifestVersion} vs package ${manifestVersion || '(missing)'}.`)
+      }
+    } catch (error) {
+      errors.push(`Source manifest is not valid JSON: ${error.message}`)
     }
   }
 

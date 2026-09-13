@@ -869,6 +869,27 @@ test('renders the Figma-aligned product header with the runtime manifest version
   }
 })
 
+test('uses the 1.0 fallback when the runtime manifest version is unavailable', async () => {
+  const previousChrome = globalThis.chrome
+  exposeDomGlobal('chrome', {runtime: {getManifest: () => {
+    throw new Error('manifest unavailable')
+  }}})
+
+  try {
+    const wrapper = mount(SettingsShell)
+    await flushPromises()
+
+    assert.equal(wrapper.get('.settings-header__version').text(), '1.0')
+    wrapper.unmount()
+  } finally {
+    if (previousChrome === undefined) {
+      delete globalThis.chrome
+    } else {
+      exposeDomGlobal('chrome', previousChrome)
+    }
+  }
+})
+
 test('resets the translation provider to Chrome built-in translation', async () => {
   const wrapper = mount(SettingsShell)
   await flushPromises()
