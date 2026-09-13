@@ -7,8 +7,8 @@ const SOURCE_ENTRYPOINTS = [
   'src/content.js'
 ]
 
-export const RELEASE_MANIFEST_VERSION = '7.1'
-export const RELEASE_PACKAGE_VERSION = '7.1.0'
+export const RELEASE_MANIFEST_VERSION = '7.2'
+export const RELEASE_PACKAGE_VERSION = '7.2.0'
 export const PACKAGE_ASSETS = Object.freeze([
   'audio-play.svg'
 ])
