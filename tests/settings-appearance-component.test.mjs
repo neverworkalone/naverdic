@@ -616,6 +616,29 @@ test('renders advanced data controls with Figma card rhythm and locale-backed la
   wrapper.unmount()
 })
 
+test('renders the recent-search opt-in card and updates the draft setting', async () => {
+  const draft = createAdvancedDraft()
+  const wrapper = mountAdvanced(draft)
+  await flushPromises()
+
+  const card = wrapper.get('[data-testid="settings-recent-search-card"]')
+  const enabled = wrapper.get('[data-testid="settings-recent-search-enabled"]')
+  assert.equal(card.text().includes(koText('SETTINGS_ADVANCED_RECENT_SEARCH_TITLE')), true)
+  assert.equal(card.text().includes(koText('SETTINGS_ADVANCED_RECENT_SEARCH_DESCRIPTION')), true)
+  assert.equal(
+    card.get('label[for="settings-recent-search-enabled"]').text(),
+    koText('SETTINGS_FIELD_RECENT_SEARCH_ENABLED')
+  )
+  assert.equal(enabled.element.checked, false)
+
+  await enabled.setValue(true)
+  assert.equal(draft.recentSearch.enabled, true)
+
+  await wrapper.setProps({isSaving: true})
+  assert.equal(enabled.element.disabled, true)
+  wrapper.unmount()
+})
+
 test('exports persisted settings and imports into draft without committing storage', async () => {
   const draft = createAdvancedDraft()
   const draftSecrets = createDefaultSecretsV2()

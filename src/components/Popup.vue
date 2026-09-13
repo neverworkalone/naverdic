@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { buildNaverApiUrl, parseNaverDictionaryResponse } from '/src/dictionary/parser.mjs'
 import DictionaryResult from '/src/components/DictionaryResult.vue'
 import {
@@ -11,23 +11,170 @@ import {
   reportMessageFailure,
   sendRuntimeMessage
 } from '/src/messaging.mjs'
+import {
+  addRecentSearch,
+  clearRecentSearches,
+  loadRecentSearchState,
+  normalizeRecentSearchTerm,
+  writeRecentSearches
+} from '/src/recent-search.mjs'
+import { normalizeSettingsV2, SETTINGS_STORAGE } from '/src/settings-v2.mjs'
 import { getText } from '/src/text.js'
 
 const word = ref('')
 const entries = ref([])
 const state = ref(POPUP_STATES.IDLE)
 const inputElement = ref(null)
+const recentSearches = ref([])
+const recentSearchEnabled = ref(false)
+const recentSearchReady = ref(false)
+const pendingRecentSearches = []
+let recentSearchWriteQueue = Promise.resolve()
+let storageChangeListener = null
 let requestRevision = 0
 const hasVisibleResult = computed(() => entries.value.length > 0
   && (state.value === POPUP_STATES.RESULT || state.value === POPUP_STATES.LOADING))
+const showRecentSearchPanel = computed(() => recentSearchEnabled.value
+  && recentSearchReady.value
+  && state.value === POPUP_STATES.IDLE
+  && recentSearches.value.length > 0)
 const shellClasses = computed(() => ({
   [`naverdic-popup-shell--${state.value}`]: true,
-  'naverdic-popup-shell--result': hasVisibleResult.value
+  'naverdic-popup-shell--result': hasVisibleResult.value,
+  'naverdic-popup-shell--recent': showRecentSearchPanel.value
 }))
 
 function setResolvedState(resolved) {
   state.value = resolved?.state || POPUP_STATES.IDLE
   entries.value = Array.isArray(resolved?.data) ? resolved.data : []
+}
+
+function queueRecentSearchWrite(searches) {
+  const localStorage = globalThis.chrome?.storage?.local
+  const snapshot = [...searches]
+  recentSearchWriteQueue = recentSearchWriteQueue
+    .catch(() => {})
+    .then(() => writeRecentSearches(localStorage, snapshot))
+    .catch(() => {})
+  return recentSearchWriteQueue
+}
+
+function queueRecentSearchClear() {
+  const localStorage = globalThis.chrome?.storage?.local
+  recentSearchWriteQueue = recentSearchWriteQueue
+    .catch(() => {})
+    .then(() => clearRecentSearches(localStorage))
+    .catch(() => {})
+  return recentSearchWriteQueue
+}
+
+function commitRecentSearch(term) {
+  if (!recentSearchEnabled.value) {
+    return
+  }
+
+  const nextSearches = addRecentSearch(recentSearches.value, term)
+  const changed = nextSearches.length !== recentSearches.value.length ||
+    nextSearches.some((entry, index) => entry !== recentSearches.value[index])
+  if (!changed) {
+    return
+  }
+
+  recentSearches.value = nextSearches
+  queueRecentSearchWrite(nextSearches)
+}
+
+function flushPendingRecentSearches() {
+  if (!recentSearchEnabled.value || pendingRecentSearches.length === 0) {
+    pendingRecentSearches.length = 0
+    return
+  }
+
+  let nextSearches = recentSearches.value
+  for (const term of pendingRecentSearches) {
+    nextSearches = addRecentSearch(nextSearches, term)
+  }
+  pendingRecentSearches.length = 0
+
+  const changed = nextSearches.length !== recentSearches.value.length ||
+    nextSearches.some((entry, index) => entry !== recentSearches.value[index])
+  if (!changed) {
+    return
+  }
+
+  recentSearches.value = nextSearches
+  queueRecentSearchWrite(nextSearches)
+}
+
+function trackRecentSearch(query) {
+  const term = normalizeRecentSearchTerm(query)
+  if (!term) {
+    return
+  }
+
+  if (!recentSearchReady.value) {
+    pendingRecentSearches.push(term)
+    return
+  }
+
+  commitRecentSearch(term)
+}
+
+async function initializeRecentSearch() {
+  try {
+    const loaded = await loadRecentSearchState(globalThis.chrome?.storage)
+    recentSearchEnabled.value = loaded.enabled
+    recentSearches.value = loaded.searches
+  } catch (_error) {
+    recentSearchEnabled.value = false
+    recentSearches.value = []
+  } finally {
+    recentSearchReady.value = true
+    flushPendingRecentSearches()
+  }
+}
+
+async function refreshRecentSearchFromStorage() {
+  const loaded = await loadRecentSearchState(globalThis.chrome?.storage)
+  recentSearchEnabled.value = loaded.enabled
+  recentSearches.value = loaded.searches
+  recentSearchReady.value = true
+  flushPendingRecentSearches()
+}
+
+function handleStorageChanged(changes, areaName) {
+  if (areaName !== 'sync') {
+    return
+  }
+
+  const settingChange = changes?.[SETTINGS_STORAGE.settings.key]
+  if (!settingChange) {
+    return
+  }
+
+  const enabled = normalizeSettingsV2(settingChange.newValue).recentSearch.enabled
+  if (!enabled) {
+    recentSearchEnabled.value = false
+    recentSearches.value = []
+    pendingRecentSearches.length = 0
+    queueRecentSearchClear()
+    return
+  }
+
+  void refreshRecentSearchFromStorage().catch(() => {
+    recentSearchEnabled.value = false
+    recentSearches.value = []
+  })
+}
+
+function clearPopupRecentSearches() {
+  recentSearches.value = []
+  pendingRecentSearches.length = 0
+  queueRecentSearchClear()
+}
+
+function searchRecentWord(recentWord) {
+  void searchWord(recentWord)
 }
 
 async function searchWord(searchTerm = word.value) {
@@ -43,6 +190,7 @@ async function searchWord(searchTerm = word.value) {
 
   const revision = ++requestRevision
   state.value = POPUP_STATES.LOADING
+  trackRecentSearch(query)
 
   try {
     const response = await sendRuntimeMessage(
@@ -90,8 +238,24 @@ async function searchWord(searchTerm = word.value) {
   }
 }
 
+void initializeRecentSearch()
+
 onMounted(() => {
   nextTick(() => inputElement.value?.focus())
+
+  const onChanged = globalThis.chrome?.storage?.onChanged
+  if (typeof onChanged?.addListener === 'function') {
+    storageChangeListener = handleStorageChanged
+    onChanged.addListener(storageChangeListener)
+  }
+})
+
+onBeforeUnmount(() => {
+  const onChanged = globalThis.chrome?.storage?.onChanged
+  if (storageChangeListener && typeof onChanged?.removeListener === 'function') {
+    onChanged.removeListener(storageChangeListener)
+  }
+  storageChangeListener = null
 })
 </script>
 
@@ -146,7 +310,46 @@ onMounted(() => {
 
       <div
         class="naverdic-popup-divider"
-        :class="{'naverdic-popup-divider--initial': !hasVisibleResult && (state === POPUP_STATES.IDLE || state === POPUP_STATES.LOADING)}"
+        :class="{
+          'naverdic-popup-divider--initial': !showRecentSearchPanel && !hasVisibleResult && (state === POPUP_STATES.IDLE || state === POPUP_STATES.LOADING),
+          'naverdic-popup-divider--recent-top': showRecentSearchPanel
+        }"
+        aria-hidden="true"
+      />
+      <section
+        v-if="showRecentSearchPanel"
+        class="naverdic-popup-recent"
+        data-testid="popup-recent-search"
+        aria-labelledby="naverdic-recent-search-title"
+      >
+        <header class="naverdic-popup-recent__header">
+          <h2
+            id="naverdic-recent-search-title"
+            class="naverdic-popup-recent__title"
+          >{{ getText('POPUP_RECENT_SEARCH_TITLE') }}</h2>
+          <button
+            type="button"
+            class="naverdic-popup-recent__clear"
+            :aria-label="getText('POPUP_RECENT_SEARCH_CLEAR_LABEL')"
+            :disabled="recentSearches.length === 0"
+            data-testid="popup-recent-search-clear"
+            @click="clearPopupRecentSearches"
+          >{{ getText('POPUP_RECENT_SEARCH_CLEAR') }}</button>
+        </header>
+        <div class="naverdic-popup-recent__grid">
+          <button
+            v-for="recentWord in recentSearches"
+            :key="recentWord"
+            type="button"
+            class="naverdic-popup-recent__item"
+            data-testid="popup-recent-search-item"
+            @click="searchRecentWord(recentWord)"
+          >{{ recentWord }}</button>
+        </div>
+      </section>
+      <div
+        v-if="showRecentSearchPanel"
+        class="naverdic-popup-divider naverdic-popup-divider--recent-bottom"
         aria-hidden="true"
       />
       <footer class="naverdic-popup-footer">
@@ -199,6 +402,12 @@ body {
 .naverdic-popup-shell--idle,
 .naverdic-popup-shell--loading {
   height: 92px;
+}
+
+.naverdic-popup-shell--recent {
+  height: auto;
+  min-height: 374px;
+  padding-bottom: 14px;
 }
 
 .naverdic-popup-shell--loading.naverdic-popup-shell--result {
@@ -335,6 +544,99 @@ body {
 
 .naverdic-popup-divider--initial {
   margin-top: 4px;
+}
+
+.naverdic-popup-divider--recent-top {
+  margin-top: 3px;
+}
+
+.naverdic-popup-divider--recent-bottom {
+  margin-top: 0;
+}
+
+.naverdic-popup-recent {
+  display: flex;
+  flex-direction: column;
+  width: 340px;
+}
+
+.naverdic-popup-recent__header {
+  position: relative;
+  display: flex;
+  width: 340px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+}
+
+.naverdic-popup-recent__title {
+  margin: 0;
+  color: #3F81F5;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.naverdic-popup-recent__clear {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #94A3B8;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.naverdic-popup-recent__clear:hover:not(:disabled) {
+  color: #64748B;
+}
+
+.naverdic-popup-recent__clear:focus-visible,
+.naverdic-popup-recent__item:focus-visible {
+  outline: 2px solid rgba(63, 129, 245, 0.3);
+  outline-offset: 1px;
+  border-radius: 3px;
+}
+
+.naverdic-popup-recent__clear:disabled {
+  cursor: default;
+}
+
+.naverdic-popup-recent__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 23px;
+  width: 340px;
+  margin-top: 11px;
+}
+
+.naverdic-popup-recent__item {
+  width: 170px;
+  height: 23px;
+  padding: 0 4px;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: #7A879E;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  line-height: 23px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.naverdic-popup-recent__item:hover {
+  border-radius: 4px;
+  background: rgba(63, 129, 245, 0.08);
+  color: #3F81F5;
 }
 
 .naverdic-popup-footer {

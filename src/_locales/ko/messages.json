@@ -17,6 +17,15 @@
   "POPUP_PRODUCT_LABEL": {
     "message": "네이버 영어사전 · NaverDic"
   },
+  "POPUP_RECENT_SEARCH_TITLE": {
+    "message": "최근 검색"
+  },
+  "POPUP_RECENT_SEARCH_CLEAR": {
+    "message": "지우기"
+  },
+  "POPUP_RECENT_SEARCH_CLEAR_LABEL": {
+    "message": "최근 검색 지우기"
+  },
   "POPUP_AUDIO_LABEL": {
     "message": "발음 재생"
   },
@@ -181,6 +190,12 @@
   },
   "SETTINGS_PAGE_ADVANCED_DESCRIPTION": {
     "message": "설정 데이터를 백업하거나 모든 설정을 초기화합니다."
+  },
+  "SETTINGS_ADVANCED_RECENT_SEARCH_TITLE": {
+    "message": "최근 검색"
+  },
+  "SETTINGS_ADVANCED_RECENT_SEARCH_DESCRIPTION": {
+    "message": "최근에 찾은 영어 단어를 저장하고 팝업에 표시합니다."
   },
   "SETTINGS_ADVANCED_DATA_TITLE": {
     "message": "설정 데이터"
@@ -349,6 +364,9 @@
   },
   "SETTINGS_FIELD_DRAG_TRIGGER_HINT": {
     "message": "드래그할 때 사용할 보조 키를 선택하세요."
+  },
+  "SETTINGS_FIELD_RECENT_SEARCH_ENABLED": {
+    "message": "최근 검색 사용"
   },
   "SETTINGS_FIELD_BLOCKED_SITES_ENABLED": {
     "message": "중지목록 사용"

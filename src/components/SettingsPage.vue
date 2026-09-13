@@ -645,6 +645,41 @@ watch(() => props.draftRevision, () => {
 
     <section
       v-if="pageId === 'advanced'"
+      class="settings-card settings-recent-search-card"
+      data-testid="settings-recent-search-card"
+    >
+      <div class="settings-card__heading">
+        <h3>{{ text('SETTINGS_ADVANCED_RECENT_SEARCH_TITLE') }}</h3>
+        <p>{{ text('SETTINGS_ADVANCED_RECENT_SEARCH_DESCRIPTION') }}</p>
+      </div>
+
+      <div
+        class="settings-recent-search-divider"
+        aria-hidden="true"
+      />
+
+      <label
+        class="settings-switch settings-recent-search-switch"
+        for="settings-recent-search-enabled"
+      >
+        <span class="settings-switch__label">
+          {{ text('SETTINGS_FIELD_RECENT_SEARCH_ENABLED') }}
+        </span>
+        <input
+          id="settings-recent-search-enabled"
+          v-model="draft.recentSearch.enabled"
+          type="checkbox"
+          :disabled="controlsDisabled"
+          data-testid="settings-recent-search-enabled"
+        >
+        <span class="settings-switch__track" aria-hidden="true">
+          <span class="settings-switch__thumb" />
+        </span>
+      </label>
+    </section>
+
+    <section
+      v-if="pageId === 'advanced'"
       class="settings-card settings-advanced-data-card"
       data-testid="settings-advanced-data-card"
     >
@@ -1614,6 +1649,107 @@ watch(() => props.draftRevision, () => {
   line-height: 17px;
 }
 
+.settings-recent-search-card {
+  position: relative;
+  height: 156px;
+  margin-bottom: 20px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.settings-recent-search-card .settings-card__heading {
+  position: absolute;
+  top: 0;
+  left: 23px;
+  width: 508px;
+  height: 90px;
+  padding: 0;
+  border-bottom: 0;
+}
+
+.settings-recent-search-card .settings-card__heading h3 {
+  position: absolute;
+  top: 21px;
+  left: 0;
+  display: flex;
+  width: 508px;
+  height: 24px;
+  align-items: center;
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.settings-recent-search-card .settings-card__heading p {
+  position: absolute;
+  top: 51px;
+  left: 0;
+  display: flex;
+  width: 508px;
+  height: 34px;
+  align-items: center;
+  margin: 0;
+  line-height: 20px;
+}
+
+.settings-recent-search-divider {
+  position: absolute;
+  top: 89px;
+  left: 23px;
+  width: 508px;
+  height: 1px;
+  background: var(--naverdic-settings-divider);
+}
+
+.settings-recent-search-switch {
+  position: absolute;
+  top: 90px;
+  left: 23px;
+  display: flex;
+  width: 508px;
+  height: 66px;
+  min-height: 66px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 0;
+}
+
+.settings-recent-search-switch .settings-switch__label {
+  position: absolute;
+  top: 18px;
+  left: 0;
+  display: flex;
+  height: 22px;
+  align-items: center;
+  color: #344054;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.settings-recent-search-switch .settings-switch__track {
+  position: absolute;
+  top: 18px;
+  right: 0;
+  width: 40px;
+  height: 22px;
+  padding: 2px;
+}
+
+.settings-recent-search-switch .settings-switch__thumb {
+  width: 18px;
+  height: 18px;
+}
+
+.settings-recent-search-switch input:checked + .settings-switch__track .settings-switch__thumb {
+  transform: translateX(18px);
+}
+
+.settings-recent-search-switch input:disabled + .settings-switch__track {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .settings-advanced-data-card {
   position: relative;
   height: 282px;
@@ -1822,6 +1958,13 @@ watch(() => props.draftRevision, () => {
     overflow: visible;
   }
 
+  .settings-recent-search-card {
+    height: auto;
+    min-height: 0;
+    padding: 0 18px 18px;
+    overflow: visible;
+  }
+
   .settings-advanced-data-card {
     height: auto;
     min-height: 0;
@@ -1921,6 +2064,58 @@ watch(() => props.draftRevision, () => {
     top: auto;
     left: auto;
     width: auto;
+  }
+
+  .settings-recent-search-card .settings-card__heading {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    height: 90px;
+  }
+
+  .settings-recent-search-card .settings-card__heading h3,
+  .settings-recent-search-card .settings-card__heading p {
+    position: static;
+    display: block;
+    width: auto;
+    height: auto;
+  }
+
+  .settings-recent-search-card .settings-card__heading h3 {
+    padding-top: 20px;
+  }
+
+  .settings-recent-search-card .settings-card__heading p {
+    margin-top: 4px;
+  }
+
+  .settings-recent-search-divider {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+  }
+
+  .settings-recent-search-switch {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    height: 66px;
+    min-height: 66px;
+  }
+
+  .settings-recent-search-switch .settings-switch__label {
+    position: static;
+    width: auto;
+    height: auto;
+  }
+
+  .settings-recent-search-switch .settings-switch__track {
+    position: relative;
+    top: auto;
+    right: auto;
   }
 
   .settings-advanced-data-card .settings-card__heading {

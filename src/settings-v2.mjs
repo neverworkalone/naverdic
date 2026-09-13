@@ -286,6 +286,7 @@ export const SETTINGS_SCHEMA_V2 = Object.freeze([
   Object.freeze({path: 'popup.backgroundColor', type: 'string', storage: 'sync', defaultValue: '#F5F6F8'}),
   Object.freeze({path: 'popup.fontColor', type: 'string', storage: 'sync', defaultValue: '#000000'}),
   Object.freeze({path: 'popup.fontSizePt', type: 'positive-integer', storage: 'sync', defaultValue: 11}),
+  Object.freeze({path: 'recentSearch.enabled', type: 'boolean', storage: 'sync', defaultValue: false}),
   Object.freeze({path: 'sites.denyListEnabled', type: 'boolean', storage: 'sync', defaultValue: false}),
   Object.freeze({path: 'sites.denyList', type: 'domain-list', storage: 'sync', defaultValue: []}),
   Object.freeze({path: 'translation.enabled', type: 'boolean', storage: 'sync', defaultValue: true}),
@@ -315,6 +316,9 @@ export const SETTINGS_V2_DEFAULTS = deepFreeze({
     backgroundColor: '#F5F6F8',
     fontColor: '#000000',
     fontSizePt: 11
+  },
+  recentSearch: {
+    enabled: false
   },
   sites: {
     denyListEnabled: false,
@@ -406,6 +410,12 @@ export function normalizeSettingsV2(values) {
       fontSizePt: normalizePositiveNumber(
         source.popup?.fontSizePt,
         defaults.popup.fontSizePt
+      )
+    },
+    recentSearch: {
+      enabled: normalizeBoolean(
+        source.recentSearch?.enabled,
+        defaults.recentSearch.enabled
       )
     },
     sites: {

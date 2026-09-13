@@ -112,13 +112,16 @@ test('defines the v2 storage split and nested settings defaults', () => {
   assert.equal(SETTINGS_V2_DEFAULTS.translation.geminiModel, 'gemini-3.5-flash')
   assert.equal(SETTINGS_V2_DEFAULTS.translation.targetLanguage, 'ko')
   assert.equal(SETTINGS_V2_DEFAULTS.popup.fontSizePt, 11)
+  assert.equal(SETTINGS_V2_DEFAULTS.recentSearch.enabled, false)
   assert.equal(SETTINGS_V2_DEFAULTS.dictionary.drag.enabled, false)
   assert.equal(SETTINGS_V2_DEFAULTS.dictionary.drag.triggerKey, 'alt')
   assert.equal(createInitialSettingsV2().translation.providerId, CHROME_TRANSLATOR_PROVIDER_ID)
   assert.equal(createInitialSettingsV2().dictionary.drag.enabled, false)
   assert.equal(createInitialSettingsV2().dictionary.drag.triggerKey, 'alt')
+  assert.equal(createInitialSettingsV2().recentSearch.enabled, false)
   assert.equal(SETTINGS_SCHEMA_V2.some(field => field.path === 'customProviders'), false)
   assert.ok(SETTINGS_SCHEMA_V2.some(field => field.path === 'translation.targetLanguage'))
+  assert.ok(SETTINGS_SCHEMA_V2.some(field => field.path === 'recentSearch.enabled'))
 })
 
 test('normalizes v2 values without accepting invalid enums or provider secrets', () => {
@@ -170,6 +173,7 @@ test('normalizes v2 values without accepting invalid enums or provider secrets',
   assert.equal(normalized.popup.backgroundColor, 'red')
   assert.equal(normalized.popup.fontColor, '#000000')
   assert.equal(normalized.popup.fontSizePt, 11)
+  assert.equal(normalized.recentSearch.enabled, false)
   assert.deepEqual(normalized.sites.denyList, ['www.example.com', 'example.com'])
   assert.equal(normalized.translation.enabled, true)
   assert.equal(normalized.translation.providerId, 'deepl-free')
@@ -335,6 +339,9 @@ test('keeps the official Chrome Translator display name and translation panel bo
     'SETTINGS_PREVIEW_DRAG_STEP_4_DESCRIPTION',
     'SETTINGS_PAGE_ADVANCED_TITLE',
     'SETTINGS_PAGE_ADVANCED_DESCRIPTION',
+    'SETTINGS_ADVANCED_RECENT_SEARCH_TITLE',
+    'SETTINGS_ADVANCED_RECENT_SEARCH_DESCRIPTION',
+    'SETTINGS_FIELD_RECENT_SEARCH_ENABLED',
     'SETTINGS_ADVANCED_DATA_TITLE',
     'SETTINGS_ADVANCED_DATA_DESCRIPTION',
     'SETTINGS_ADVANCED_EXPORT_TITLE',
@@ -368,6 +375,10 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(toolbarPopup, /\.naverdic-popup-shell--result \{[\s\S]*min-height: 308px/)
   assert.match(toolbarPopup, /\.naverdic-popup-shell--idle,[\s\S]*\.naverdic-popup-shell--loading \{[\s\S]*height: 92px/)
   assert.match(toolbarPopup, /\.naverdic-popup-shell--loading\.naverdic-popup-shell--result \{[\s\S]*height: auto/)
+  assert.match(toolbarPopup, /naverdic-popup-recent__grid/)
+  assert.match(toolbarPopup, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)/)
+  assert.match(toolbarPopup, /POPUP_RECENT_SEARCH_TITLE/)
+  assert.match(toolbarPopup, /POPUP_RECENT_SEARCH_CLEAR/)
   assert.match(toolbarPopup, /\.naverdic-popup-search \{[\s\S]*width: 340px/)
   assert.match(toolbarPopup, /\.naverdic-popup-search__input \{[\s\S]*width: 272px/)
   assert.match(toolbarPopup, /\.naverdic-popup-body \{[\s\S]*display: flex;[\s\S]*width: 340px/)
@@ -452,6 +463,12 @@ test('keeps the official Chrome Translator display name and translation panel bo
   assert.match(appearancePage, /\.settings-blocked-sites-switch \.settings-switch__track \{\s*position: absolute;\s*top: 25px/)
   assert.match(appearancePage, /SETTINGS_BLOCKED_SITES_REGISTERED/)
   assert.match(appearancePage, /settings-advanced-data-card/)
+  assert.match(appearancePage, /settings-recent-search-card/)
+  assert.match(appearancePage, /settings-recent-search-divider/)
+  assert.match(appearancePage, /settings-recent-search-switch/)
+  assert.match(appearancePage, /SETTINGS_ADVANCED_RECENT_SEARCH_TITLE/)
+  assert.match(appearancePage, /SETTINGS_ADVANCED_RECENT_SEARCH_DESCRIPTION/)
+  assert.match(appearancePage, /SETTINGS_FIELD_RECENT_SEARCH_ENABLED/)
   assert.match(appearancePage, /settings-advanced-divider--heading/)
   assert.match(appearancePage, /settings-advanced-divider--export/)
   assert.match(appearancePage, /settings-advanced-divider--import/)
