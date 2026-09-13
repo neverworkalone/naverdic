@@ -1,4 +1,5 @@
 # 네이버 영어사전 · NaverDic
+[![pages-build-deployment](https://github.com/neverworkalone/naverdic/actions/workflows/pages/pages-build-deployment/badge.svg?branch=master)](https://github.com/neverworkalone/naverdic/actions/workflows/pages/pages-build-deployment)
 
 A Chrome extension for quickly looking up English words with Naver Dictionary and translating selected text with Chrome's built-in Translator, DeepL, or Gemini.
 
