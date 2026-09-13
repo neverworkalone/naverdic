@@ -7,9 +7,18 @@ import {
   respondOnce
 } from './messaging.mjs'
 import {
+  addRecentSearch,
+  clearRecentSearches,
+  normalizeRecentSearchTerm,
+  readRecentSearchEnabled,
+  readRecentSearches,
+  writeRecentSearches
+} from './recent-search.mjs'
+import {
   executeProviderTranslation,
   PROVIDER_ERROR_CODES
 } from './translation-engine.mjs'
+import {SETTINGS_STORAGE} from './settings-v2.mjs'
 import {getProviderPreset, normalizeProviderDefinition} from './translation-provider.mjs'
 
 function isRecord(value) {
@@ -42,6 +51,69 @@ function hasProvider(request) {
   return isRecord(request.provider)
 }
 
+let recentSearchOperationQueue = Promise.resolve()
+let recentSearchSettingsRevision = 0
+let recentSearchListenerStorage = null
+
+function observeRecentSearchSettings(storage) {
+  if (recentSearchListenerStorage === storage || !storage?.onChanged?.addListener) {
+    return
+  }
+
+  recentSearchListenerStorage = storage
+  storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'sync' && changes?.[SETTINGS_STORAGE.settings.key]) {
+      recentSearchSettingsRevision += 1
+    }
+  })
+}
+
+function enqueueRecentSearchOperation(operation) {
+  const result = recentSearchOperationQueue
+    .catch(() => {})
+    .then(operation)
+  recentSearchOperationQueue = result.catch(() => {})
+  return result
+}
+
+async function handleRecentSearch(request, storage) {
+  observeRecentSearchSettings(storage)
+
+  return enqueueRecentSearchOperation(async () => {
+    if (request.operation === 'clear') {
+      await clearRecentSearches(storage?.local)
+      return createSuccessResponse([])
+    }
+
+    const term = normalizeRecentSearchTerm(request.term)
+    if (!term || !(await readRecentSearchEnabled(storage))) {
+      return createSuccessResponse([])
+    }
+
+    const settingsRevision = recentSearchSettingsRevision
+    const searches = await readRecentSearches(storage?.local)
+    if (settingsRevision !== recentSearchSettingsRevision ||
+        !(await readRecentSearchEnabled(storage))) {
+      return createSuccessResponse(searches)
+    }
+
+    const nextSearches = addRecentSearch(searches, term)
+    const changed = nextSearches.length !== searches.length ||
+      nextSearches.some((entry, index) => entry !== searches[index])
+    if (!changed) {
+      return createSuccessResponse(nextSearches)
+    }
+
+    if (settingsRevision !== recentSearchSettingsRevision ||
+        !(await readRecentSearchEnabled(storage))) {
+      return createSuccessResponse(searches)
+    }
+
+    await writeRecentSearches(storage?.local, nextSearches)
+    return createSuccessResponse(nextSearches)
+  })
+}
+
 /**
  * Validate the two existing message request shapes before touching fetch.
  * Returning a response instead of throwing makes malformed messages safe at
@@ -67,6 +139,28 @@ export function validateMessageRequest(request) {
       MESSAGE_ERROR_CODES.UNKNOWN_ACTION,
       `Unsupported message action: ${request.action}`
     )
+  }
+
+  if (request.action === MESSAGE_ACTIONS.RECENT_SEARCH) {
+    if (request.operation === 'clear') {
+      return null
+    }
+
+    if (request.operation !== 'record') {
+      return createErrorResponse(
+        MESSAGE_ERROR_CODES.INVALID_REQUEST,
+        'The recent-search operation must be record or clear.'
+      )
+    }
+
+    if (typeof request.term !== 'string' || !request.term.trim()) {
+      return createErrorResponse(
+        MESSAGE_ERROR_CODES.MISSING_PAYLOAD,
+        'The recent-search term is required.'
+      )
+    }
+
+    return null
   }
 
   const providerRequest = request.action === MESSAGE_ACTIONS.TRANSLATION && hasProvider(request)
@@ -383,12 +477,24 @@ export async function handleBackgroundMessage(
   request,
   {
     fetchFn = globalThis.fetch,
-    timeoutMs = DEFAULT_MESSAGE_TIMEOUT_MS
+    timeoutMs = DEFAULT_MESSAGE_TIMEOUT_MS,
+    storage = globalThis.chrome?.storage
   } = {}
 ) {
   const validationError = validateMessageRequest(request)
   if (validationError) {
     return validationError
+  }
+
+  if (request.action === MESSAGE_ACTIONS.RECENT_SEARCH) {
+    try {
+      return await handleRecentSearch(request, storage)
+    } catch (_error) {
+      return createErrorResponse(
+        MESSAGE_ERROR_CODES.INTERNAL_ERROR,
+        'The recent-search operation failed.'
+      )
+    }
   }
 
   if (request.action === MESSAGE_ACTIONS.TRANSLATION) {

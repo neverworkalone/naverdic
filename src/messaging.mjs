@@ -2,7 +2,8 @@ export const DEFAULT_MESSAGE_TIMEOUT_MS = 10000
 
 export const MESSAGE_ACTIONS = Object.freeze({
   DICTIONARY: 'endic',
-  TRANSLATION: 'translation'
+  TRANSLATION: 'translation',
+  RECENT_SEARCH: 'recent-search'
 })
 
 export const MESSAGE_ERROR_CODES = Object.freeze({
@@ -18,7 +19,7 @@ export const MESSAGE_ERROR_CODES = Object.freeze({
 })
 
 /**
- * Existing actions only. Both actions use the same response envelope:
+ * All actions use the same response envelope:
  * {ok: true, data: unknown} or
  * {ok: false, error: {code: string, message: string, ...details}}.
  *
@@ -27,6 +28,8 @@ export const MESSAGE_ERROR_CODES = Object.freeze({
  *                        key?: string, provider?: ProviderDefinition,
  *                        data: {text: string[], target_lang?: string,
  *                        targetLanguage?: string}}
+ * recent-search record: {action: 'recent-search', operation: 'record', term: string}
+ * recent-search clear:  {action: 'recent-search', operation: 'clear'}
  */
 export const MESSAGE_CONTRACTS = Object.freeze({
   [MESSAGE_ACTIONS.DICTIONARY]: Object.freeze({
@@ -36,6 +39,10 @@ export const MESSAGE_CONTRACTS = Object.freeze({
   [MESSAGE_ACTIONS.TRANSLATION]: Object.freeze({
     request: "{ action: 'translation', method: 'POST', url?: string, key?: string, provider?: ProviderDefinition, data: TranslationRequest }",
     response: 'MessageResponse<TranslationResponse>'
+  }),
+  [MESSAGE_ACTIONS.RECENT_SEARCH]: Object.freeze({
+    request: "{ action: 'recent-search', operation: 'record'|'clear', term?: string }",
+    response: 'MessageResponse<string[]>'
   })
 })
 
@@ -75,6 +82,21 @@ export function createTranslationRequest({url, method = 'POST', key, data, provi
   }
 
   return request
+}
+
+export function createRecentSearchRequest({term} = {}) {
+  return {
+    action: MESSAGE_ACTIONS.RECENT_SEARCH,
+    operation: 'record',
+    term
+  }
+}
+
+export function createClearRecentSearchRequest() {
+  return {
+    action: MESSAGE_ACTIONS.RECENT_SEARCH,
+    operation: 'clear'
+  }
 }
 
 export function createSuccessResponse(data) {

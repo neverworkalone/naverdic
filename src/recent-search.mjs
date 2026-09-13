@@ -185,7 +185,7 @@ export function clearRecentSearches(area) {
   return removeStorageArea(area, RECENT_SEARCH_STORAGE.key)
 }
 
-async function readRecentSearchEnabled(storage) {
+export async function readRecentSearchEnabled(storage) {
   const values = await readStorageArea(storage?.sync, SETTINGS_STORAGE.settings.key)
   return normalizeSettingsV2(values[SETTINGS_STORAGE.settings.key]).recentSearch.enabled
 }

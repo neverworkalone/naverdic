@@ -5,8 +5,12 @@ import {fileURLToPath, pathToFileURL} from 'node:url'
 import {after, before, test} from 'node:test'
 import {JSDOM} from 'jsdom'
 import {compileScript, parse} from '@vue/compiler-sfc'
-import {RECENT_SEARCH_STORAGE} from '../src/recent-search.mjs'
-import {SETTINGS_STORAGE} from '../src/settings-v2.mjs'
+import {MESSAGE_ACTIONS} from '../src/messaging.mjs'
+import {
+  addRecentSearch,
+  RECENT_SEARCH_STORAGE
+} from '../src/recent-search.mjs'
+import {normalizeSettingsV2, SETTINGS_STORAGE} from '../src/settings-v2.mjs'
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 let tempRoot
@@ -270,12 +274,47 @@ function createPopupStorage({enabled = false, searches = [], sync: providedSync 
   }
 }
 
+function sameSearches(left, right) {
+  return left.length === right.length && left.every((entry, index) => entry === right[index])
+}
+
+function respondToRecentSearchRequest(request, storage, callback) {
+  if (request.operation === 'clear') {
+    if (!storage?.local?.remove) {
+      callback({ok: true, data: []})
+      return
+    }
+    storage.local.remove(RECENT_SEARCH_STORAGE.key, () => {
+      callback({ok: true, data: []})
+    })
+    return
+  }
+
+  const enabled = normalizeSettingsV2(
+    storage?.sync?.items?.[SETTINGS_STORAGE.settings.key]
+  ).recentSearch.enabled
+  const current = storage?.local?.items?.[RECENT_SEARCH_STORAGE.key] || []
+  const next = enabled ? addRecentSearch(current, request.term) : []
+  if (enabled && !sameSearches(current, next)) {
+    storage.local.set({[RECENT_SEARCH_STORAGE.key]: next}, () => {
+      callback({ok: true, data: next})
+    })
+    return
+  }
+
+  callback({ok: true, data: next})
+}
+
 function mountPopup({storage = null} = {}) {
   requests = []
   globalThis.chrome = {
     i18n: {getMessage: () => ''},
     runtime: {
       sendMessage: (request, callback) => {
+        if (request.action === MESSAGE_ACTIONS.RECENT_SEARCH) {
+          respondToRecentSearchRequest(request, storage, callback)
+          return
+        }
         requests.push({request, callback})
       }
     },

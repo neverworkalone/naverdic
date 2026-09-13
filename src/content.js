@@ -17,8 +17,10 @@ import {
 import {createChromeTranslatorRuntime} from './chrome-translator.mjs'
 import {SETTINGS_V2_DEFAULTS} from './settings-v2.mjs'
 import {
+  createRecentSearchRequest,
   MESSAGE_ERROR_CODES,
-  reportMessageFailure
+  reportMessageFailure,
+  sendRuntimeMessage
 } from './messaging.mjs'
 import {
   DEFAULT_OPTIONS,
@@ -29,10 +31,7 @@ import {
   getProviderPreset
 } from './translation-provider.mjs'
 import {
-  addRecentSearch,
-  normalizeRecentSearchTerm,
-  readRecentSearches,
-  writeRecentSearches
+  normalizeRecentSearchTerm
 } from './recent-search.mjs'
 
 export {DEFAULT_OPTIONS, STORAGE_DEFAULTS}
@@ -51,7 +50,7 @@ let popupController = null
 let popupRequestCoordinator = null
 let popupDataClient = null
 let activeRecentSearchEnabled = false
-let recentSearchWriteQueue = Promise.resolve()
+let activeRecentSearchStateRevision = 0
 
 function getPopupController() {
   if (!popupController) {
@@ -102,23 +101,18 @@ function trackInlineRecentSearch(query) {
     return
   }
 
-  recentSearchWriteQueue = recentSearchWriteQueue
-    .catch(() => {})
-    .then(async () => {
-      if (!activeRecentSearchEnabled) {
-        return
-      }
+  const settingsRevision = activeRecentSearchStateRevision
+  void Promise.resolve().then(() => {
+    if (!activeRecentSearchEnabled ||
+        settingsRevision !== activeRecentSearchStateRevision) {
+      return
+    }
 
-      const localStorage = globalThis.chrome?.storage?.local
-      const searches = await readRecentSearches(localStorage)
-      const nextSearches = addRecentSearch(searches, term)
-      const changed = nextSearches.length !== searches.length ||
-        nextSearches.some((entry, index) => entry !== searches[index])
-      if (changed) {
-        await writeRecentSearches(localStorage, nextSearches)
-      }
-    })
-    .catch(() => {})
+    return sendRuntimeMessage(
+      globalThis.chrome?.runtime,
+      createRecentSearchRequest({term})
+    )
+  })
 }
 
 function prepareChromeTranslatorRuntime() {
@@ -212,7 +206,11 @@ function removePopup() {
 function applyOptions(items) {
   const configurationRevision = ++interactionConfigurationRevision
   const nextItems = items || {}
-  activeRecentSearchEnabled = Boolean(nextItems.recentSearchEnabled)
+  const nextRecentSearchEnabled = Boolean(nextItems.recentSearchEnabled)
+  if (nextRecentSearchEnabled !== activeRecentSearchEnabled) {
+    activeRecentSearchStateRevision += 1
+  }
+  activeRecentSearchEnabled = nextRecentSearchEnabled
   const nextProviderId = nextItems.translationProviderId || 'deepl-free'
   const nextNeedsChromeRuntime = nextProviderId === CHROME_TRANSLATOR_PROVIDER_ID &&
     Boolean(nextItems.translate)
@@ -299,6 +297,7 @@ export function unregisterEventListener() {
   chromeTranslatorRuntime = null
   activeTranslationProviderId = ''
   activeRecentSearchEnabled = false
+  activeRecentSearchStateRevision += 1
 }
 
 export function registerEventListener() {

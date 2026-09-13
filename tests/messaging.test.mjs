@@ -6,8 +6,10 @@ import {
   MESSAGE_ACTIONS,
   MESSAGE_CONTRACTS,
   MESSAGE_ERROR_CODES,
+  createClearRecentSearchRequest,
   createDictionaryRequest,
   createErrorResponse,
+  createRecentSearchRequest,
   createSuccessResponse,
   createTranslationRequest,
   isMessageResponse,
@@ -21,6 +23,8 @@ import {
   validateMessageRequest
 } from '../src/background-handler.mjs'
 import {getProviderPreset} from '../src/translation-provider.mjs'
+import {RECENT_SEARCH_STORAGE} from '../src/recent-search.mjs'
+import {SETTINGS_STORAGE, createInitialSettingsV2} from '../src/settings-v2.mjs'
 
 function jsonResponse(data, overrides = {}) {
   return {
@@ -49,13 +53,96 @@ function translationRequest(overrides = {}) {
   })
 }
 
+class AsyncStorageArea {
+  constructor(items = {}) {
+    this.items = {...items}
+    this.setCalls = []
+  }
+
+  get(keys, callback) {
+    const requestedKeys = Array.isArray(keys) ? keys : [keys]
+    const values = Object.fromEntries(requestedKeys
+      .filter(key => Object.prototype.hasOwnProperty.call(this.items, key))
+      .map(key => [key, this.items[key]]))
+    setImmediate(() => callback(values))
+  }
+
+  set(values, callback) {
+    this.setCalls.push({...values})
+    setImmediate(() => {
+      Object.assign(this.items, values)
+      callback?.()
+    })
+  }
+
+  remove(keys, callback) {
+    setImmediate(() => {
+      for (const key of (Array.isArray(keys) ? keys : [keys])) {
+        delete this.items[key]
+      }
+      callback?.()
+    })
+  }
+}
+
+class DeferredRecentStorageArea extends AsyncStorageArea {
+  constructor(items = {}) {
+    super(items)
+    this.pendingGets = []
+  }
+
+  get(keys, callback) {
+    const requestedKeys = Array.isArray(keys) ? keys : [keys]
+    const values = Object.fromEntries(requestedKeys
+      .filter(key => Object.prototype.hasOwnProperty.call(this.items, key))
+      .map(key => [key, this.items[key]]))
+    this.pendingGets.push({callback, values})
+  }
+
+  resolveNextGet() {
+    const pending = this.pendingGets.shift()
+    pending?.callback(pending.values)
+  }
+}
+
+function createRecentStorage({enabled = true, local = new AsyncStorageArea()} = {}) {
+  const settings = createInitialSettingsV2()
+  settings.recentSearch.enabled = enabled
+  const listeners = new Set()
+  const sync = new AsyncStorageArea({
+    [SETTINGS_STORAGE.settings.key]: settings
+  })
+  return {
+    sync,
+    local,
+    onChanged: {
+      addListener(listener) {
+        listeners.add(listener)
+      },
+      removeListener(listener) {
+        listeners.delete(listener)
+      }
+    },
+    setRecentSearchEnabled(nextEnabled) {
+      const oldValue = sync.items[SETTINGS_STORAGE.settings.key]
+      const newValue = {...oldValue, recentSearch: {enabled: nextEnabled}}
+      sync.items[SETTINGS_STORAGE.settings.key] = newValue
+      listeners.forEach(listener => listener({
+        [SETTINGS_STORAGE.settings.key]: {oldValue, newValue}
+      }, 'sync'))
+    }
+  }
+}
+
 test('documents the existing actions and creates their request envelopes', () => {
   assert.deepEqual(MESSAGE_ACTIONS, {
     DICTIONARY: 'endic',
-    TRANSLATION: 'translation'
+    TRANSLATION: 'translation',
+    RECENT_SEARCH: 'recent-search'
   })
   assert.ok(MESSAGE_CONTRACTS.endic.request.includes("action: 'endic'"))
   assert.ok(MESSAGE_CONTRACTS.translation.response.includes('TranslationResponse'))
+  assert.ok(MESSAGE_CONTRACTS['recent-search'].request.includes("action: 'recent-search'"))
 
   assert.deepEqual(dictionaryRequest(), {
     action: 'endic',
@@ -68,6 +155,15 @@ test('documents the existing actions and creates their request envelopes', () =>
     url: 'https://api-free.deepl.com/v2/translate',
     key: 'test-key',
     data: {text: ['hello'], target_lang: 'ko'}
+  })
+  assert.deepEqual(createRecentSearchRequest({term: 'Hello'}), {
+    action: MESSAGE_ACTIONS.RECENT_SEARCH,
+    operation: 'record',
+    term: 'Hello'
+  })
+  assert.deepEqual(createClearRecentSearchRequest(), {
+    action: MESSAGE_ACTIONS.RECENT_SEARCH,
+    operation: 'clear'
   })
   assert.deepEqual(createSuccessResponse({value: 1}), {ok: true, data: {value: 1}})
   assert.deepEqual(createErrorResponse('TEST', 'failed', {status: 500}), {
@@ -91,6 +187,8 @@ test('rejects unknown and incomplete requests before calling fetch', async () =>
     [{action: 'endic', method: 'GET'}, MESSAGE_ERROR_CODES.MISSING_PAYLOAD],
     [{action: 'endic', method: 'POST', url: 'https://example.com'}, MESSAGE_ERROR_CODES.INVALID_REQUEST],
     [{action: 'endic', method: 'GET', url: 'not-a-url'}, MESSAGE_ERROR_CODES.INVALID_REQUEST],
+    [{action: 'recent-search', operation: 'record'}, MESSAGE_ERROR_CODES.MISSING_PAYLOAD],
+    [{action: 'recent-search', operation: 'unknown', term: 'hello'}, MESSAGE_ERROR_CODES.INVALID_REQUEST],
     [translationRequest({key: ''}), MESSAGE_ERROR_CODES.MISSING_PAYLOAD],
     [translationRequest({data: undefined}), MESSAGE_ERROR_CODES.MISSING_PAYLOAD],
     [translationRequest({data: {text: ['hello']}}), MESSAGE_ERROR_CODES.MISSING_PAYLOAD]
@@ -104,6 +202,40 @@ test('rejects unknown and incomplete requests before calling fetch', async () =>
 
   assert.equal(fetchCalls, 0)
   assert.equal(validateMessageRequest(dictionaryRequest()), null)
+})
+
+test('serializes recent-search writes across concurrent extension contexts', async () => {
+  const storage = createRecentStorage()
+  const [first, second] = await Promise.all([
+    handleBackgroundMessage(createRecentSearchRequest({term: 'first'}), {storage}),
+    handleBackgroundMessage(createRecentSearchRequest({term: 'second'}), {storage})
+  ])
+
+  assert.equal(first.ok, true)
+  assert.equal(second.ok, true)
+  assert.deepEqual(
+    storage.local.items[RECENT_SEARCH_STORAGE.key].sort(),
+    ['first', 'second']
+  )
+  assert.equal(storage.local.setCalls.length, 2)
+})
+
+test('does not write a queued recent search after the opt-in setting changes off', async () => {
+  const local = new DeferredRecentStorageArea()
+  const storage = createRecentStorage({local})
+  const pending = handleBackgroundMessage(
+    createRecentSearchRequest({term: 'stale'}),
+    {storage}
+  )
+
+  await new Promise(resolve => setImmediate(() => setImmediate(resolve)))
+  storage.setRecentSearchEnabled(false)
+  local.resolveNextGet()
+
+  const response = await pending
+  assert.deepEqual(response, {ok: true, data: []})
+  assert.equal(local.setCalls.length, 0)
+  assert.equal(RECENT_SEARCH_STORAGE.key in local.items, false)
 })
 
 test('returns a shared success response for dictionary and translation requests', async () => {

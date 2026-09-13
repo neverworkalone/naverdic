@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {JSDOM} from 'jsdom'
 
+import {MESSAGE_ACTIONS} from '../src/messaging.mjs'
+import {addRecentSearch, RECENT_SEARCH_STORAGE} from '../src/recent-search.mjs'
 import {
   calculatePopupPosition,
   createPopupAnchor,
@@ -17,7 +19,6 @@ import {
   createDefaultSecretsV2,
   createInitialSettingsV2
 } from '../src/settings-v2.mjs'
-import {RECENT_SEARCH_STORAGE} from '../src/recent-search.mjs'
 
 const VIEWPORT = {
   left: 0,
@@ -407,6 +408,7 @@ test('installs dictionary interaction while Chrome Translator availability is pe
   const availability = new Promise(resolve => {
     resolveAvailability = resolve
   })
+  let recentSearchMessageCount = 0
   const previousGlobals = {
     chrome: globalThis.chrome,
     document: globalThis.document,
@@ -433,10 +435,34 @@ test('installs dictionary interaction while Chrome Translator availability is pe
     storage,
     runtime: {
       getURL: name => `https://extension.test/${name}`,
-      sendMessage: (_request, callback) => callback({
-        ok: true,
-        data: {searchResult: {searchResultList: []}}
-      })
+      sendMessage: (request, callback) => {
+        if (request.action === MESSAGE_ACTIONS.RECENT_SEARCH) {
+          recentSearchMessageCount += 1
+          const current = localItems[RECENT_SEARCH_STORAGE.key] || []
+          const next = request.operation === 'record' && settings.recentSearch.enabled
+            ? addRecentSearch(current, request.term)
+            : current
+          if (request.operation === 'record') {
+            if (settings.recentSearch.enabled) {
+              localItems[RECENT_SEARCH_STORAGE.key] = next
+            }
+          } else {
+            delete localItems[RECENT_SEARCH_STORAGE.key]
+          }
+          callback({ok: true, data: next})
+          return
+        }
+
+        if (request.action === MESSAGE_ACTIONS.TRANSLATION) {
+          callback({ok: true, data: {translations: [{text: '안녕'}]}})
+          return
+        }
+
+        callback({
+          ok: true,
+          data: {searchResult: {searchResultList: []}}
+        })
+      }
     },
     i18n: {getMessage: () => ''}
   }
@@ -473,6 +499,67 @@ test('installs dictionary interaction while Chrome Translator availability is pe
     assert.ok(document.getElementById('popupFrame'))
     assert.equal(listeners.size, 1)
     await new Promise(resolve => setImmediate(resolve))
+    assert.deepEqual(localItems[RECENT_SEARCH_STORAGE.key], ['hello'])
+    assert.equal(recentSearchMessageCount, 1)
+
+    settings.dictionary.drag.enabled = true
+    listeners.forEach(listener => listener({
+      [SETTINGS_STORAGE.settings.key]: {newValue: settings}
+    }, 'sync'))
+    await new Promise(resolve => setImmediate(resolve))
+
+    const selectedText = document.getElementById('word').firstChild
+    selectedText.data = 'world'
+    document.dispatchEvent(new window.MouseEvent('mousedown', {
+      bubbles: true,
+      button: 0,
+      clientX: 100,
+      clientY: 100
+    }))
+    document.dispatchEvent(new window.MouseEvent('mousemove', {
+      bubbles: true,
+      button: 0,
+      clientX: 120,
+      clientY: 100
+    }))
+    document.dispatchEvent(new window.MouseEvent('mouseup', {
+      bubbles: true,
+      button: 0,
+      clientX: 120,
+      clientY: 100,
+      altKey: true
+    }))
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(recentSearchMessageCount, 1)
+
+    settings.dictionary.drag.enabled = false
+    listeners.forEach(listener => listener({
+      [SETTINGS_STORAGE.settings.key]: {newValue: settings}
+    }, 'sync'))
+    await new Promise(resolve => setImmediate(resolve))
+
+    selectedText.data = 'again'
+    document.dispatchEvent(new window.MouseEvent('mousedown', {
+      bubbles: true,
+      button: 0,
+      clientX: 100,
+      clientY: 100
+    }))
+    document.dispatchEvent(new window.MouseEvent('mousemove', {
+      bubbles: true,
+      button: 0,
+      clientX: 120,
+      clientY: 100
+    }))
+    document.dispatchEvent(new window.MouseEvent('mouseup', {
+      bubbles: true,
+      button: 0,
+      clientX: 120,
+      clientY: 100,
+      ctrlKey: true
+    }))
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(recentSearchMessageCount, 1)
     assert.deepEqual(localItems[RECENT_SEARCH_STORAGE.key], ['hello'])
 
     resolveAvailability('available')
