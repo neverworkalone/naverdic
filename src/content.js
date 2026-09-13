@@ -12,13 +12,16 @@ import {createPopupController, POPUP_STATES} from './content-popup.mjs'
 import {resolvePopupState} from './popup-state.mjs'
 import {
   createPopupRequestCoordinator,
-  isAbortError
+  isAbortError,
+  POPUP_REQUEST_STATUSES
 } from './content-request.mjs'
 import {createChromeTranslatorRuntime} from './chrome-translator.mjs'
 import {SETTINGS_V2_DEFAULTS} from './settings-v2.mjs'
 import {
+  createRecentSearchRequest,
   MESSAGE_ERROR_CODES,
-  reportMessageFailure
+  reportMessageFailure,
+  sendRuntimeMessage
 } from './messaging.mjs'
 import {
   DEFAULT_OPTIONS,
@@ -28,6 +31,9 @@ import {
   CHROME_TRANSLATOR_PROVIDER_ID,
   getProviderPreset
 } from './translation-provider.mjs'
+import {
+  normalizeRecentSearchTerm
+} from './recent-search.mjs'
 
 export {DEFAULT_OPTIONS, STORAGE_DEFAULTS}
 
@@ -44,6 +50,8 @@ let interactionConfigurationRevision = 0
 let popupController = null
 let popupRequestCoordinator = null
 let popupDataClient = null
+let activeRecentSearchEnabled = false
+let activeRecentSearchStateRevision = 0
 
 function getPopupController() {
   if (!popupController) {
@@ -86,6 +94,26 @@ function getChromeTranslatorRuntime() {
     chromeTranslatorRuntime = createChromeTranslatorRuntime()
   }
   return chromeTranslatorRuntime
+}
+
+function trackInlineRecentSearch(query) {
+  const term = normalizeRecentSearchTerm(query)
+  if (!activeRecentSearchEnabled || !term) {
+    return
+  }
+
+  const settingsRevision = activeRecentSearchStateRevision
+  void Promise.resolve().then(() => {
+    if (!activeRecentSearchEnabled ||
+        settingsRevision !== activeRecentSearchStateRevision) {
+      return
+    }
+
+    return sendRuntimeMessage(
+      globalThis.chrome?.runtime,
+      createRecentSearchRequest({term})
+    )
+  })
 }
 
 function prepareChromeTranslatorRuntime() {
@@ -136,7 +164,7 @@ function renderRequestResult(type, result) {
   popupController.update(resolved.state, resolved.data)
 }
 
-function openPopup(event, key = null, type = 'search') {
+function openPopup(event, key = null, type = 'search', source = '') {
   const text = getSelectionText(window.getSelection?.())
   if (!text) {
     return
@@ -164,6 +192,11 @@ function openPopup(event, key = null, type = 'search') {
 
   coordinator.run(request).then(result => {
     renderRequestResult(popupType, result)
+    if (!isTranslation &&
+        source === 'double-click' &&
+        result.status === POPUP_REQUEST_STATUSES.SUCCESS) {
+      trackInlineRecentSearch(query)
+    }
   })
 }
 
@@ -175,6 +208,11 @@ function removePopup() {
 function applyOptions(items) {
   const configurationRevision = ++interactionConfigurationRevision
   const nextItems = items || {}
+  const nextRecentSearchEnabled = Boolean(nextItems.recentSearchEnabled)
+  if (nextRecentSearchEnabled !== activeRecentSearchEnabled) {
+    activeRecentSearchStateRevision += 1
+  }
+  activeRecentSearchEnabled = nextRecentSearchEnabled
   const nextProviderId = nextItems.translationProviderId || 'deepl-free'
   const nextNeedsChromeRuntime = nextProviderId === CHROME_TRANSLATOR_PROVIDER_ID &&
     Boolean(nextItems.translate)
@@ -260,6 +298,8 @@ export function unregisterEventListener() {
   chromeTranslatorRuntime?.destroy()
   chromeTranslatorRuntime = null
   activeTranslationProviderId = ''
+  activeRecentSearchEnabled = false
+  activeRecentSearchStateRevision += 1
 }
 
 export function registerEventListener() {

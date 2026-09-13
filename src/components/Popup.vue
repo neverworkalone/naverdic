@@ -8,15 +8,15 @@ import {
 } from '/src/popup-state.mjs'
 import {
   createDictionaryRequest,
+  createClearRecentSearchRequest,
+  createRecentSearchRequest,
   reportMessageFailure,
   sendRuntimeMessage
 } from '/src/messaging.mjs'
 import {
   addRecentSearch,
-  clearRecentSearches,
   loadRecentSearchState,
-  normalizeRecentSearchTerm,
-  writeRecentSearches
+  normalizeRecentSearchTerm
 } from '/src/recent-search.mjs'
 import { normalizeSettingsV2, SETTINGS_STORAGE } from '/src/settings-v2.mjs'
 import { getText } from '/src/text.js'
@@ -29,7 +29,6 @@ const recentSearches = ref([])
 const recentSearchEnabled = ref(false)
 const recentSearchReady = ref(false)
 const pendingRecentSearches = []
-let recentSearchWriteQueue = Promise.resolve()
 let storageChangeListener = null
 let recentSearchStateRevision = 0
 const popupBodyElement = ref(null)
@@ -51,23 +50,18 @@ function setResolvedState(resolved) {
   entries.value = Array.isArray(resolved?.data) ? resolved.data : []
 }
 
-function queueRecentSearchWrite(searches) {
-  const localStorage = globalThis.chrome?.storage?.local
-  const snapshot = [...searches]
-  recentSearchWriteQueue = recentSearchWriteQueue
-    .catch(() => {})
-    .then(() => writeRecentSearches(localStorage, snapshot))
-    .catch(() => {})
-  return recentSearchWriteQueue
+function queueRecentSearchRecord(term) {
+  void sendRuntimeMessage(
+    globalThis.chrome?.runtime,
+    createRecentSearchRequest({term})
+  )
 }
 
 function queueRecentSearchClear() {
-  const localStorage = globalThis.chrome?.storage?.local
-  recentSearchWriteQueue = recentSearchWriteQueue
-    .catch(() => {})
-    .then(() => clearRecentSearches(localStorage))
-    .catch(() => {})
-  return recentSearchWriteQueue
+  void sendRuntimeMessage(
+    globalThis.chrome?.runtime,
+    createClearRecentSearchRequest()
+  )
 }
 
 function commitRecentSearch(term) {
@@ -83,7 +77,7 @@ function commitRecentSearch(term) {
   }
 
   recentSearches.value = nextSearches
-  queueRecentSearchWrite(nextSearches)
+  queueRecentSearchRecord(term)
 }
 
 function flushPendingRecentSearches() {
@@ -94,7 +88,13 @@ function flushPendingRecentSearches() {
 
   let nextSearches = recentSearches.value
   for (const term of pendingRecentSearches) {
-    nextSearches = addRecentSearch(nextSearches, term)
+    const updatedSearches = addRecentSearch(nextSearches, term)
+    const changed = updatedSearches.length !== nextSearches.length ||
+      updatedSearches.some((entry, index) => entry !== nextSearches[index])
+    if (changed) {
+      queueRecentSearchRecord(term)
+    }
+    nextSearches = updatedSearches
   }
   pendingRecentSearches.length = 0
 
@@ -105,7 +105,6 @@ function flushPendingRecentSearches() {
   }
 
   recentSearches.value = nextSearches
-  queueRecentSearchWrite(nextSearches)
 }
 
 function trackRecentSearch(query) {
@@ -227,7 +226,6 @@ async function searchWord(searchTerm = word.value) {
 
   const revision = ++requestRevision
   state.value = POPUP_STATES.LOADING
-  trackRecentSearch(query)
 
   try {
     const response = await sendRuntimeMessage(
@@ -256,6 +254,9 @@ async function searchWord(searchTerm = word.value) {
       data: parseNaverDictionaryResponse(response.data)
     })
     setResolvedState(resolved)
+    if (resolved.state === POPUP_STATES.RESULT) {
+      trackRecentSearch(query)
+    }
   } catch (error) {
     if (revision !== requestRevision) {
       return
@@ -444,7 +445,7 @@ body {
 
 .naverdic-popup-shell--recent {
   height: auto;
-  min-height: 374px;
+  min-height: 0;
   padding-bottom: 14px;
 }
 

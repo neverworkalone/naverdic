@@ -7,9 +7,18 @@ import {
   respondOnce
 } from './messaging.mjs'
 import {
+  addRecentSearch,
+  clearRecentSearches,
+  normalizeRecentSearchTerm,
+  readRecentSearchEnabled,
+  readRecentSearches,
+  writeRecentSearches
+} from './recent-search.mjs'
+import {
   executeProviderTranslation,
   PROVIDER_ERROR_CODES
 } from './translation-engine.mjs'
+import {normalizeSettingsV2, SETTINGS_STORAGE} from './settings-v2.mjs'
 import {getProviderPreset, normalizeProviderDefinition} from './translation-provider.mjs'
 
 function isRecord(value) {
@@ -42,8 +51,87 @@ function hasProvider(request) {
   return isRecord(request.provider)
 }
 
+let recentSearchOperationQueue = Promise.resolve()
+let recentSearchSettingsRevision = 0
+let recentSearchListenerStorage = null
+
+function observeRecentSearchSettings(storage) {
+  if (recentSearchListenerStorage === storage || !storage?.onChanged?.addListener) {
+    return
+  }
+
+  recentSearchListenerStorage = storage
+  storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'sync') {
+      return
+    }
+
+    const settingChange = changes?.[SETTINGS_STORAGE.settings.key]
+    if (!settingChange) {
+      return
+    }
+
+    const previousEnabled = normalizeSettingsV2(settingChange.oldValue).recentSearch.enabled
+    const enabled = normalizeSettingsV2(settingChange.newValue).recentSearch.enabled
+    if (previousEnabled === enabled) {
+      return
+    }
+
+    recentSearchSettingsRevision += 1
+    if (!enabled) {
+      void enqueueRecentSearchOperation(() => clearRecentSearches(storage?.local)).catch(() => {})
+    }
+  })
+}
+
+function enqueueRecentSearchOperation(operation) {
+  const result = recentSearchOperationQueue
+    .catch(() => {})
+    .then(operation)
+  recentSearchOperationQueue = result.catch(() => {})
+  return result
+}
+
+async function handleRecentSearch(request, storage) {
+  observeRecentSearchSettings(storage)
+
+  return enqueueRecentSearchOperation(async () => {
+    if (request.operation === 'clear') {
+      await clearRecentSearches(storage?.local)
+      return createSuccessResponse([])
+    }
+
+    const term = normalizeRecentSearchTerm(request.term)
+    if (!term || !(await readRecentSearchEnabled(storage))) {
+      return createSuccessResponse([])
+    }
+
+    const settingsRevision = recentSearchSettingsRevision
+    const searches = await readRecentSearches(storage?.local)
+    if (settingsRevision !== recentSearchSettingsRevision ||
+        !(await readRecentSearchEnabled(storage))) {
+      return createSuccessResponse(searches)
+    }
+
+    const nextSearches = addRecentSearch(searches, term)
+    const changed = nextSearches.length !== searches.length ||
+      nextSearches.some((entry, index) => entry !== searches[index])
+    if (!changed) {
+      return createSuccessResponse(nextSearches)
+    }
+
+    if (settingsRevision !== recentSearchSettingsRevision ||
+        !(await readRecentSearchEnabled(storage))) {
+      return createSuccessResponse(searches)
+    }
+
+    await writeRecentSearches(storage?.local, nextSearches)
+    return createSuccessResponse(nextSearches)
+  })
+}
+
 /**
- * Validate the two existing message request shapes before touching fetch.
+ * Validate supported message request shapes before touching fetch.
  * Returning a response instead of throwing makes malformed messages safe at
  * the service-worker boundary.
  */
@@ -67,6 +155,28 @@ export function validateMessageRequest(request) {
       MESSAGE_ERROR_CODES.UNKNOWN_ACTION,
       `Unsupported message action: ${request.action}`
     )
+  }
+
+  if (request.action === MESSAGE_ACTIONS.RECENT_SEARCH) {
+    if (request.operation === 'clear') {
+      return null
+    }
+
+    if (request.operation !== 'record') {
+      return createErrorResponse(
+        MESSAGE_ERROR_CODES.INVALID_REQUEST,
+        'The recent-search operation must be record or clear.'
+      )
+    }
+
+    if (typeof request.term !== 'string' || !request.term.trim()) {
+      return createErrorResponse(
+        MESSAGE_ERROR_CODES.MISSING_PAYLOAD,
+        'The recent-search term is required.'
+      )
+    }
+
+    return null
   }
 
   const providerRequest = request.action === MESSAGE_ACTIONS.TRANSLATION && hasProvider(request)
@@ -383,12 +493,24 @@ export async function handleBackgroundMessage(
   request,
   {
     fetchFn = globalThis.fetch,
-    timeoutMs = DEFAULT_MESSAGE_TIMEOUT_MS
+    timeoutMs = DEFAULT_MESSAGE_TIMEOUT_MS,
+    storage = globalThis.chrome?.storage
   } = {}
 ) {
   const validationError = validateMessageRequest(request)
   if (validationError) {
     return validationError
+  }
+
+  if (request.action === MESSAGE_ACTIONS.RECENT_SEARCH) {
+    try {
+      return await handleRecentSearch(request, storage)
+    } catch (_error) {
+      return createErrorResponse(
+        MESSAGE_ERROR_CODES.INTERNAL_ERROR,
+        'The recent-search operation failed.'
+      )
+    }
   }
 
   if (request.action === MESSAGE_ACTIONS.TRANSLATION) {
@@ -454,10 +576,16 @@ export async function handleBackgroundMessage(
  * Register the Chrome listener separately from the fetch logic so the
  * sendResponse/return-true lifecycle can be tested without a Chrome global.
  */
-export function registerBackgroundListener(runtime, handler = handleBackgroundMessage) {
+export function registerBackgroundListener(
+  runtime,
+  handler = handleBackgroundMessage,
+  storage = globalThis.chrome?.storage
+) {
   if (!runtime?.onMessage?.addListener) {
     return null
   }
+
+  observeRecentSearchSettings(storage)
 
   const listener = (request, _sender, sendResponse) => {
     const respond = respondOnce(sendResponse)

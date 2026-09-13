@@ -5,8 +5,12 @@ import {fileURLToPath, pathToFileURL} from 'node:url'
 import {after, before, test} from 'node:test'
 import {JSDOM} from 'jsdom'
 import {compileScript, parse} from '@vue/compiler-sfc'
-import {RECENT_SEARCH_STORAGE} from '../src/recent-search.mjs'
-import {SETTINGS_STORAGE} from '../src/settings-v2.mjs'
+import {MESSAGE_ACTIONS} from '../src/messaging.mjs'
+import {
+  addRecentSearch,
+  RECENT_SEARCH_STORAGE
+} from '../src/recent-search.mjs'
+import {normalizeSettingsV2, SETTINGS_STORAGE} from '../src/settings-v2.mjs'
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 let tempRoot
@@ -270,12 +274,47 @@ function createPopupStorage({enabled = false, searches = [], sync: providedSync 
   }
 }
 
+function sameSearches(left, right) {
+  return left.length === right.length && left.every((entry, index) => entry === right[index])
+}
+
+function respondToRecentSearchRequest(request, storage, callback) {
+  if (request.operation === 'clear') {
+    if (!storage?.local?.remove) {
+      callback({ok: true, data: []})
+      return
+    }
+    storage.local.remove(RECENT_SEARCH_STORAGE.key, () => {
+      callback({ok: true, data: []})
+    })
+    return
+  }
+
+  const enabled = normalizeSettingsV2(
+    storage?.sync?.items?.[SETTINGS_STORAGE.settings.key]
+  ).recentSearch.enabled
+  const current = storage?.local?.items?.[RECENT_SEARCH_STORAGE.key] || []
+  const next = enabled ? addRecentSearch(current, request.term) : []
+  if (enabled && !sameSearches(current, next)) {
+    storage.local.set({[RECENT_SEARCH_STORAGE.key]: next}, () => {
+      callback({ok: true, data: next})
+    })
+    return
+  }
+
+  callback({ok: true, data: next})
+}
+
 function mountPopup({storage = null} = {}) {
   requests = []
   globalThis.chrome = {
     i18n: {getMessage: () => ''},
     runtime: {
       sendMessage: (request, callback) => {
+        if (request.action === MESSAGE_ACTIONS.RECENT_SEARCH) {
+          respondToRecentSearchRequest(request, storage, callback)
+          return
+        }
         requests.push({request, callback})
       }
     },
@@ -418,6 +457,46 @@ test('records only valid toolbar words, moves duplicates to the front, and clear
   await flushPromises()
   assert.equal(RECENT_SEARCH_STORAGE.key in storage.local.items, false)
   assert.equal(wrapper.find('[data-testid="popup-recent-search"]').exists(), false)
+  wrapper.unmount()
+})
+
+test('records toolbar history only after a non-empty current dictionary result', async () => {
+  const storage = createPopupStorage({enabled: true})
+  const wrapper = mountPopup({storage})
+  await flushPromises()
+
+  const input = wrapper.get('.naverdic-popup-search__input')
+  const form = wrapper.get('.naverdic-popup-search')
+
+  await input.setValue('found')
+  await form.trigger('submit')
+  respond(0, {ok: true, data: dictionaryResponse('found')})
+  await flushPromises()
+  assert.deepEqual(storage.local.items[RECENT_SEARCH_STORAGE.key], ['found'])
+
+  await input.setValue('missing')
+  await form.trigger('submit')
+  respond(1, {ok: true, data: {searchResultMap: {searchResultListMap: {WORD: {items: []}}}}})
+  await flushPromises()
+  assert.deepEqual(storage.local.items[RECENT_SEARCH_STORAGE.key], ['found'])
+
+  await input.setValue('offline')
+  await form.trigger('submit')
+  respond(2, {
+    ok: false,
+    error: {code: 'NETWORK_ERROR', message: 'offline'}
+  })
+  await flushPromises()
+  assert.deepEqual(storage.local.items[RECENT_SEARCH_STORAGE.key], ['found'])
+
+  await input.setValue('stale')
+  await form.trigger('submit')
+  await input.setValue('current')
+  await form.trigger('submit')
+  respond(3, {ok: true, data: dictionaryResponse('stale')})
+  respond(4, {ok: true, data: dictionaryResponse('current')})
+  await flushPromises()
+  assert.deepEqual(storage.local.items[RECENT_SEARCH_STORAGE.key], ['current', 'found'])
   wrapper.unmount()
 })
 

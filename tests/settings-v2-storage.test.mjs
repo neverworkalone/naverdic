@@ -112,6 +112,7 @@ test('uses the disabled Alt drag default for a new install without stored settin
   assert.equal(loaded.settings.dictionary.drag.enabled, false)
   assert.equal(loaded.settings.dictionary.drag.triggerKey, 'alt')
   assert.equal(loaded.settings.popup.backgroundColor, '#F5F6F8')
+  assert.equal(loaded.settings.recentSearch.enabled, true)
   assert.equal(loaded.migrationNeeded, true)
 })
 

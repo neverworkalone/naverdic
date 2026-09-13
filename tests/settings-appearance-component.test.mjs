@@ -629,8 +629,10 @@ test('renders the recent-search opt-in card and updates the draft setting', asyn
     card.get('label[for="settings-recent-search-enabled"]').text(),
     koText('SETTINGS_FIELD_RECENT_SEARCH_ENABLED')
   )
-  assert.equal(enabled.element.checked, false)
+  assert.equal(enabled.element.checked, true)
 
+  await enabled.setValue(false)
+  assert.equal(draft.recentSearch.enabled, false)
   await enabled.setValue(true)
   assert.equal(draft.recentSearch.enabled, true)
 

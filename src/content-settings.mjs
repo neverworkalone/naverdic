@@ -47,6 +47,7 @@ export function normalizeContentRuntimeSettings(values = {}) {
     popup_bgcolor: settings.popup.backgroundColor,
     popup_fontcolor: settings.popup.fontColor,
     popup_fontsize: settings.popup.fontSizePt,
+    recentSearchEnabled: settings.recentSearch.enabled,
     use_deny_list: settings.sites.denyListEnabled,
     safe_urls: settings.sites.denyList,
     translationProviderId: settings.translation.providerId,

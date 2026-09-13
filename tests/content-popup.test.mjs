@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {JSDOM} from 'jsdom'
 
+import {MESSAGE_ACTIONS} from '../src/messaging.mjs'
+import {addRecentSearch, RECENT_SEARCH_STORAGE} from '../src/recent-search.mjs'
 import {
   calculatePopupPosition,
   createPopupAnchor,
@@ -28,6 +30,28 @@ const VIEWPORT = {
 }
 
 const POPUP_SIZE = {width: 360, height: 200}
+
+function contentDictionaryResponse(word) {
+  return {
+    searchResultMap: {
+      searchResultListMap: {
+        WORD: {
+          items: [{
+            handleEntry: word,
+            meansCollector: [{
+              partOfSpeech: 'noun',
+              means: [{order: '1', value: 'meaning'}]
+            }]
+          }]
+        }
+      }
+    }
+  }
+}
+
+function emptyContentDictionaryResponse() {
+  return {searchResultMap: {searchResultListMap: {WORD: {items: []}}}}
+}
 
 test('positions the inline popup in all four viewport quadrants', () => {
   const cases = [
@@ -373,7 +397,11 @@ test('installs dictionary interaction while Chrome Translator availability is pe
   const {document, window} = dom.window
   const settings = createInitialSettingsV2()
   settings.dictionary.drag.enabled = false
+  settings.recentSearch.enabled = true
   const secrets = createDefaultSecretsV2()
+  const localItems = {
+    [SETTINGS_STORAGE.secrets.key]: secrets
+  }
   const listeners = new Set()
   const storage = {
     sync: {
@@ -382,9 +410,16 @@ test('installs dictionary interaction while Chrome Translator availability is pe
       })
     },
     local: {
-      get: (_keys, callback) => callback({
-        [SETTINGS_STORAGE.secrets.key]: secrets
-      })
+      get: (keys, callback) => {
+        const requestedKeys = Array.isArray(keys) ? keys : [keys]
+        callback(Object.fromEntries(requestedKeys
+          .filter(key => Object.prototype.hasOwnProperty.call(localItems, key))
+          .map(key => [key, localItems[key]])))
+      },
+      set: (values, callback) => {
+        Object.assign(localItems, values)
+        callback?.()
+      }
     },
     onChanged: {
       addListener: listener => listeners.add(listener),
@@ -395,6 +430,8 @@ test('installs dictionary interaction while Chrome Translator availability is pe
   const availability = new Promise(resolve => {
     resolveAvailability = resolve
   })
+  let recentSearchMessageCount = 0
+  const pendingDictionaryResponses = []
   const previousGlobals = {
     chrome: globalThis.chrome,
     document: globalThis.document,
@@ -421,10 +458,56 @@ test('installs dictionary interaction while Chrome Translator availability is pe
     storage,
     runtime: {
       getURL: name => `https://extension.test/${name}`,
-      sendMessage: (_request, callback) => callback({
-        ok: true,
-        data: {searchResult: {searchResultList: []}}
-      })
+      sendMessage: (request, callback) => {
+        if (request.action === MESSAGE_ACTIONS.RECENT_SEARCH) {
+          recentSearchMessageCount += 1
+          const current = localItems[RECENT_SEARCH_STORAGE.key] || []
+          const next = request.operation === 'record' && settings.recentSearch.enabled
+            ? addRecentSearch(current, request.term)
+            : current
+          if (request.operation === 'record') {
+            if (settings.recentSearch.enabled) {
+              localItems[RECENT_SEARCH_STORAGE.key] = next
+            }
+          } else {
+            delete localItems[RECENT_SEARCH_STORAGE.key]
+          }
+          callback({ok: true, data: next})
+          return
+        }
+
+        if (request.action === MESSAGE_ACTIONS.TRANSLATION) {
+          callback({ok: true, data: {translations: [{text: '안녕'}]}})
+          return
+        }
+
+        if (request.action === MESSAGE_ACTIONS.DICTIONARY) {
+          const query = new URL(request.url).searchParams.get('query') || 'hello'
+          if (query === 'stale' || query === 'current') {
+            pendingDictionaryResponses.push({query, callback})
+            return
+          }
+          if (request.url.includes('missing')) {
+            callback({ok: true, data: emptyContentDictionaryResponse()})
+            return
+          }
+          if (request.url.includes('offline')) {
+            callback({
+              ok: false,
+              error: {code: 'NETWORK_ERROR', message: 'offline'}
+            })
+            return
+          }
+
+          callback({ok: true, data: contentDictionaryResponse(query)})
+          return
+        }
+
+        callback({
+          ok: true,
+          data: {searchResult: {searchResultList: []}}
+        })
+      }
     },
     i18n: {getMessage: () => ''}
   }
@@ -438,28 +521,130 @@ test('installs dictionary interaction while Chrome Translator availability is pe
     selection.removeAllRanges()
     selection.addRange(range)
     window.getSelection = () => selection
+    const selectedText = document.getElementById('word').firstChild
+    const setSelectedText = value => {
+      selectedText.data = value
+      range.setStart(selectedText, 0)
+      range.setEnd(selectedText, selectedText.length)
+      selection.removeAllRanges()
+      selection.addRange(range)
+    }
+    const dispatchDoubleClick = () => {
+      for (let index = 0; index < 2; index += 1) {
+        document.dispatchEvent(new window.MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 100,
+          clientY: 100
+        }))
+        document.dispatchEvent(new window.MouseEvent('mouseup', {
+          bubbles: true,
+          button: 0,
+          clientX: 100,
+          clientY: 100
+        }))
+      }
+    }
 
     const content = await import(`../src/content.js?pending-availability=${Date.now()}`)
     content.main()
     await new Promise(resolve => setImmediate(resolve))
 
-    for (let index = 0; index < 2; index += 1) {
-      document.dispatchEvent(new window.MouseEvent('mousedown', {
-        bubbles: true,
-        button: 0,
-        clientX: 100,
-        clientY: 100
-      }))
-      document.dispatchEvent(new window.MouseEvent('mouseup', {
-        bubbles: true,
-        button: 0,
-        clientX: 100,
-        clientY: 100
-      }))
-    }
+    dispatchDoubleClick()
 
     assert.ok(document.getElementById('popupFrame'))
     assert.equal(listeners.size, 1)
+    await new Promise(resolve => setImmediate(resolve))
+    assert.deepEqual(localItems[RECENT_SEARCH_STORAGE.key], ['hello'])
+    assert.equal(recentSearchMessageCount, 1)
+
+    settings.dictionary.drag.enabled = true
+    listeners.forEach(listener => listener({
+      [SETTINGS_STORAGE.settings.key]: {newValue: settings}
+    }, 'sync'))
+    await new Promise(resolve => setImmediate(resolve))
+
+    setSelectedText('world')
+    document.dispatchEvent(new window.MouseEvent('mousedown', {
+      bubbles: true,
+      button: 0,
+      clientX: 100,
+      clientY: 100
+    }))
+    document.dispatchEvent(new window.MouseEvent('mousemove', {
+      bubbles: true,
+      button: 0,
+      clientX: 120,
+      clientY: 100
+    }))
+    document.dispatchEvent(new window.MouseEvent('mouseup', {
+      bubbles: true,
+      button: 0,
+      clientX: 120,
+      clientY: 100,
+      altKey: true
+    }))
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(recentSearchMessageCount, 1)
+
+    settings.dictionary.drag.enabled = false
+    listeners.forEach(listener => listener({
+      [SETTINGS_STORAGE.settings.key]: {newValue: settings}
+    }, 'sync'))
+    await new Promise(resolve => setImmediate(resolve))
+
+    setSelectedText('again')
+    document.dispatchEvent(new window.MouseEvent('mousedown', {
+      bubbles: true,
+      button: 0,
+      clientX: 100,
+      clientY: 100
+    }))
+    document.dispatchEvent(new window.MouseEvent('mousemove', {
+      bubbles: true,
+      button: 0,
+      clientX: 120,
+      clientY: 100
+    }))
+    document.dispatchEvent(new window.MouseEvent('mouseup', {
+      bubbles: true,
+      button: 0,
+      clientX: 120,
+      clientY: 100,
+      ctrlKey: true
+    }))
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(recentSearchMessageCount, 1)
+    assert.deepEqual(localItems[RECENT_SEARCH_STORAGE.key], ['hello'])
+
+    setSelectedText('missing')
+    dispatchDoubleClick()
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(recentSearchMessageCount, 1)
+    assert.deepEqual(localItems[RECENT_SEARCH_STORAGE.key], ['hello'])
+
+    setSelectedText('offline')
+    dispatchDoubleClick()
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(recentSearchMessageCount, 1)
+    assert.deepEqual(localItems[RECENT_SEARCH_STORAGE.key], ['hello'])
+
+    setSelectedText('stale')
+    dispatchDoubleClick()
+    setSelectedText('current')
+    dispatchDoubleClick()
+    assert.equal(pendingDictionaryResponses.length, 2)
+    pendingDictionaryResponses.find(item => item.query === 'stale').callback({
+      ok: true,
+      data: contentDictionaryResponse('stale')
+    })
+    pendingDictionaryResponses.find(item => item.query === 'current').callback({
+      ok: true,
+      data: contentDictionaryResponse('current')
+    })
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(recentSearchMessageCount, 2)
+    assert.deepEqual(localItems[RECENT_SEARCH_STORAGE.key], ['current', 'hello'])
 
     resolveAvailability('available')
     await new Promise(resolve => setImmediate(resolve))
