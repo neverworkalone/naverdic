@@ -123,13 +123,29 @@ function createRecentStorage({enabled = true, local = new AsyncStorageArea()} = 
         listeners.delete(listener)
       }
     },
-    setRecentSearchEnabled(nextEnabled) {
+    updateSettings(changes) {
       const oldValue = sync.items[SETTINGS_STORAGE.settings.key]
-      const newValue = {...oldValue, recentSearch: {enabled: nextEnabled}}
+      const newValue = {...oldValue, ...changes}
       sync.items[SETTINGS_STORAGE.settings.key] = newValue
       listeners.forEach(listener => listener({
         [SETTINGS_STORAGE.settings.key]: {oldValue, newValue}
       }, 'sync'))
+    },
+    setRecentSearchEnabled(nextEnabled) {
+      this.updateSettings({
+        recentSearch: {
+          ...sync.items[SETTINGS_STORAGE.settings.key].recentSearch,
+          enabled: nextEnabled
+        }
+      })
+    },
+    setPopupFontSize(nextFontSize) {
+      this.updateSettings({
+        popup: {
+          ...sync.items[SETTINGS_STORAGE.settings.key].popup,
+          fontSizePt: nextFontSize
+        }
+      })
     }
   }
 }
@@ -220,6 +236,19 @@ test('serializes recent-search writes across concurrent extension contexts', asy
   assert.equal(storage.local.setCalls.length, 2)
 })
 
+test('clears stored recent searches when the opt-in setting changes off', async () => {
+  const storage = createRecentStorage({
+    local: new AsyncStorageArea({[RECENT_SEARCH_STORAGE.key]: ['stored']})
+  })
+  const runtime = {onMessage: {addListener() {}}}
+  registerBackgroundListener(runtime, () => createSuccessResponse([]), storage)
+
+  storage.setRecentSearchEnabled(false)
+  await new Promise(resolve => setImmediate(() => setImmediate(resolve)))
+
+  assert.equal(RECENT_SEARCH_STORAGE.key in storage.local.items, false)
+})
+
 test('does not write a queued recent search after the opt-in setting changes off', async () => {
   const local = new DeferredRecentStorageArea()
   const storage = createRecentStorage({local})
@@ -236,6 +265,24 @@ test('does not write a queued recent search after the opt-in setting changes off
   assert.deepEqual(response, {ok: true, data: []})
   assert.equal(local.setCalls.length, 0)
   assert.equal(RECENT_SEARCH_STORAGE.key in local.items, false)
+})
+
+test('keeps a queued recent search when an unrelated setting changes', async () => {
+  const local = new DeferredRecentStorageArea()
+  const storage = createRecentStorage({local})
+  const pending = handleBackgroundMessage(
+    createRecentSearchRequest({term: 'stale'}),
+    {storage}
+  )
+
+  await new Promise(resolve => setImmediate(() => setImmediate(resolve)))
+  storage.setPopupFontSize(12)
+  local.resolveNextGet()
+
+  const response = await pending
+  assert.deepEqual(response, {ok: true, data: ['stale']})
+  assert.deepEqual(local.items[RECENT_SEARCH_STORAGE.key], ['stale'])
+  assert.equal(local.setCalls.length, 1)
 })
 
 test('returns a shared success response for dictionary and translation requests', async () => {

@@ -31,6 +31,28 @@ const VIEWPORT = {
 
 const POPUP_SIZE = {width: 360, height: 200}
 
+function contentDictionaryResponse(word) {
+  return {
+    searchResultMap: {
+      searchResultListMap: {
+        WORD: {
+          items: [{
+            handleEntry: word,
+            meansCollector: [{
+              partOfSpeech: 'noun',
+              means: [{order: '1', value: 'meaning'}]
+            }]
+          }]
+        }
+      }
+    }
+  }
+}
+
+function emptyContentDictionaryResponse() {
+  return {searchResultMap: {searchResultListMap: {WORD: {items: []}}}}
+}
+
 test('positions the inline popup in all four viewport quadrants', () => {
   const cases = [
     {
@@ -409,6 +431,7 @@ test('installs dictionary interaction while Chrome Translator availability is pe
     resolveAvailability = resolve
   })
   let recentSearchMessageCount = 0
+  const pendingDictionaryResponses = []
   const previousGlobals = {
     chrome: globalThis.chrome,
     document: globalThis.document,
@@ -458,6 +481,28 @@ test('installs dictionary interaction while Chrome Translator availability is pe
           return
         }
 
+        if (request.action === MESSAGE_ACTIONS.DICTIONARY) {
+          const query = new URL(request.url).searchParams.get('query') || 'hello'
+          if (query === 'stale' || query === 'current') {
+            pendingDictionaryResponses.push({query, callback})
+            return
+          }
+          if (request.url.includes('missing')) {
+            callback({ok: true, data: emptyContentDictionaryResponse()})
+            return
+          }
+          if (request.url.includes('offline')) {
+            callback({
+              ok: false,
+              error: {code: 'NETWORK_ERROR', message: 'offline'}
+            })
+            return
+          }
+
+          callback({ok: true, data: contentDictionaryResponse(query)})
+          return
+        }
+
         callback({
           ok: true,
           data: {searchResult: {searchResultList: []}}
@@ -476,25 +521,36 @@ test('installs dictionary interaction while Chrome Translator availability is pe
     selection.removeAllRanges()
     selection.addRange(range)
     window.getSelection = () => selection
+    const selectedText = document.getElementById('word').firstChild
+    const setSelectedText = value => {
+      selectedText.data = value
+      range.setStart(selectedText, 0)
+      range.setEnd(selectedText, selectedText.length)
+      selection.removeAllRanges()
+      selection.addRange(range)
+    }
+    const dispatchDoubleClick = () => {
+      for (let index = 0; index < 2; index += 1) {
+        document.dispatchEvent(new window.MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 100,
+          clientY: 100
+        }))
+        document.dispatchEvent(new window.MouseEvent('mouseup', {
+          bubbles: true,
+          button: 0,
+          clientX: 100,
+          clientY: 100
+        }))
+      }
+    }
 
     const content = await import(`../src/content.js?pending-availability=${Date.now()}`)
     content.main()
     await new Promise(resolve => setImmediate(resolve))
 
-    for (let index = 0; index < 2; index += 1) {
-      document.dispatchEvent(new window.MouseEvent('mousedown', {
-        bubbles: true,
-        button: 0,
-        clientX: 100,
-        clientY: 100
-      }))
-      document.dispatchEvent(new window.MouseEvent('mouseup', {
-        bubbles: true,
-        button: 0,
-        clientX: 100,
-        clientY: 100
-      }))
-    }
+    dispatchDoubleClick()
 
     assert.ok(document.getElementById('popupFrame'))
     assert.equal(listeners.size, 1)
@@ -508,8 +564,7 @@ test('installs dictionary interaction while Chrome Translator availability is pe
     }, 'sync'))
     await new Promise(resolve => setImmediate(resolve))
 
-    const selectedText = document.getElementById('word').firstChild
-    selectedText.data = 'world'
+    setSelectedText('world')
     document.dispatchEvent(new window.MouseEvent('mousedown', {
       bubbles: true,
       button: 0,
@@ -538,7 +593,7 @@ test('installs dictionary interaction while Chrome Translator availability is pe
     }, 'sync'))
     await new Promise(resolve => setImmediate(resolve))
 
-    selectedText.data = 'again'
+    setSelectedText('again')
     document.dispatchEvent(new window.MouseEvent('mousedown', {
       bubbles: true,
       button: 0,
@@ -561,6 +616,35 @@ test('installs dictionary interaction while Chrome Translator availability is pe
     await new Promise(resolve => setImmediate(resolve))
     assert.equal(recentSearchMessageCount, 1)
     assert.deepEqual(localItems[RECENT_SEARCH_STORAGE.key], ['hello'])
+
+    setSelectedText('missing')
+    dispatchDoubleClick()
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(recentSearchMessageCount, 1)
+    assert.deepEqual(localItems[RECENT_SEARCH_STORAGE.key], ['hello'])
+
+    setSelectedText('offline')
+    dispatchDoubleClick()
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(recentSearchMessageCount, 1)
+    assert.deepEqual(localItems[RECENT_SEARCH_STORAGE.key], ['hello'])
+
+    setSelectedText('stale')
+    dispatchDoubleClick()
+    setSelectedText('current')
+    dispatchDoubleClick()
+    assert.equal(pendingDictionaryResponses.length, 2)
+    pendingDictionaryResponses.find(item => item.query === 'stale').callback({
+      ok: true,
+      data: contentDictionaryResponse('stale')
+    })
+    pendingDictionaryResponses.find(item => item.query === 'current').callback({
+      ok: true,
+      data: contentDictionaryResponse('current')
+    })
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(recentSearchMessageCount, 2)
+    assert.deepEqual(localItems[RECENT_SEARCH_STORAGE.key], ['current', 'hello'])
 
     resolveAvailability('available')
     await new Promise(resolve => setImmediate(resolve))

@@ -460,6 +460,46 @@ test('records only valid toolbar words, moves duplicates to the front, and clear
   wrapper.unmount()
 })
 
+test('records toolbar history only after a non-empty current dictionary result', async () => {
+  const storage = createPopupStorage({enabled: true})
+  const wrapper = mountPopup({storage})
+  await flushPromises()
+
+  const input = wrapper.get('.naverdic-popup-search__input')
+  const form = wrapper.get('.naverdic-popup-search')
+
+  await input.setValue('found')
+  await form.trigger('submit')
+  respond(0, {ok: true, data: dictionaryResponse('found')})
+  await flushPromises()
+  assert.deepEqual(storage.local.items[RECENT_SEARCH_STORAGE.key], ['found'])
+
+  await input.setValue('missing')
+  await form.trigger('submit')
+  respond(1, {ok: true, data: {searchResultMap: {searchResultListMap: {WORD: {items: []}}}}})
+  await flushPromises()
+  assert.deepEqual(storage.local.items[RECENT_SEARCH_STORAGE.key], ['found'])
+
+  await input.setValue('offline')
+  await form.trigger('submit')
+  respond(2, {
+    ok: false,
+    error: {code: 'NETWORK_ERROR', message: 'offline'}
+  })
+  await flushPromises()
+  assert.deepEqual(storage.local.items[RECENT_SEARCH_STORAGE.key], ['found'])
+
+  await input.setValue('stale')
+  await form.trigger('submit')
+  await input.setValue('current')
+  await form.trigger('submit')
+  respond(3, {ok: true, data: dictionaryResponse('stale')})
+  respond(4, {ok: true, data: dictionaryResponse('current')})
+  await flushPromises()
+  assert.deepEqual(storage.local.items[RECENT_SEARCH_STORAGE.key], ['current', 'found'])
+  wrapper.unmount()
+})
+
 test('hides and stops recording immediately when the saved setting changes to off', async () => {
   const storage = createPopupStorage({enabled: true, searches: ['stored']})
   const wrapper = mountPopup({storage})

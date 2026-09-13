@@ -18,7 +18,7 @@ import {
   executeProviderTranslation,
   PROVIDER_ERROR_CODES
 } from './translation-engine.mjs'
-import {SETTINGS_STORAGE} from './settings-v2.mjs'
+import {normalizeSettingsV2, SETTINGS_STORAGE} from './settings-v2.mjs'
 import {getProviderPreset, normalizeProviderDefinition} from './translation-provider.mjs'
 
 function isRecord(value) {
@@ -62,8 +62,24 @@ function observeRecentSearchSettings(storage) {
 
   recentSearchListenerStorage = storage
   storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'sync' && changes?.[SETTINGS_STORAGE.settings.key]) {
-      recentSearchSettingsRevision += 1
+    if (areaName !== 'sync') {
+      return
+    }
+
+    const settingChange = changes?.[SETTINGS_STORAGE.settings.key]
+    if (!settingChange) {
+      return
+    }
+
+    const previousEnabled = normalizeSettingsV2(settingChange.oldValue).recentSearch.enabled
+    const enabled = normalizeSettingsV2(settingChange.newValue).recentSearch.enabled
+    if (previousEnabled === enabled) {
+      return
+    }
+
+    recentSearchSettingsRevision += 1
+    if (!enabled) {
+      void enqueueRecentSearchOperation(() => clearRecentSearches(storage?.local)).catch(() => {})
     }
   })
 }
@@ -115,7 +131,7 @@ async function handleRecentSearch(request, storage) {
 }
 
 /**
- * Validate the two existing message request shapes before touching fetch.
+ * Validate supported message request shapes before touching fetch.
  * Returning a response instead of throwing makes malformed messages safe at
  * the service-worker boundary.
  */
@@ -560,10 +576,16 @@ export async function handleBackgroundMessage(
  * Register the Chrome listener separately from the fetch logic so the
  * sendResponse/return-true lifecycle can be tested without a Chrome global.
  */
-export function registerBackgroundListener(runtime, handler = handleBackgroundMessage) {
+export function registerBackgroundListener(
+  runtime,
+  handler = handleBackgroundMessage,
+  storage = globalThis.chrome?.storage
+) {
   if (!runtime?.onMessage?.addListener) {
     return null
   }
+
+  observeRecentSearchSettings(storage)
 
   const listener = (request, _sender, sendResponse) => {
     const respond = respondOnce(sendResponse)

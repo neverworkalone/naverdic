@@ -16,7 +16,7 @@ import {
 import {
   addRecentSearch,
   loadRecentSearchState,
-  normalizeRecentSearchTerm,
+  normalizeRecentSearchTerm
 } from '/src/recent-search.mjs'
 import { normalizeSettingsV2, SETTINGS_STORAGE } from '/src/settings-v2.mjs'
 import { getText } from '/src/text.js'
@@ -226,7 +226,6 @@ async function searchWord(searchTerm = word.value) {
 
   const revision = ++requestRevision
   state.value = POPUP_STATES.LOADING
-  trackRecentSearch(query)
 
   try {
     const response = await sendRuntimeMessage(
@@ -255,6 +254,9 @@ async function searchWord(searchTerm = word.value) {
       data: parseNaverDictionaryResponse(response.data)
     })
     setResolvedState(resolved)
+    if (resolved.state === POPUP_STATES.RESULT) {
+      trackRecentSearch(query)
+    }
   } catch (error) {
     if (revision !== requestRevision) {
       return

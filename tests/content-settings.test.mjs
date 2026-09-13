@@ -45,7 +45,7 @@ test('maps v7 Chrome settings to content runtime without exposing unrelated loca
   assert.equal(runtime.translationCredential, '')
   assert.equal(runtime.translationTargetLanguage, 'ko')
   assert.equal(runtime.deepl_auth_key, '')
-  assert.equal(runtime.recentSearchEnabled, false)
+  assert.equal(runtime.recentSearchEnabled, true)
   assert.equal(JSON.stringify(runtime).includes('deep-secret'), false)
 })
 

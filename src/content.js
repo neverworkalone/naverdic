@@ -12,7 +12,8 @@ import {createPopupController, POPUP_STATES} from './content-popup.mjs'
 import {resolvePopupState} from './popup-state.mjs'
 import {
   createPopupRequestCoordinator,
-  isAbortError
+  isAbortError,
+  POPUP_REQUEST_STATUSES
 } from './content-request.mjs'
 import {createChromeTranslatorRuntime} from './chrome-translator.mjs'
 import {SETTINGS_V2_DEFAULTS} from './settings-v2.mjs'
@@ -176,10 +177,6 @@ function openPopup(event, key = null, type = 'search', source = '') {
     return
   }
 
-  if (!isTranslation && source === 'double-click') {
-    trackInlineRecentSearch(query)
-  }
-
   const controller = getPopupController()
   const coordinator = getPopupRequestCoordinator()
   const dataClient = getPopupDataClient()
@@ -195,6 +192,11 @@ function openPopup(event, key = null, type = 'search', source = '') {
 
   coordinator.run(request).then(result => {
     renderRequestResult(popupType, result)
+    if (!isTranslation &&
+        source === 'double-click' &&
+        result.status === POPUP_REQUEST_STATUSES.SUCCESS) {
+      trackInlineRecentSearch(query)
+    }
   })
 }
 
