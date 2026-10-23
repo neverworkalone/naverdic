@@ -434,10 +434,6 @@ body {
   background: var(--naverdic-color-surface-popup, #F5F6F8);
 }
 
-.naverdic-popup-shell--result {
-  min-height: 308px;
-}
-
 .naverdic-popup-shell--idle,
 .naverdic-popup-shell--loading {
   height: 92px;
@@ -526,7 +522,7 @@ body {
 }
 
 .naverdic-popup-body--result {
-  max-height: 336px;
+  max-height: 288px;
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -535,7 +531,7 @@ body {
   flex: 0 0 auto;
   width: 340px;
   height: auto;
-  min-height: 216px;
+  min-height: 0;
   max-height: none;
   overflow: visible;
 }
