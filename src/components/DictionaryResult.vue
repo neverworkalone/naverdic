@@ -179,10 +179,10 @@ onBeforeUnmount(() => stopAudio())
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
   width: 100%;
-  min-height: 216px;
-  padding: 12px 4px;
+  min-height: 0;
+  padding: 8px 4px;
   overflow: visible;
   border-radius: 8px;
   background: var(--naverdic-color-surface-popup, #F5F6F8);
@@ -192,12 +192,12 @@ onBeforeUnmount(() => stopAudio())
 .dictionary-result__entry {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
   min-width: 0;
 }
 
 .dictionary-result__entry + .dictionary-result__entry {
-  padding-top: 8px;
+  padding-top: 5px;
   border-top: 1px solid #E5EBF2;
 }
 
