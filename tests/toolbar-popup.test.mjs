@@ -380,6 +380,116 @@ test('matches the v7 toolbar shell and renders a dictionary result', async () =>
   wrapper.unmount()
 })
 
+test('reduces Naver expression titles with acronym meanings after the first result', async () => {
+  const wrapper = mountPopup()
+  await wrapper.get('.naverdic-popup-search__input').setValue('grime')
+  await wrapper.get('.naverdic-popup-search').trigger('submit')
+
+  respond(0, {
+    ok: true,
+    data: {
+      searchResultMap: {
+        searchResultListMap: {
+          WORD: {
+            items: [
+              {
+                handleEntry: 'grime',
+                sourceDictnameKO: '옥스퍼드 영한사전',
+                meansCollector: [{
+                  partOfSpeech: '명사',
+                  means: [{order: '1', value: '때, 더께 (=<span class="related_word">dirt</span>)'}]
+                }]
+              },
+              {
+                handleEntry: 'Rhythm and Grime',
+                sourceDictnameKO: 'Abbreviations.com',
+                meansCollector: [{
+                  partOfSpeech: '',
+                  means: [{order: '', value: '(약어 <span class="related_word" lang="en">RNG</span>)'}]
+                }]
+              },
+              {
+                handleEntry: 'Doing Away With Grime',
+                sourceDictnameKO: 'Abbreviations.com',
+                meansCollector: [{
+                  partOfSpeech: '',
+                  means: [{order: '', value: '(약어 <span class="related_word" lang="en">DAWG</span>)'}]
+                }]
+              },
+              {
+                handleEntry: 'Best Universal Grit Grime and Effluent Remover',
+                sourceDictnameKO: 'Abbreviations.com',
+                meansCollector: [{
+                  partOfSpeech: '',
+                  means: [{order: '', value: '(약어 <span class="related_word" lang="en">BUGGER</span>)'}]
+                }]
+              }
+            ]
+          }
+        }
+      }
+    }
+  })
+  await flushPromises()
+
+  const words = wrapper.findAll('.dictionary-result__word')
+  assert.deepEqual(words.map(word => word.text()), [
+    'grime',
+    'Rhythm and Grime',
+    'Doing Away With Grime',
+    'Best Universal Grit Grime and Effluent Remover'
+  ])
+  assert.equal(words[0].classes().includes('dictionary-result__word--secondary'), false)
+  assert.equal(words[1].classes().includes('dictionary-result__word--secondary'), true)
+  assert.equal(words[2].classes().includes('dictionary-result__word--secondary'), true)
+  assert.equal(words[3].classes().includes('dictionary-result__word--secondary'), true)
+  assert.ok(wrapper.findAll('.dictionary-result__meaning').some(meaning => meaning.text().includes('(약어 RNG)')))
+
+  const component = await readFile(path.join(projectRoot, 'src/components/DictionaryResult.vue'), 'utf8')
+  assert.match(
+    component,
+    /\.dictionary-result__word--secondary\s*\{[^}]*font-size:\s*14px;/s
+  )
+  wrapper.unmount()
+})
+
+test('reduces every toolbar result after the first even when later entries have parts of speech', async () => {
+  const wrapper = mountPopup()
+  await wrapper.get('.naverdic-popup-search__input').setValue('machine')
+  await wrapper.get('.naverdic-popup-search').trigger('submit')
+
+  respond(0, {
+    ok: true,
+    data: {
+      searchResultMap: {
+        searchResultListMap: {
+          WORD: {
+            items: [
+              {handleEntry: 'machine', meansCollector: [{partOfSpeech: '명사', means: [{order: '1', value: '기계'}]}]},
+              {handleEntry: 'mechanical', meansCollector: [{partOfSpeech: '형용사', means: [{order: '1', value: '기계로 작동되는'}]}]},
+              {handleEntry: 'slot machine', meansCollector: [{partOfSpeech: '명사', means: [{order: '1', value: '슬롯머신'}]}]}
+            ]
+          }
+        }
+      }
+    }
+  })
+  await flushPromises()
+
+  const words = wrapper.findAll('.dictionary-result__word')
+  assert.deepEqual(words.map(word => word.text()), ['machine', 'mechanical', 'slot machine'])
+  assert.equal(words[0].classes().includes('dictionary-result__word--secondary'), false)
+  assert.equal(words[1].classes().includes('dictionary-result__word--secondary'), true)
+  assert.equal(words[2].classes().includes('dictionary-result__word--secondary'), true)
+
+  const component = await readFile(path.join(projectRoot, 'src/components/DictionaryResult.vue'), 'utf8')
+  assert.match(
+    component,
+    /\.dictionary-result__word--secondary\s*\{[^}]*font-size:\s*14px;/s
+  )
+  wrapper.unmount()
+})
+
 test('keeps recent searches completely absent when the opt-in setting is off', async () => {
   const storage = createPopupStorage()
   const wrapper = mountPopup({storage})

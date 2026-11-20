@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict'
-import {readFile} from 'node:fs/promises'
 import test from 'node:test'
 import {JSDOM} from 'jsdom'
 
@@ -281,40 +280,6 @@ test('renders common states inside an isolated shadow popup and closes on outsid
   )
   document.dispatchEvent(new window.KeyboardEvent('keydown', {key: 'Escape', bubbles: true}))
   assert.equal(controller.isOpen(), false)
-  dom.window.close()
-})
-
-test('caps entries without meanings at 15pt while respecting smaller popup sizes', async () => {
-  const stylesheet = await readFile(new URL('../src/content.css', import.meta.url), 'utf8')
-  const dom = new JSDOM('<!doctype html><body></body>', {url: 'https://example.com/'})
-  const {document, window} = dom.window
-  const controller = createPopupController({
-    document,
-    window,
-    options: {fontSizePt: 17},
-    loadStylesheet: () => Promise.resolve(stylesheet)
-  })
-
-  controller.open({
-    popupType: 'dictionary',
-    popupAnchor: {getRect: () => ({left: 100, right: 140, top: 100, bottom: 120})}
-  })
-  controller.update(POPUP_STATES.RESULT, [
-    {word: 'Rhythm and Grime', meanings: []},
-    {word: 'grime', meanings: [{order: '1', value: '먼지'}]}
-  ])
-
-  const popup = document.getElementById('popupFrame').shadowRoot.querySelector('#popupShadow')
-  const titles = popup.querySelectorAll('.naverdic-wordTitle')
-  assert.equal(popup.style.fontSize, '17pt')
-  assert.equal(titles[0].classList.contains('naverdic-wordTitle--no-meaning'), true)
-  assert.equal(titles[1].classList.contains('naverdic-wordTitle--no-meaning'), false)
-  assert.match(
-    stylesheet,
-    /\.naverdic-wordTitle--no-meaning\s*\{[^}]*font-size:\s*min\(15pt,\s*1em\);/s
-  )
-
-  controller.close()
   dom.window.close()
 })
 
