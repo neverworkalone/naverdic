@@ -109,7 +109,11 @@ function renderDictionary(documentLike, container, entries, onAudioFailure) {
   const audioEntryIndex = findAudioEntryIndex(entries)
 
   entries.forEach((entry, entryIndex) => {
-    const title = createTextElement(documentLike, 'div', 'naverdic-wordTitle')
+    const meanings = Array.isArray(entry.meanings) ? entry.meanings : []
+    const titleClassName = meanings.length === 0
+      ? 'naverdic-wordTitle naverdic-wordTitle--no-meaning'
+      : 'naverdic-wordTitle'
+    const title = createTextElement(documentLike, 'div', titleClassName)
     const wordLink = documentLike.createElement('a')
     wordLink.href = entry.dictionaryUrl || '#'
     wordLink.target = '_blank'
@@ -155,7 +159,6 @@ function renderDictionary(documentLike, container, entries, onAudioFailure) {
 
     container.appendChild(title)
 
-    const meanings = Array.isArray(entry.meanings) ? entry.meanings : []
     meanings.forEach((meaning, meaningIndex) => {
       const className = meaningIndex === meanings.length - 1
         ? 'naverdic-wordMeans-last'
