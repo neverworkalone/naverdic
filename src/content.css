@@ -45,10 +45,6 @@
   padding-left: 1px;
 }
 
-.naverdic-wordTitle--no-meaning {
-  font-size: min(15pt, 1em);
-}
-
 .naverdic-wordTitle a {
   text-decoration: none;
   color: inherit;

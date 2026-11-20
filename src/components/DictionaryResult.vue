@@ -127,6 +127,7 @@ onBeforeUnmount(() => stopAudio())
         <a
           v-if="entry.word"
           class="dictionary-result__word"
+          :class="{'dictionary-result__word--no-part-of-speech': !entry.partOfSpeech}"
           :href="entry.dictionaryUrl || '#'"
           target="_blank"
           rel="noopener noreferrer"
@@ -221,6 +222,10 @@ onBeforeUnmount(() => stopAudio())
 
 .dictionary-result__word:hover {
   text-decoration: underline;
+}
+
+.dictionary-result__word--no-part-of-speech {
+  font-size: 15px;
 }
 
 .dictionary-result__audio-button {
